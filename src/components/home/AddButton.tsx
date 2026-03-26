@@ -1,3 +1,5 @@
+import { AddIcon } from "../../icons";
+
 interface AddButtonProps {
   onClick?: () => void;
   "aria-label"?: string;
@@ -9,10 +11,10 @@ export default function AddButton({ onClick, "aria-label": ariaLabel }: AddButto
       type="button"
       onClick={onClick}
       aria-label={ariaLabel ?? "Add"}
-      className="group rounded-xl border border-gray-100 h-full min-h-[240px] w-full flex items-center justify-center transition-all duration-200 bg-transparent focus:outline-none"
+      className="group rounded-xl h-full min-h-[240px] w-full flex items-center justify-center transition-all duration-200 bg-transparent focus:outline-none"
     >
-      <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-500 transition-all duration-200">
-        <span className="text-2xl font-light leading-none">+</span>
+      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white text-gray-500 transition-all duration-200 shadow-[2px_4px_10px_0px_#0000000F]">
+        <AddIcon className="text-black"/>
       </div>
     </button>
   );

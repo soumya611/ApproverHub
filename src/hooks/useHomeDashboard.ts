@@ -29,7 +29,7 @@ async function fetchHomeDashboard(): Promise<HomeDashboardData> {
       weekday: weekdays[now.getDay()],
     },
     welcome: {
-      title: "Welcome!",
+      title: "Welcome !",
       subtitle: "Greetings for the day",
     },
     progress: {
