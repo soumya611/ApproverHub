@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+
+# Add to .gitignore
+echo "public/sample-video.mp4" >> .gitignore
+
+# Remove it from git tracking (keeps the file locally)
+git rm --cached public/sample-video.mp4
+
+git add .gitignore
+git commit -m "Remove large video file from tracking"
+git push
