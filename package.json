@@ -1,0 +1,72 @@
+{
+  "name": "tailadmin-react",
+  "private": true,
+  "version": "2.0.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.28.0",
+    "@react-jvectormap/core": "^1.0.4",
+    "@react-jvectormap/world": "^1.1.2",
+    "@syncfusion/ej2-base": "^31.2.5",
+    "@syncfusion/ej2-buttons": "^31.2.3",
+    "@syncfusion/ej2-inputs": "^31.2.5",
+    "@syncfusion/ej2-navigations": "^31.2.5",
+    "@syncfusion/ej2-popups": "^31.2.5",
+    "@syncfusion/ej2-react-inputs": "^31.2.15",
+    "@syncfusion/ej2-react-pdfviewer": "^31.2.5",
+    "@syncfusion/ej2-splitbuttons": "^31.2.2",
+    "apexcharts": "^4.1.0",
+    "clsx": "^2.1.1",
+    "flatpickr": "^4.6.13",
+    "lucide-react": "^0.545.0",
+    "react": "^19.0.0",
+    "react-apexcharts": "^1.7.0",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.5",
+    "react-helmet-async": "^2.0.5",
+    "react-router": "^7.1.5",
+    "react-router-dom": "7.9.4",
+    "swiper": "^11.2.3",
+    "tailwind-merge": "^3.0.1",
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "@tailwindcss/postcss": "^4.0.8",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.19.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "globals": "^15.14.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.14",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.22.0",
+    "vite": "^7.1.9",
+    "vite-plugin-svgr": "^4.5.0"
+  },
+  "overrides": {
+    "react-helmet-async": {
+      "react": "^16.8.0 || ^17 || ^18 || ^19"
+    },
+    "@react-jvectormap/core": {
+      "react": "^16.8.0 || ^17 || ^18 || ^19",
+      "react-dom": "^16.8.0 || ^17 || ^18 || ^19"
+    },
+    "@react-jvectormap/world": {
+      "react": "^16.8.0 || ^17 || ^18 || ^19",
+      "react-dom": "^16.8.0 || ^17 || ^18 || ^19"
+    }
+  }
+}

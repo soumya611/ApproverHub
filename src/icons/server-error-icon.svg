@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Laptop base -->
+  <rect x="9" y="50" width="46" height="5" rx="6" fill="#8B9A9A"/>
+  
+  <!-- Laptop stand/hinge -->
+  <rect x="26" y="48" width="12" height="4" rx="2" fill="#A0AFAF"/>
+  
+  <!-- Laptop screen frame -->
+  <rect x="6" y="10" width="52" height="38" rx="2" fill="#4A5F75"/>
+  
+  <!-- Screen inner area -->
+  <rect x="8" y="12" width="48" height="34" fill="#3D5166"/>
+  
+  <!-- X icon -->
+  <g transform="translate(32, 22)">
+    <rect x="-7" y="-1.5" width="14" height="3" rx="1.5" fill="#E07A91" transform="rotate(45)"/>
+    <rect x="-7" y="-1.5" width="14" height="3" rx="1.5" fill="#E07A91" transform="rotate(-45)"/>
+  </g>
+  
+  <!-- "500" text -->
+  <text x="32" y="40" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#F5A623" text-anchor="middle">500</text>
+</svg>
