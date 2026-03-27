@@ -16,6 +16,7 @@ import Analytics from "./pages/Analytics";
 import JobInformationSettings from "./pages/JobInformationSettings";
 import JobInformationEditor from "./pages/JobInformationEditor";
 import JobInformationBranching from "./pages/JobInformationBranching";
+import CampaignSetting from "./pages/CampaignSetting";
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/campaigns/:campaignId/edit" element={<CreateCampaign />} />
               <Route path="/job-tracker" element={<JobTracker />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/campaign-setting" element={<CampaignSetting />} />
               <Route
                 path="/settings/jobs/job-information"
                 element={<JobInformationSettings />}

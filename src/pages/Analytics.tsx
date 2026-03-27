@@ -73,6 +73,7 @@ import LocalizationSettingsCard from "../components/settings/LocalizationSetting
 import { useJobInformationSteps } from "../components/ui/job-information/useJobInformationSteps";
 import { useJobInformationStore } from "../stores/jobInformationStore";
 import type { JobInfoQuestion } from "../types/jobInformation";
+import { Link } from "react-router";
 
 export default function Analytics() {
   const { columns, setColumns } = useColumnsConfig();
@@ -234,7 +235,7 @@ export default function Analytics() {
       chatCount: 3,
       tag: "Urgent",
       tagTone: "red",
-      thumbnailSrc:"https://images.pexels.com/photos/6287933/pexels-photo-6287933.jpeg"
+      thumbnailSrc: "https://images.pexels.com/photos/6287933/pexels-photo-6287933.jpeg"
     },
     {
       title: "Brochure .V1",
@@ -295,83 +296,83 @@ export default function Analytics() {
     ownerAvatarUrl?: string;
     subRows?: CampaignSubRow[];
   }> = [
-    {
-      id: "cam-1",
-      campaignId: "CAM114025",
-      title: "Summer allergies",
-      endDate: "27 Oct 25",
-      jobProgress: "1 of 3 completed",
-      campaignStatus: "Started",
-      ownerName: "Krutika",
-      ownerAvatarUrl: "/uploads/avatar-1.jpg",
-    },
-    {
-      id: "cam-2",
-      campaignId: "CAM254953",
-      title: "Employee roster",
-      endDate: "02 Oct 25",
-      jobProgress: "0 of 2 completed",
-      campaignStatus: "Start Pending",
-      ownerName: "Mihir",
-    },
-    {
-      id: "cam-3",
-      campaignId: "CAM124040",
-      title: "Winter campaign",
-      endDate: "16 Oct 25",
-      jobProgress: "4 of 4 completed",
-      campaignStatus: "Completed",
-      ownerName: "Gaurav",
-    },
-    {
-      id: "cam-4",
-      campaignId: "CAM124041",
-      title: "Fall Vacay",
-      endDate: "05 Oct 25",
-      jobProgress: "2 of 4 completed",
-      campaignStatus: "Started",
-      jobStatusTag: "Late",
-      ownerName: "Pooja",
-    },
-    {
-      id: "cam-5",
-      campaignId: "CAM254954",
-      title: "Summer campaign 2",
-      endDate: "12 Nov 25",
-      jobProgress: "0 of 3 completed",
-      campaignStatus: "Start Pending",
-      ownerName: "Kiran",
-      subRows: [
-        {
-          id: "cam-5-sub-1",
-          jobNumber: "JB61601",
-          title: "Employee booklet DOC",
-          endDate: "DD/MM/YY",
-          jobProgress: "0 of 3 completed",
-          campaignStatus: "Start Pending",
-          ownerName: "Kiran",
-        },
-        {
-          id: "cam-5-sub-2",
-          jobNumber: "JB61602",
-          title: "Employee booklet Dft",
-          endDate: "DD/MM/YY",
-          jobProgress: "0 of 3 completed",
-          campaignStatus: "Start Pending",
-          ownerName: "Kiran",
-        },
-        {
-          id: "cam-5-sub-3",
-          jobNumber: "JB61603",
-          title: "Employee booklet PPT",
-          endDate: "DD/MM/YY",
-          jobProgress: "0 of 3 completed",
-          campaignStatus: "Start Pending",
-          ownerName: "Kiran",
-        },
-      ],
-    },
-  ];
+      {
+        id: "cam-1",
+        campaignId: "CAM114025",
+        title: "Summer allergies",
+        endDate: "27 Oct 25",
+        jobProgress: "1 of 3 completed",
+        campaignStatus: "Started",
+        ownerName: "Krutika",
+        ownerAvatarUrl: "/uploads/avatar-1.jpg",
+      },
+      {
+        id: "cam-2",
+        campaignId: "CAM254953",
+        title: "Employee roster",
+        endDate: "02 Oct 25",
+        jobProgress: "0 of 2 completed",
+        campaignStatus: "Start Pending",
+        ownerName: "Mihir",
+      },
+      {
+        id: "cam-3",
+        campaignId: "CAM124040",
+        title: "Winter campaign",
+        endDate: "16 Oct 25",
+        jobProgress: "4 of 4 completed",
+        campaignStatus: "Completed",
+        ownerName: "Gaurav",
+      },
+      {
+        id: "cam-4",
+        campaignId: "CAM124041",
+        title: "Fall Vacay",
+        endDate: "05 Oct 25",
+        jobProgress: "2 of 4 completed",
+        campaignStatus: "Started",
+        jobStatusTag: "Late",
+        ownerName: "Pooja",
+      },
+      {
+        id: "cam-5",
+        campaignId: "CAM254954",
+        title: "Summer campaign 2",
+        endDate: "12 Nov 25",
+        jobProgress: "0 of 3 completed",
+        campaignStatus: "Start Pending",
+        ownerName: "Kiran",
+        subRows: [
+          {
+            id: "cam-5-sub-1",
+            jobNumber: "JB61601",
+            title: "Employee booklet DOC",
+            endDate: "DD/MM/YY",
+            jobProgress: "0 of 3 completed",
+            campaignStatus: "Start Pending",
+            ownerName: "Kiran",
+          },
+          {
+            id: "cam-5-sub-2",
+            jobNumber: "JB61602",
+            title: "Employee booklet Dft",
+            endDate: "DD/MM/YY",
+            jobProgress: "0 of 3 completed",
+            campaignStatus: "Start Pending",
+            ownerName: "Kiran",
+          },
+          {
+            id: "cam-5-sub-3",
+            jobNumber: "JB61603",
+            title: "Employee booklet PPT",
+            endDate: "DD/MM/YY",
+            jobProgress: "0 of 3 completed",
+            campaignStatus: "Start Pending",
+            ownerName: "Kiran",
+          },
+        ],
+      },
+    ];
 
   const addJobRows = MOCK_JOBS.slice(0, 5);
   const workflowReviewers = Array.from(
@@ -564,29 +565,29 @@ export default function Analytics() {
               />
             </button>
             <div className="group relative">
-  <button
-    type="button"
-    className="flex items-center rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-    aria-label="View workflow stages"
-    title="View workflow stages"
-  >
-    <span className="relative rounded-md bg-gray-100 px-2 py-0.5 pr-3 text-[11px] text-gray-600 after:absolute after:right-[-6px] after:top-1/2 after:-translate-y-1/2 after:border-y-[6px] after:border-y-transparent after:border-l-[6px] after:border-l-gray-100">
-      S1
-    </span>
-  </button>
+              <button
+                type="button"
+                className="flex items-center rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                aria-label="View workflow stages"
+                title="View workflow stages"
+              >
+                <span className="relative rounded-md bg-gray-100 px-2 py-0.5 pr-3 text-[11px] text-gray-600 after:absolute after:right-[-6px] after:top-1/2 after:-translate-y-1/2 after:border-y-[6px] after:border-y-transparent after:border-l-[6px] after:border-l-gray-100">
+                  S1
+                </span>
+              </button>
 
-  <div
-    style={{ "--stage-arrow-offset": "14px" } as CSSProperties}
-    className="pointer-events-none absolute left-full top-0 z-30 ml-3 w-[334px] translate-x-2 rounded-xl border border-gray-200 bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.45)] opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100 max-h-[70vh] overflow-visible"
-  >
-    {/* Arrow pointing LEFT toward S1 — sits outside the left border */}
-    <span
-      style={{ top: "var(--stage-arrow-offset)" } as CSSProperties}
-      className="pointer-events-none absolute -left-[7px] z-10 h-[13px] w-[13px] rotate-45 border-b border-l border-gray-200 bg-white"
-    />
+              <div
+                style={{ "--stage-arrow-offset": "14px" } as CSSProperties}
+                className="pointer-events-none absolute left-full top-0 z-30 ml-3 w-[334px] translate-x-2 rounded-xl border border-gray-200 bg-white p-0 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.45)] opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100 max-h-[70vh] overflow-visible"
+              >
+                {/* Arrow pointing LEFT toward S1 — sits outside the left border */}
+                <span
+                  style={{ top: "var(--stage-arrow-offset)" } as CSSProperties}
+                  className="pointer-events-none absolute -left-[7px] z-10 h-[13px] w-[13px] rotate-45 border-b border-l border-gray-200 bg-white"
+                />
 
-    <div className="relative z-20 divide-y divide-gray-100  overflow-hidden">
-      {stagePreview.map((stage) => (
+                <div className="relative z-20 divide-y divide-gray-100  overflow-hidden">
+                  {stagePreview.map((stage) => (
                     <WorkflowStageCard
                       key={stage.id}
                       stage={stage}
@@ -595,10 +596,10 @@ export default function Analytics() {
                       fallbackTopBarClass="bg-gray-300"
                       className="rounded-none border-0 p-3 pt-2 sm:p-3 sm:pt-2 sm:pb-2"
                     />
-      ))}
-    </div>
-  </div>
-</div>
+                  ))}
+                </div>
+              </div>
+            </div>
             <Button size="sm" variant="secondary" onClick={() => setIsPopupOpen(true)}>
               Open email reviewers
             </Button>
@@ -733,8 +734,8 @@ export default function Analytics() {
                 id: "export-job",
                 label: "Export job details",
                 subItems: [
-                  { id: "export-pdf", label: "PDF file", onClick: () => {} },
-                  { id: "export-csv", label: "CSV file", onClick: () => {} },
+                  { id: "export-pdf", label: "PDF file", onClick: () => { } },
+                  { id: "export-csv", label: "CSV file", onClick: () => { } },
                 ],
               },
             ]}
@@ -1064,7 +1065,7 @@ export default function Analytics() {
                         prev === row.id ? null : row.id
                       )
                     }
-                    onEdit={() => {}}
+                    onEdit={() => { }}
                   />
                 ))}
               </tbody>
@@ -1412,8 +1413,8 @@ export default function Analytics() {
               title={note.title}
               description={note.description}
               date={note.date}
-              onEdit={() => {}}
-              onDelete={() => {}}
+              onEdit={() => { }}
+              onDelete={() => { }}
             />
           ))}
         </div>
@@ -1428,10 +1429,17 @@ export default function Analytics() {
               description={mention.description}
               date={mention.date}
               avatarUrl={mention.avatarUrl}
-              onDelete={() => {}}
+              onDelete={() => { }}
             />
           ))}
         </div>
+
+        <div className="mt-6 space-y-3">
+          <Link to="/campaign-setting" className="text-sm text-white bg-secondary px-2 py-1 rounded-sm inline-block">
+            Campaign Setting
+          </Link>
+        </div>
+
       </PageContentContainer>
 
       <EmailReviewersPopup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />

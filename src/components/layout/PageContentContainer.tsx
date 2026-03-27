@@ -12,7 +12,7 @@ interface PageContentContainerProps {
  */
 export default function PageContentContainer({ children, className = "" }: PageContentContainerProps) {
   return (
-    <div className={`rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden ${className}`}>
+    <div className={`rounded-xl shadow-[2px_4px_10px_0px_#0000000F] bg-white overflow-hidden ${className}`}>
       {children}
     </div>
   );

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import ToggleSwitch from "../toggle/ToggleSwitch";
 import { normalizeColumns, type ColumnConfigItem } from "../../../data/columnsConfig";
 import { useColumnsConfig } from "../../../context/ColumnsConfigContext";
+import Checkbox from "../../form/input/Checkbox";
 
 export default function ColumnsManager() {
   const [isDisabled, setIsDisabled] = useState(false);
@@ -54,29 +55,14 @@ export default function ColumnsManager() {
     };
     setColumns((prev) => normalizeColumns([...prev, newField]));
     setNewFieldName("");
+    setShowAddInput(false);
   };
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-800">Campaign</h3>
-          <p className="text-xs text-gray-500">
-            Define Campaign section and tab name with column visibility.
-          </p>
-        </div>
-        <ToggleSwitch
-          checked={isDisabled}
-          onChange={setIsDisabled}
-          label="Disable"
-          showLabel
-          size="sm"
-        />
-      </div>
+    <section className="bg-white p-5 shadow-sm">
       <div
-        className={`mt-4 rounded-lg border border-gray-100 bg-gray-50/40 p-4 ${
-          isDisabled ? "pointer-events-none opacity-60" : ""
-        }`}
+        className={`max-w-[460px] rounded-md border-1 border-[#D9D9D9] bg-gray-50/40 p-4 ${isDisabled ? "pointer-events-none opacity-60" : ""
+          }`}
       >
         <div className="space-y-1">
           <p className="text-xs font-semibold text-gray-500">Rows</p>
@@ -89,16 +75,14 @@ export default function ColumnsManager() {
           {fields.map((field) => (
             <div
               key={field.id}
-              className="flex flex-wrap items-center gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm"
+              className="flex flex-wrap items-center gap-3 bg-white px-3 py-2"
             >
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded columns-checkbox"
+              <Checkbox
                 checked={field.required ? true : field.checked}
-                disabled={field.required}
-                onChange={(event) =>
-                  handleToggleEnabled(field.id, event.target.checked)
+                onChange={(checked) =>
+                  handleToggleEnabled(field.id, checked)
                 }
+                className="!h-4 !w-4"
               />
               <input
                 type="text"
@@ -106,38 +90,53 @@ export default function ColumnsManager() {
                 onChange={(event) =>
                   handleLabelChange(field.id, event.target.value)
                 }
-                className="flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+                className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
               />
-              <ToggleSwitch
-                checked={field.required}
-                onChange={(checked) => handleToggleRequired(field.id, checked)}
-                label="Required"
-                showLabel
-                size="sm"
-                className="ml-auto"
-                labelClassName="text-[11px] text-gray-500"
-              />
+              <div className="ml-auto flex items-center gap-2">
+                <ToggleSwitch
+                  checked={field.required ?? false}
+                  onChange={(checked) => handleToggleRequired(field.id, checked)}
+                  size="sm"
+                />
+                <span className="text-[11px] text-gray-500">
+                  Required
+                </span>
+              </div>
+
             </div>
           ))}
         </div>
         {showAddInput ? (
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-3 bg-white px-3 py-2">
+            {/* Empty checkbox placeholder — keeps input aligned with rows above */}
+            <span className="h-4 w-4 flex-shrink-0" />
+
+            {/* Input — same flex-1 as label inputs above */}
             <input
               type="text"
               placeholder="Enter field name"
               value={newFieldName}
               onChange={(event) => setNewFieldName(event.target.value)}
-              className="flex-1 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 shadow-sm focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+              onKeyDown={(e) => e.key === "Enter" && handleAddField()}
+              className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
             />
-            <button
-              type="button"
-              onClick={handleAddField}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-secondary-500)] text-lg font-semibold text-white transition hover:bg-[var(--color-secondary-600)] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={!newFieldName.trim()}
-              aria-label="Add field"
-            >
-              +
-            </button>
+
+            {/* Add button — same position as toggle+Required above */}
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAddField}
+                disabled={!newFieldName.trim()}
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-lg font-semibold transition ${newFieldName.trim()
+                    ? "bg-[#FFEAE6] text-[var(--color-secondary-500)]"
+                    : "bg-[#FFEAE6] text-gray-300 cursor-not-allowed"
+                  }`}
+                aria-label="Add field"
+              >
+                +
+              </button>
+              <span className="text-[11px] text-transparent select-none">Required</span>
+            </div>
           </div>
         ) : (
           <button

@@ -29,7 +29,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
         <input
           id={id}
           type="checkbox"
-          className={`h-5 w-5 appearance-none cursor-pointer rounded-sm border disabled:opacity-60 ${
+          className={`h-5 w-5 appearance-none cursor-pointer border disabled:opacity-60 ${
             checked
               ? disabled
                 ? "border-[#E4E7EC] bg-[#E4E7EC]"
