@@ -51,7 +51,7 @@ export default function Home() {
       <PageMeta title="Home" description="Dashboard overview" />
 
       {/* Header card: date + welcome message + progress ring */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-5 mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white rounded-xl shadow-[2px_4px_10px_0px_#0000000F] border border-gray-100 px-6 py-5 mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-5">
           <DateCard date={date} />
           <WelcomeSection welcome={welcome} />

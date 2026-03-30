@@ -20,10 +20,10 @@ export default function ProgressCard({ progress }: ProgressCardProps) {
         <circle cx="34" cy="34" r={radius} fill="none" stroke={TRACK} strokeWidth="5" />
         <circle
           cx="34" cy="34" r={radius}
-          fill="none" stroke={TEAL} strokeWidth="5"
+          fill="none" stroke={TEAL} strokeWidth="6"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
+          strokeLinecap="butt"
           className="transition-all duration-500"
         />
       </svg>
