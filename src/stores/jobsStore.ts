@@ -2,19 +2,54 @@ import { create } from "zustand";
 import type { JobRow } from "../components/jobs/types";
 import { MOCK_JOBS } from "../components/jobs/types";
 
+interface JobsPaginationState {
+  currentPage: number;
+  pageSize: number;
+}
+
 interface JobsState {
   jobs: JobRow[];
   archived: JobRow[];
   pinned: JobRow[];
+  pagination: JobsPaginationState;
   addJob: (job: JobRow) => void;
   updateJob: (id: string, updates: Partial<JobRow>) => void;
   pinJobs: (ids: string[]) => void;
   unpinJob: (id: string) => void;
   archiveJobs: (ids: string[]) => void;
+  goToNextPage: () => void;
+  goToPreviousPage: () => void;
+  setCurrentPage: (page: number) => void;
+  setPageSize: (pageSize: number) => void;
+  resetPagination: () => void;
   clearAll: () => void;
 }
 
 const STORAGE_KEY = "jobs_store_v1";
+const DEFAULT_PAGE_SIZE = 50;
+
+const normalizePagination = (
+  pagination?: Partial<JobsPaginationState>
+): JobsPaginationState => {
+  const normalizedPageSize =
+    pagination?.pageSize && pagination.pageSize > 0
+      ? Math.floor(pagination.pageSize)
+      : DEFAULT_PAGE_SIZE;
+  const normalizedCurrentPage =
+    pagination?.currentPage && pagination.currentPage > 0
+      ? Math.floor(pagination.currentPage)
+      : 1;
+
+  return {
+    currentPage: normalizedCurrentPage,
+    pageSize: normalizedPageSize,
+  };
+};
+
+const clampPage = (page: number, totalItems: number, pageSize: number) => {
+  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, pageSize)));
+  return Math.min(Math.max(1, page), totalPages);
+};
 
 const readStoredState = () => {
   if (typeof window === "undefined") return null;
@@ -25,12 +60,14 @@ const readStoredState = () => {
       jobs: JobRow[];
       archived?: JobRow[];
       pinned?: JobRow[];
+      pagination?: Partial<JobsPaginationState>;
     };
     if (!parsed || !Array.isArray(parsed.jobs)) return null;
     return {
       jobs: parsed.jobs,
       archived: Array.isArray(parsed.archived) ? parsed.archived : [],
       pinned: Array.isArray(parsed.pinned) ? parsed.pinned : [],
+      pagination: normalizePagination(parsed.pagination),
     };
   } catch {
     return null;
@@ -41,6 +78,7 @@ const persistState = (state: {
   jobs: JobRow[];
   archived: JobRow[];
   pinned: JobRow[];
+  pagination: JobsPaginationState;
 }) => {
   if (typeof window === "undefined") return;
   try {
@@ -60,16 +98,18 @@ export const useJobsStore = create<JobsState>((set, get) => {
         (job) => initialJobs.find((item) => item.id === job.id) ?? job
       )
       .filter((job) => initialJobs.some((item) => item.id === job.id)) ?? [];
+  const initialPagination = normalizePagination(stored?.pagination);
 
   const persist = () => {
-    const { jobs, archived, pinned } = get();
-    persistState({ jobs, archived, pinned });
+    const { jobs, archived, pinned, pagination } = get();
+    persistState({ jobs, archived, pinned, pagination });
   };
 
   return {
     jobs: initialJobs,
     archived: initialArchived,
     pinned: initialPinned,
+    pagination: initialPagination,
     addJob: (job) => {
       set((state) => ({
         jobs: [job, ...state.jobs],
@@ -123,13 +163,86 @@ export const useJobsStore = create<JobsState>((set, get) => {
           ),
         ];
         const pinned = state.pinned.filter((job) => !ids.includes(job.id));
-        return { jobs: remaining, archived, pinned };
+        const currentPage = clampPage(
+          state.pagination.currentPage,
+          remaining.length,
+          state.pagination.pageSize
+        );
+        return {
+          jobs: remaining,
+          archived,
+          pinned,
+          pagination: {
+            ...state.pagination,
+            currentPage,
+          },
+        };
       });
       persist();
     },
+    goToNextPage: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: state.pagination.currentPage + 1,
+        },
+      }));
+      persist();
+    },
+    goToPreviousPage: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: Math.max(1, state.pagination.currentPage - 1),
+        },
+      }));
+      persist();
+    },
+    setCurrentPage: (page) => {
+      const normalizedPage =
+        Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: normalizedPage,
+        },
+      }));
+      persist();
+    },
+    setPageSize: (pageSize) => {
+      const normalizedPageSize =
+        Number.isFinite(pageSize) && pageSize > 0
+          ? Math.floor(pageSize)
+          : DEFAULT_PAGE_SIZE;
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          pageSize: normalizedPageSize,
+          currentPage: 1,
+        },
+      }));
+      persist();
+    },
+    resetPagination: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: 1,
+        },
+      }));
+      persist();
+    },
     clearAll: () => {
-      set({ jobs: MOCK_JOBS, archived: [], pinned: [] });
-      persistState({ jobs: MOCK_JOBS, archived: [], pinned: [] });
+      set((state) => ({
+        jobs: MOCK_JOBS,
+        archived: [],
+        pinned: [],
+        pagination: {
+          ...state.pagination,
+          currentPage: 1,
+        },
+      }));
+      persist();
     },
   };
 });

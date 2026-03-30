@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type WheelEvent } from "react";
 import { useNavigate } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import PageContentContainer from "../components/layout/PageContentContainer";
+import PaginationControls from "../components/common/PaginationControls";
 import SearchInput from "../components/ui/search-input/SearchInput";
 import AdvanceFilter, {
   type AdvanceFilterState,
@@ -306,7 +307,15 @@ export default function Campaigns() {
     duplicateCampaigns,
     archiveCampaigns,
     pinCampaigns,
+    pagination,
+    goToNextPage,
+    goToPreviousPage,
+    setCurrentPage,
+    setPageSize,
+    resetPagination,
   } = useCampaignsStore();
+  const campaignsCurrentPage = pagination.currentPage;
+  const campaignsPageSize = pagination.pageSize;
   const allCount = campaigns.length;
   const visibleColumns = useMemo(() => columns.filter((item) => item.checked), [
     columns,
@@ -347,14 +356,36 @@ export default function Campaigns() {
     [filteredCampaigns, search]
   );
 
+  const totalCampaignPages = useMemo(
+    () => Math.max(1, Math.ceil(visibleCampaigns.length / campaignsPageSize)),
+    [visibleCampaigns.length, campaignsPageSize]
+  );
+
+  const currentCampaignPage = Math.min(campaignsCurrentPage, totalCampaignPages);
+
+  const paginatedCampaigns = useMemo(() => {
+    const start = (currentCampaignPage - 1) * campaignsPageSize;
+    return visibleCampaigns.slice(start, start + campaignsPageSize);
+  }, [visibleCampaigns, currentCampaignPage, campaignsPageSize]);
+
+  const campaignsFrom = visibleCampaigns.length
+    ? (currentCampaignPage - 1) * campaignsPageSize + 1
+    : 0;
+  const campaignsTo = visibleCampaigns.length
+    ? Math.min(visibleCampaigns.length, currentCampaignPage * campaignsPageSize)
+    : 0;
+
+  const canGoToPreviousCampaignPage = currentCampaignPage > 1;
+  const canGoToNextCampaignPage = currentCampaignPage < totalCampaignPages;
+
   const visibleIds = useMemo(
     () => new Set(visibleCampaigns.map((row) => row.id)),
     [visibleCampaigns]
   );
 
   const allCampaignsSelected =
-    visibleCampaigns.length > 0 &&
-    visibleCampaigns.every((row) => selectedCampaignIds.includes(row.id));
+    paginatedCampaigns.length > 0 &&
+    paginatedCampaigns.every((row) => selectedCampaignIds.includes(row.id));
 
   const selectionActions: SelectedItemAction[] = [
     {
@@ -430,7 +461,7 @@ export default function Campaigns() {
 
   useEffect(() => {
     if (!isFilterOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
         filterPanelRef.current &&
         !filterPanelRef.current.contains(event.target as Node)
@@ -444,7 +475,7 @@ export default function Campaigns() {
 
   useEffect(() => {
     if (!openViewMenuId) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
         viewMenuRef.current &&
         !viewMenuRef.current.contains(event.target as Node)
@@ -458,7 +489,7 @@ export default function Campaigns() {
 
   useEffect(() => {
     if (!isColumnsOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
         columnsPanelRef.current &&
         !columnsPanelRef.current.contains(event.target as Node)
@@ -495,7 +526,18 @@ export default function Campaigns() {
   };
 
   const toggleAllCampaigns = (checked: boolean) => {
-    setSelectedCampaignIds(checked ? visibleCampaigns.map((row) => row.id) : []);
+    setSelectedCampaignIds((prev) => {
+      if (!checked) {
+        return prev.filter(
+          (id) => !paginatedCampaigns.some((row) => row.id === id)
+        );
+      }
+      const next = new Set(prev);
+      paginatedCampaigns.forEach((row) => {
+        next.add(row.id);
+      });
+      return Array.from(next);
+    });
   };
 
   const handleSaveView = (state: AdvanceFilterState) => {
@@ -526,6 +568,7 @@ export default function Campaigns() {
     setOpenViewMenuId(null);
     setCurrentFilterState(null);
     setFilterResetKey((prev) => prev + 1);
+    resetPagination();
   };
 
   const handleViewSelect = (view: SavedView) => {
@@ -554,7 +597,7 @@ export default function Campaigns() {
     event.preventDefault();
   };
 
-  const handleTableMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  const handleTableMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     const container = tableScrollRef.current;
     if (!container || event.button !== 0) return;
     const target = event.target as HTMLElement;
@@ -566,7 +609,7 @@ export default function Campaigns() {
     tableScrollLeftRef.current = container.scrollLeft;
   };
 
-  const handleTableMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+  const handleTableMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const container = tableScrollRef.current;
     if (!container || !isTableDraggingRef.current) return;
     const delta = event.clientX - tableStartXRef.current;
@@ -600,6 +643,12 @@ export default function Campaigns() {
 
   const getViewCount = (view: SavedView) =>
     applyFilters(campaigns, view.filterState).length;
+
+  useEffect(() => {
+    if (campaignsCurrentPage > totalCampaignPages) {
+      setCurrentPage(totalCampaignPages);
+    }
+  }, [campaignsCurrentPage, totalCampaignPages, setCurrentPage]);
 
   return (
     <>
@@ -821,7 +870,7 @@ export default function Campaigns() {
                   />
                 </thead>
                 <tbody>
-                  {visibleCampaigns.map((row) => (
+                  {paginatedCampaigns.map((row) => (
                     <CampaignTableRow
                       key={row.id}
                       campaignId={row.campaignId}
@@ -858,6 +907,22 @@ export default function Campaigns() {
               No campaigns match the current filters.
             </div>
           )}
+
+          {visibleCampaigns.length > 0 ? (
+            <PaginationControls
+              total={visibleCampaigns.length}
+              from={campaignsFrom}
+              to={campaignsTo}
+              label="results"
+              canGoPrevious={canGoToPreviousCampaignPage}
+              canGoNext={canGoToNextCampaignPage}
+              onPrevious={goToPreviousPage}
+              onNext={goToNextPage}
+              pageSize={campaignsPageSize}
+              pageSizeOptions={[5, 10, 20]}
+              onPageSizeChange={setPageSize}
+            />
+          ) : null}
         </div>
       </PageContentContainer>
 

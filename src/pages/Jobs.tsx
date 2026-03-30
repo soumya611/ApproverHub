@@ -3,12 +3,13 @@ import {
   useMemo,
   useRef,
   useState,
-  type MouseEvent,
+  type MouseEvent as ReactMouseEvent,
   type WheelEvent,
 } from "react";
 import { useNavigate } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import PageContentContainer from "../components/layout/PageContentContainer";
+import PaginationControls from "../components/common/PaginationControls";
 import SearchInput from "../components/ui/search-input/SearchInput";
 import AdvanceFilter, {
   type AdvanceFilterState,
@@ -286,6 +287,13 @@ export default function Jobs() {
   const updateJob = useJobsStore((state) => state.updateJob);
   const pinJobs = useJobsStore((state) => state.pinJobs);
   const archiveJobs = useJobsStore((state) => state.archiveJobs);
+  const jobsCurrentPage = useJobsStore((state) => state.pagination.currentPage);
+  const jobsPageSize = useJobsStore((state) => state.pagination.pageSize);
+  const goToNextJobsPage = useJobsStore((state) => state.goToNextPage);
+  const goToPreviousJobsPage = useJobsStore((state) => state.goToPreviousPage);
+  const setJobsCurrentPage = useJobsStore((state) => state.setCurrentPage);
+  const setJobsPageSize = useJobsStore((state) => state.setPageSize);
+  const resetJobsPagination = useJobsStore((state) => state.resetPagination);
   const localizationOverrides = useLocalizationStore((s) => s.overrides);
   const jobsTitle = resolveLabel("page.jobs.title", localizationOverrides);
   const { columns, setColumns } = useJobsColumnsConfig();
@@ -455,6 +463,28 @@ export default function Jobs() {
     [searchedJobs, pinnedIds]
   );
 
+  const totalJobPages = useMemo(
+    () => Math.max(1, Math.ceil(visibleJobs.length / jobsPageSize)),
+    [visibleJobs.length, jobsPageSize]
+  );
+
+  const currentJobPage = Math.min(jobsCurrentPage, totalJobPages);
+
+  const paginatedJobs = useMemo(() => {
+    const start = (currentJobPage - 1) * jobsPageSize;
+    return visibleJobs.slice(start, start + jobsPageSize);
+  }, [visibleJobs, currentJobPage, jobsPageSize]);
+
+  const jobsFrom = visibleJobs.length
+    ? (currentJobPage - 1) * jobsPageSize + 1
+    : 0;
+  const jobsTo = visibleJobs.length
+    ? Math.min(visibleJobs.length, currentJobPage * jobsPageSize)
+    : 0;
+
+  const canGoToPreviousJobsPage = currentJobPage > 1;
+  const canGoToNextJobsPage = currentJobPage < totalJobPages;
+
   const visibleIds = useMemo(
     () => new Set(visibleJobs.map((row) => row.id)),
     [visibleJobs]
@@ -466,15 +496,27 @@ export default function Jobs() {
   );
 
   const allSelected =
-    visibleJobs.length > 0 &&
-    visibleJobs.every((job) => selectedIds.has(job.id));
+    paginatedJobs.length > 0 &&
+    paginatedJobs.every((job) => selectedIds.has(job.id));
 
   const toggleSelectAll = () => {
-    if (visibleJobs.length === 0) return;
+    if (paginatedJobs.length === 0) return;
     if (allSelected) {
-      setSelectedIds(new Set());
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        paginatedJobs.forEach((job) => {
+          next.delete(job.id);
+        });
+        return next;
+      });
     } else {
-      setSelectedIds(new Set(visibleJobs.map((job) => job.id)));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        paginatedJobs.forEach((job) => {
+          next.add(job.id);
+        });
+        return next;
+      });
     }
   };
 
@@ -590,6 +632,7 @@ export default function Jobs() {
     setOpenViewMenuId(null);
     setCurrentFilterState(null);
     setFilterResetKey((prev) => prev + 1);
+    resetJobsPagination();
   };
 
   const handleViewSelect = (view: SavedView) => {
@@ -638,7 +681,7 @@ export default function Jobs() {
     event.preventDefault();
   };
 
-  const handleTableMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  const handleTableMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     const container = tableScrollRef.current;
     if (!container || event.button !== 0) return;
     const target = event.target as HTMLElement;
@@ -650,7 +693,7 @@ export default function Jobs() {
     tableScrollLeftRef.current = container.scrollLeft;
   };
 
-  const handleTableMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+  const handleTableMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const container = tableScrollRef.current;
     if (!container || !isTableDraggingRef.current) return;
     const delta = event.clientX - tableStartXRef.current;
@@ -786,7 +829,7 @@ export default function Jobs() {
 
   const jobCards = useMemo<JobCardData[]>(
     () =>
-      visibleJobs.map((job) => ({
+      paginatedJobs.map((job) => ({
         title: job.jobName,
         description: job.campaignId,
         meta: job.jobNumber,
@@ -795,12 +838,12 @@ export default function Jobs() {
         tag: job.tag ?? undefined,
         tagTone: job.tag ? TAG_TONE_MAP[job.tag] : undefined,
       })),
-    [visibleJobs]
+    [paginatedJobs]
   );
 
   useEffect(() => {
     if (!isFilterOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
         filterPanelRef.current &&
         !filterPanelRef.current.contains(event.target as Node)
@@ -814,7 +857,7 @@ export default function Jobs() {
 
   useEffect(() => {
     if (!openViewMenuId) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
         viewMenuRef.current &&
         !viewMenuRef.current.contains(event.target as Node)
@@ -828,7 +871,7 @@ export default function Jobs() {
 
   useEffect(() => {
     if (!isColumnsOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
         columnsPanelRef.current &&
         !columnsPanelRef.current.contains(event.target as Node)
@@ -861,6 +904,12 @@ export default function Jobs() {
       setColumnsDraft(columns);
     }
   }, [columns, columnsDraft.length]);
+
+  useEffect(() => {
+    if (jobsCurrentPage > totalJobPages) {
+      setJobsCurrentPage(totalJobPages);
+    }
+  }, [jobsCurrentPage, totalJobPages, setJobsCurrentPage]);
 
   return (
     <>
@@ -1054,7 +1103,7 @@ export default function Jobs() {
               className="overflow-x-auto custom-scrollbar cursor-grab active:cursor-grabbing"
             >
               <JobsTable
-                jobs={visibleJobs}
+                jobs={paginatedJobs}
                 selectedIds={selectedIds}
                 onToggleSelectAll={toggleSelectAll}
                 onToggleSelect={toggleSelect}
@@ -1071,6 +1120,22 @@ export default function Jobs() {
               No jobs match the current filters.
             </div>
           )}
+
+          {visibleJobs.length > 0 ? (
+            <PaginationControls
+              total={visibleJobs.length}
+              from={jobsFrom}
+              to={jobsTo}
+              label="results"
+              canGoPrevious={canGoToPreviousJobsPage}
+              canGoNext={canGoToNextJobsPage}
+              onPrevious={goToPreviousJobsPage}
+              onNext={goToNextJobsPage}
+              pageSize={jobsPageSize}
+              pageSizeOptions={[5, 10, 20]}
+              onPageSizeChange={setJobsPageSize}
+            />
+          ) : null}
         </div>
 
         {viewMode === "list" && archivedJobs.length > 0 ? (

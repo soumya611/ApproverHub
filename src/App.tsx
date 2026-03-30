@@ -17,6 +17,12 @@ import JobInformationSettings from "./pages/JobInformationSettings";
 import JobInformationEditor from "./pages/JobInformationEditor";
 import JobInformationBranching from "./pages/JobInformationBranching";
 import CampaignSetting from "./pages/CampaignSetting";
+import Profile from "./pages/Profile";
+import ProfileWorkSchedule from "./pages/ProfileWorkSchedule";
+import ProfileNotifications from "./pages/ProfileNotifications";
+import Settings from "./pages/Settings";
+import SettingsUsers from "./pages/SettingsUsers";
+import SettingsUserDetail from "./pages/SettingsUserDetail";
 
 export default function App() {
   return (
@@ -39,6 +45,12 @@ export default function App() {
               <Route path="/job-tracker" element={<JobTracker />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/campaign-setting" element={<CampaignSetting />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/people/users" element={<SettingsUsers />} />
+              <Route path="/settings/people/users/:userId" element={<SettingsUserDetail />} />
+              <Route path="/profile/work-schedule" element={<ProfileWorkSchedule />} />
+              <Route path="/profile/notifications" element={<ProfileNotifications />} />
               <Route
                 path="/settings/jobs/job-information"
                 element={<JobInformationSettings />}

@@ -1,8 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
 import { getStoredUserIdentity } from "../../utils/userIdentity";
 
 interface UserAvatarProps {
   size?: "small" | "medium" | "large";
   className?: string;
+  name?: string;
+  avatarUrl?: string;
 }
 
 const sizeClasses = {
@@ -11,43 +14,64 @@ const sizeClasses = {
   large: "h-20 w-20 text-lg",
 };
 
-export default function UserAvatar({ size = "medium", className = "" }: UserAvatarProps) {
+const getInitials = (label: string): string => {
+  const parts = label.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
+const getAvatarColor = (seed: string): string => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 50%)`;
+};
+
+export default function UserAvatar({
+  size = "medium",
+  className = "",
+  name,
+  avatarUrl,
+}: UserAvatarProps) {
   const userData = getStoredUserIdentity();
-  const name = userData?.name || "User";
+  const resolvedName = name || userData?.name || "User";
+  const resolvedAvatarUrl = avatarUrl || userData?.avatarUrl || "";
+  const [hasImageError, setHasImageError] = useState(false);
 
-  // Get initials from name (first letter of first word and first letter of last word)
-  const getInitials = (name: string): string => {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) {
-      return parts[0].charAt(0).toUpperCase();
-    }
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-  };
+  useEffect(() => {
+    setHasImageError(false);
+  }, [resolvedAvatarUrl]);
 
-  const initials = name ? getInitials(name) : "U";
-
-  // Generate a color based on the user's name/email for consistent coloring
-  const getAvatarColor = (str: string): string => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const hue = hash % 360;
-    return `hsl(${hue}, 65%, 50%)`;
-  };
-
-  const bgColor = userData?.email 
-    ? getAvatarColor(userData.email)
-    : "hsl(200, 65%, 50%)";
+  const initials = useMemo(
+    () => (resolvedName ? getInitials(resolvedName) : "U"),
+    [resolvedName]
+  );
+  const bgColor = useMemo(
+    () => getAvatarColor(userData?.email || resolvedName),
+    [userData?.email, resolvedName]
+  );
+  const showFallback = !resolvedAvatarUrl || hasImageError;
 
   return (
     <div
       className={`${sizeClasses[size]} ${className} rounded-full flex items-center justify-center font-semibold text-white shadow-sm`}
-      style={{ backgroundColor: bgColor }}
-      title={name}
+      style={showFallback ? { backgroundColor: bgColor } : undefined}
+      title={resolvedName}
     >
-      {initials}
+      {showFallback ? (
+        initials
+      ) : (
+        <img
+          src={resolvedAvatarUrl}
+          alt={resolvedName}
+          className="h-full w-full rounded-full object-cover"
+          onError={() => setHasImageError(true)}
+        />
+      )}
     </div>
   );
 }
-

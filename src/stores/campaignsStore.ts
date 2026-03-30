@@ -3,6 +3,11 @@ import type { CampaignMember, CampaignRowData } from "../data/campaigns";
 import { CAMPAIGN_DATA } from "../data/campaigns";
 import type { WorkflowMember, WorkflowStage } from "../types/workflow.types";
 
+interface CampaignsPaginationState {
+  currentPage: number;
+  pageSize: number;
+}
+
 export type PinnedMember = CampaignMember;
 
 export type PinnedCampaign = {
@@ -20,16 +25,46 @@ interface CampaignsState {
   campaigns: CampaignRowData[];
   archived: CampaignRowData[];
   pinned: PinnedCampaign[];
+  pagination: CampaignsPaginationState;
   addCampaign: (campaign: CampaignRowData) => void;
   updateCampaign: (id: string, updates: Partial<CampaignRowData>) => void;
   duplicateCampaigns: (ids: string[]) => void;
   archiveCampaigns: (ids: string[]) => void;
   pinCampaigns: (ids: string[]) => void;
   unpinCampaign: (id: string) => void;
+  goToNextPage: () => void;
+  goToPreviousPage: () => void;
+  setCurrentPage: (page: number) => void;
+  setPageSize: (pageSize: number) => void;
+  resetPagination: () => void;
   clearAll: () => void;
 }
 
 const STORAGE_KEY = "campaigns_store_v1";
+const DEFAULT_PAGE_SIZE = 50;
+
+const normalizePagination = (
+  pagination?: Partial<CampaignsPaginationState>
+): CampaignsPaginationState => {
+  const normalizedPageSize =
+    pagination?.pageSize && pagination.pageSize > 0
+      ? Math.floor(pagination.pageSize)
+      : DEFAULT_PAGE_SIZE;
+  const normalizedCurrentPage =
+    pagination?.currentPage && pagination.currentPage > 0
+      ? Math.floor(pagination.currentPage)
+      : 1;
+
+  return {
+    currentPage: normalizedCurrentPage,
+    pageSize: normalizedPageSize,
+  };
+};
+
+const clampPage = (page: number, totalItems: number, pageSize: number) => {
+  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, pageSize)));
+  return Math.min(Math.max(1, page), totalPages);
+};
 
 const readStoredState = () => {
   if (typeof window === "undefined") return null;
@@ -40,9 +75,13 @@ const readStoredState = () => {
       campaigns: CampaignRowData[];
       archived: CampaignRowData[];
       pinned: PinnedCampaign[];
+      pagination?: Partial<CampaignsPaginationState>;
     };
     if (!parsed || !Array.isArray(parsed.campaigns)) return null;
-    return parsed;
+    return {
+      ...parsed,
+      pagination: normalizePagination(parsed.pagination),
+    };
   } catch {
     return null;
   }
@@ -52,6 +91,7 @@ const persistState = (state: {
   campaigns: CampaignRowData[];
   archived: CampaignRowData[];
   pinned: PinnedCampaign[];
+  pagination: CampaignsPaginationState;
 }) => {
   if (typeof window === "undefined") return;
   try {
@@ -194,16 +234,18 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
     stored?.pinned ?? [],
     initialCampaigns
   );
+  const initialPagination = normalizePagination(stored?.pagination);
 
   const persist = () => {
-    const { campaigns, archived, pinned } = get();
-    persistState({ campaigns, archived, pinned });
+    const { campaigns, archived, pinned, pagination } = get();
+    persistState({ campaigns, archived, pinned, pagination });
   };
 
   return {
     campaigns: initialCampaigns,
     archived: initialArchived,
     pinned: initialPinned,
+    pagination: initialPagination,
     addCampaign: (campaign) => {
       set((state) => ({
         campaigns: [campaign, ...state.campaigns],
@@ -250,7 +292,20 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
           ),
         ];
         const pinned = state.pinned.filter((item) => !ids.includes(item.id));
-        return { campaigns: remaining, archived, pinned };
+        const currentPage = clampPage(
+          state.pagination.currentPage,
+          remaining.length,
+          state.pagination.pageSize
+        );
+        return {
+          campaigns: remaining,
+          archived,
+          pinned,
+          pagination: {
+            ...state.pagination,
+            currentPage,
+          },
+        };
       });
       persist();
     },
@@ -274,13 +329,69 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
       }));
       persist();
     },
+    goToNextPage: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: state.pagination.currentPage + 1,
+        },
+      }));
+      persist();
+    },
+    goToPreviousPage: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: Math.max(1, state.pagination.currentPage - 1),
+        },
+      }));
+      persist();
+    },
+    setCurrentPage: (page) => {
+      const normalizedPage =
+        Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: normalizedPage,
+        },
+      }));
+      persist();
+    },
+    setPageSize: (pageSize) => {
+      const normalizedPageSize =
+        Number.isFinite(pageSize) && pageSize > 0
+          ? Math.floor(pageSize)
+          : DEFAULT_PAGE_SIZE;
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          pageSize: normalizedPageSize,
+          currentPage: 1,
+        },
+      }));
+      persist();
+    },
+    resetPagination: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: 1,
+        },
+      }));
+      persist();
+    },
     clearAll: () => {
-      set({ campaigns: CAMPAIGN_DATA, archived: [], pinned: [] });
-      persistState({
+      set((state) => ({
         campaigns: CAMPAIGN_DATA,
         archived: [],
         pinned: [],
-      });
+        pagination: {
+          ...state.pagination,
+          currentPage: 1,
+        },
+      }));
+      persist();
     },
   };
 });
