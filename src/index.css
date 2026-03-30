@@ -1360,6 +1360,28 @@ video::cue {
   outline-offset: 2px;
 }
 
+/* Global icon controls */
+.app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: currentColor;
+}
+
+.app-icon > svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}
+
+.app-icon--force,
+.app-icon--force * {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
 
 .frame-gallery {
   bottom: 22px; /* sits just above normal footer */

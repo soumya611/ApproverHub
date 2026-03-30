@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import PageContentContainer from "../components/layout/PageContentContainer";
 import SearchInput from "../components/ui/search-input/SearchInput";
+import UnderlineTabs from "../components/ui/tabs/UnderlineTabs";
 import PopupModal from "../components/ui/popup-modal/PopupModal";
 import FileDropzone from "../components/ui/file-dropzone/FileDropzone";
 import Button from "../components/ui/button/Button";
@@ -573,22 +574,7 @@ export default function JobDetails() {
 
           <div className="mt-5 rounded-2xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-5 pt-2">
-              <div className="flex flex-wrap items-end gap-6">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`-mb-px border-b-3 border-primary  px-1 pb-3 pt-3 text-sm transition ${
-                      activeTab === tab.id
-                        ? "border-[#007B8C] font-bold text-primary"
-                        : "border-transparent font-medium text-gray-400 hover:text-gray-700"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+              <UnderlineTabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
               <div className="mb-2 w-full max-w-[240px] rounded-full border border-gray-200 px-3 py-0.5">
                 <SearchInput
                   placeholder="Search job details"

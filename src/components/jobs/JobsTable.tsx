@@ -33,7 +33,8 @@ export default function JobsTable({
   showSelection = true,
   showEdit = true,
 }: JobsTableProps) {
-  const allSelected = jobs.length > 0 && selectedIds.size === jobs.length;
+  const allSelected =
+    jobs.length > 0 && jobs.every((job) => selectedIds.has(job.id));
   const visibleColumnIds = useMemo(
     () => columns.map((column) => column.id as JobColumnId),
     [columns]

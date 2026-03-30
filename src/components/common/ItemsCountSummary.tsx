@@ -21,7 +21,7 @@ export default function ItemsCountSummary({
 
   return (
     <span className={`text-xs text-gray-500 ${className}`}>
-      {boundedFrom}-{boundedTo} of {safeTotal} {label} showing
+      {boundedFrom} to {boundedTo} of {safeTotal} {label} showing
     </span>
   );
 }

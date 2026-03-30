@@ -1,43 +1,123 @@
 import { create } from "zustand";
-import type { JobTrackerItem } from "../components/workflow/types";
-import { JOB_TRACKER_ITEMS } from "../components/workflow/data/jobTrackerMockData";
+
+interface JobTrackerPaginationState {
+  currentPage: number;
+  pageSize: number;
+}
 
 interface JobTrackerState {
-  items: JobTrackerItem[];
-  addItem: (item: Omit<JobTrackerItem, "id">) => JobTrackerItem;
-  removeItem: (id: string) => void;
-  updateItem: (id: string, updates: Partial<Omit<JobTrackerItem, "id">>) => void;
+  pagination: JobTrackerPaginationState;
+  goToNextPage: () => void;
+  goToPreviousPage: () => void;
+  setCurrentPage: (page: number) => void;
+  setPageSize: (pageSize: number) => void;
+  resetPagination: () => void;
 }
 
-function generateTrackerId(): string {
-  return `jt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
+const STORAGE_KEY = "job_tracker_store_v1";
+const DEFAULT_PAGE_SIZE = 50;
 
-export const useJobTrackerStore = create<JobTrackerState>((set) => ({
-  items: JOB_TRACKER_ITEMS,
+const normalizePagination = (
+  pagination?: Partial<JobTrackerPaginationState>
+): JobTrackerPaginationState => {
+  const normalizedPageSize =
+    pagination?.pageSize && pagination.pageSize > 0
+      ? Math.floor(pagination.pageSize)
+      : DEFAULT_PAGE_SIZE;
+  const normalizedCurrentPage =
+    pagination?.currentPage && pagination.currentPage > 0
+      ? Math.floor(pagination.currentPage)
+      : 1;
 
-  addItem: (item) => {
-    const newItem: JobTrackerItem = {
-      id: generateTrackerId(),
-      ...item,
+  return {
+    currentPage: normalizedCurrentPage,
+    pageSize: normalizedPageSize,
+  };
+};
+
+const readStoredPagination = (): JobTrackerPaginationState | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      pagination?: Partial<JobTrackerPaginationState>;
     };
+    return normalizePagination(parsed.pagination);
+  } catch {
+    return null;
+  }
+};
 
-    set((state) => ({
-      items: [...state.items, newItem],
-    }));
+const persistPagination = (pagination: JobTrackerPaginationState) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ pagination }));
+  } catch {
+    // Ignore persistence errors.
+  }
+};
 
-    return newItem;
-  },
+export const useJobTrackerStore = create<JobTrackerState>((set, get) => {
+  const initialPagination = readStoredPagination() ?? normalizePagination();
 
-  removeItem: (id) => {
-    set((state) => ({
-      items: state.items.filter((item) => item.id !== id),
-    }));
-  },
+  const persist = () => {
+    persistPagination(get().pagination);
+  };
 
-  updateItem: (id, updates) => {
-    set((state) => ({
-      items: state.items.map((item) => (item.id === id ? { ...item, ...updates } : item)),
-    }));
-  },
-}));
+  return {
+    pagination: initialPagination,
+    goToNextPage: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: state.pagination.currentPage + 1,
+        },
+      }));
+      persist();
+    },
+    goToPreviousPage: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: Math.max(1, state.pagination.currentPage - 1),
+        },
+      }));
+      persist();
+    },
+    setCurrentPage: (page) => {
+      const normalizedPage =
+        Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: normalizedPage,
+        },
+      }));
+      persist();
+    },
+    setPageSize: (pageSize) => {
+      const normalizedPageSize =
+        Number.isFinite(pageSize) && pageSize > 0
+          ? Math.floor(pageSize)
+          : DEFAULT_PAGE_SIZE;
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          pageSize: normalizedPageSize,
+          currentPage: 1,
+        },
+      }));
+      persist();
+    },
+    resetPagination: () => {
+      set((state) => ({
+        pagination: {
+          ...state.pagination,
+          currentPage: 1,
+        },
+      }));
+      persist();
+    },
+  };
+});

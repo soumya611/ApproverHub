@@ -1,3 +1,4 @@
+import type { ComponentType, SVGProps } from "react";
 import { ReactComponent as PlusIcon } from "./plus.svg?react";
 import { ReactComponent as CloseIcon } from "./close.svg?react";
 import { ReactComponent as BoxIcon } from "./box.svg?react";
@@ -147,6 +148,7 @@ import { ReactComponent as Symbols_lock_Icon } from "./material-symbols_lock-out
 import { ReactComponent as CalculationIcon } from "./Frame 1171275796.svg?react";
 import { ReactComponent as DeadlineIcon } from "./akar-icons_stop.svg?react";
 import { ReactComponent as StartIcon } from "./qlementine-icons_gamepad-start-16.svg?react";
+import { ReactComponent as LogoutIcon } from "./solar_logout-outline.svg?react";
 
 
 export {
@@ -297,4 +299,7 @@ export {
   CalculationIcon,
   DeadlineIcon,
   StartIcon,
+  LogoutIcon,
 };
+
+export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;

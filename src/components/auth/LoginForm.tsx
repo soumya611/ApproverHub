@@ -1,15 +1,42 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EyeCloseIcon, EyeIcon, LockIcon, MailIcon } from "../../icons";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { useNavigate } from "react-router";
+import { deriveDisplayNameFromEmail, saveUserIdentity } from "../../utils/userIdentity";
+import { type UnifiedUser, useUsersStore } from "../../stores/usersStore";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const findUserByEmail = useUsersStore((state) => state.findUserByEmail);
+  const getDefaultUser = useUsersStore((state) => state.getDefaultUser);
+  const upsertUser = useUsersStore((state) => state.upsertUser);
+
+  const matchedUser = useMemo(() => findUserByEmail(email), [email, findUserByEmail]);
+
+  const buildDefaultUserFromEmail = (userEmail: string): UnifiedUser => {
+    const safeName = deriveDisplayNameFromEmail(userEmail) || "User";
+    return {
+      id: "ID1000000",
+      email: userEmail,
+      name: safeName,
+      role: "User",
+      appRole: "user",
+      company: "",
+      isActive: true,
+      inviteState: "none",
+      avatarUrl: "/images/user/user-01.jpg",
+      phone: "",
+      source: "session",
+      bio: "",
+    };
+  };
 
   return (
     <div className="flex w-full flex-col">
@@ -39,6 +66,31 @@ export default function LoginForm() {
         className="flex flex-col gap-5"
         onSubmit={(e) => {
           e.preventDefault();
+          const defaultUser = getDefaultUser();
+          const normalizedEmail = email.trim().toLowerCase() || defaultUser.email;
+          const selectedUser = findUserByEmail(normalizedEmail);
+          const finalUser = selectedUser ?? buildDefaultUserFromEmail(normalizedEmail);
+
+          if (!selectedUser) {
+            upsertUser(finalUser);
+          }
+
+          saveUserIdentity(
+            {
+              id: finalUser.id,
+              email: finalUser.email,
+              name: finalUser.name,
+              role: finalUser.appRole ?? "user",
+              accountStatus: finalUser.isActive ? "active" : "inactive",
+              avatarUrl: finalUser.avatarUrl,
+              phone: finalUser.phone,
+              title: finalUser.title,
+              team: finalUser.team,
+              workSchedule: finalUser.workSchedule,
+              bio: finalUser.bio,
+            },
+            rememberMe
+          );
           navigate("/home");
         }}
       >
@@ -47,10 +99,17 @@ export default function LoginForm() {
           <MailIcon className="absolute left-3 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <Input
             type="email"
-            placeholder="john.smith@perivan.com"
+            placeholder="manager@approverhub.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             className="w-full border border-gray-300 bg-white pl-10 pr-4 py-3 rounded-xl text-gray-800 placeholder:text-gray-400 focus:border-[var(--color-primary-500)] focus:ring-2 focus:ring-[var(--color-primary-500)]/20 focus:outline-none dark:border-gray-600 dark:bg-gray-900 dark:text-white"
           />
         </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {matchedUser
+            ? `Role login: ${matchedUser.name} (${matchedUser.role})`
+            : "Unlisted email signs in as normal User role."}
+        </p>
 
         {/* Password */}
         <div className="relative">
@@ -58,6 +117,8 @@ export default function LoginForm() {
           <Input
             type={showPassword ? "text" : "password"}
             placeholder="At least 8 characters"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
             className="w-full border border-gray-300 bg-white pl-10 pr-11 py-3 rounded-xl text-gray-800 placeholder:text-gray-400 focus:border-[var(--color-primary-500)] focus:ring-2 focus:ring-[var(--color-primary-500)]/20 focus:outline-none dark:border-gray-600 dark:bg-gray-900 dark:text-white"
           />
           <button
