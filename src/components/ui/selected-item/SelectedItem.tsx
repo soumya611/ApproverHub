@@ -15,6 +15,7 @@ interface SelectedItemProps {
   onClose?: () => void;
   className?: string;
   actionButtonClassName?: string;
+  selectedCountClassName?: string;
 }
 
 const defaultActions: SelectedItemAction[] = [
@@ -31,13 +32,14 @@ export default function SelectedItem({
   onClose,
   className = "",
   actionButtonClassName = "",
+  selectedCountClassName = "text-[var(--color-secondary-500)]",
 }: SelectedItemProps) {
   return (
     <div
       className={`inline-flex w-fit max-w-full items-center gap-4 px-4 py-3 shadow-sm ${className}`}
     >
       <div className="flex flex-wrap items-center gap-4 text-sm">
-        <span className="font-semibold text-[var(--color-secondary-500)]">
+        <span className={`font-semibold ${selectedCountClassName}`}>
           {selectedCount} Selected
         </span>
         {actions.map((action, index) => (

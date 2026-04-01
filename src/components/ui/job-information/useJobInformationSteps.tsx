@@ -48,32 +48,71 @@ export function useJobInformationSteps(
   const [answers, setAnswers] = useState<JobInfoAnswers>(
     getDefaultAnswers(resolvedQuestions, initialAnswers)
   );
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndexState] = useState(0);
+  const [stepHistory, setStepHistory] = useState<number[]>([]);
 
   useEffect(() => {
     setAnswers(getDefaultAnswers(resolvedQuestions, initialAnswers));
-    setStepIndex(0);
+    setStepIndexState(0);
+    setStepHistory([]);
   }, [resolvedQuestions, initialAnswers]);
+
+  const resolveNextIndex = (
+    questionIndex: number,
+    nextQuestionId?: string
+  ) => {
+    if (nextQuestionId) {
+      const linkedIndex = resolvedQuestions.findIndex(
+        (item) => item.id === nextQuestionId
+      );
+      if (linkedIndex >= 0) return linkedIndex;
+    }
+    if (questionIndex < resolvedQuestions.length - 1) {
+      return questionIndex + 1;
+    }
+    return questionIndex;
+  };
+
+  const goToStep = (nextIndex: number) => {
+    if (nextIndex === stepIndex) return;
+    setStepHistory((prev) => [...prev, stepIndex]);
+    setStepIndexState(nextIndex);
+  };
+
+  const goBack = () => {
+    if (!stepHistory.length) {
+      setStepIndexState((current) => Math.max(current - 1, 0));
+      return;
+    }
+    const previousIndex = stepHistory[stepHistory.length - 1];
+    setStepHistory((prev) => prev.slice(0, -1));
+    setStepIndexState(previousIndex);
+  };
+
+  const setStepIndex = (nextIndex: number) => {
+    if (nextIndex === stepIndex) return;
+    if (nextIndex === 0) {
+      setStepHistory([]);
+      setStepIndexState(0);
+      return;
+    }
+    if (nextIndex < stepIndex) {
+      goBack();
+      return;
+    }
+    goToStep(nextIndex);
+  };
 
   const handleChoiceSelect = (questionIndex: number, value: string) => {
     const question = resolvedQuestions[questionIndex];
     if (!question) return;
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
     const selectedOption = question.options.find((opt) => opt.id === value);
-    const resolvedNextId =
-      selectedOption?.nextQuestionId ?? question.fallbackNextQuestionId;
-    if (resolvedNextId) {
-      const nextIndex = resolvedQuestions.findIndex(
-        (item) => item.id === resolvedNextId
-      );
-      if (nextIndex >= 0) {
-        setStepIndex(nextIndex);
-        return;
-      }
-    }
-    if (questionIndex < resolvedQuestions.length - 1) {
-      setStepIndex(questionIndex + 1);
-    }
+    const nextIndex = resolveNextIndex(
+      questionIndex,
+      selectedOption?.nextQuestionId ?? question.fallbackNextQuestionId
+    );
+    goToStep(nextIndex);
   };
 
   const handleCheckboxToggle = (questionId: string, optionId: string) => {
@@ -85,6 +124,29 @@ export function useJobInformationSteps(
         : [...currentArray, optionId];
       return { ...prev, [questionId]: next };
     });
+  };
+
+  const handleCheckboxContinue = (questionIndex: number) => {
+    const question = resolvedQuestions[questionIndex];
+    if (!question) return;
+
+    const selectedValue = answers[question.id];
+    const selectedArray = Array.isArray(selectedValue) ? selectedValue : [];
+    if (question.required && selectedArray.length === 0) {
+      return;
+    }
+
+    const selectedOptions = question.options.filter((option) =>
+      selectedArray.includes(option.id)
+    );
+    const firstLinkedOption = selectedOptions.find(
+      (option) => Boolean(option.nextQuestionId)
+    );
+    const nextIndex = resolveNextIndex(
+      questionIndex,
+      firstLinkedOption?.nextQuestionId ?? question.fallbackNextQuestionId
+    );
+    goToStep(nextIndex);
   };
 
   const steps = useMemo<StepDropdownStep[]>(
@@ -131,6 +193,20 @@ export function useJobInformationSteps(
                     />
                   )
                 )}
+                {isCheckbox ? (
+                  <button
+                    type="button"
+                    onClick={() => handleCheckboxContinue(index)}
+                    disabled={question.required && selectedArray.length === 0}
+                    className={`mt-2 w-fit rounded px-3 py-1.5 text-xs font-semibold ${
+                      question.required && selectedArray.length === 0
+                        ? "cursor-not-allowed bg-gray-200 text-gray-400"
+                        : "bg-[#F25C54] text-white hover:bg-[#E34A41]"
+                    }`}
+                  >
+                    Continue
+                  </button>
+                ) : null}
               </div>
             </div>
           ),

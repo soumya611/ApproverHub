@@ -4,11 +4,30 @@ import { normalizeColumns, type ColumnConfigItem } from "../../../data/columnsCo
 import { useColumnsConfig } from "../../../context/ColumnsConfigContext";
 import Checkbox from "../../form/input/Checkbox";
 
-export default function ColumnsManager() {
-  const [isDisabled, setIsDisabled] = useState(false);
+interface ColumnsManagerProps {
+  disabled?: boolean;
+  defaultNewFieldChecked?: boolean;
+  addFieldInputVisible?: boolean;
+  onAddFieldInputVisibleChange?: (visible: boolean) => void;
+}
+
+export default function ColumnsManager({
+  disabled = false,
+  defaultNewFieldChecked = true,
+  addFieldInputVisible,
+  onAddFieldInputVisibleChange,
+}: ColumnsManagerProps) {
   const [newFieldName, setNewFieldName] = useState("");
-  const [showAddInput, setShowAddInput] = useState(false);
+  const [internalShowAddInput, setInternalShowAddInput] = useState(false);
   const { columns, setColumns } = useColumnsConfig();
+  const showAddInput = addFieldInputVisible ?? internalShowAddInput;
+
+  const setShowAddInput = (visible: boolean) => {
+    if (addFieldInputVisible === undefined) {
+      setInternalShowAddInput(visible);
+    }
+    onAddFieldInputVisibleChange?.(visible);
+  };
 
   const fields = useMemo(() => normalizeColumns(columns), [columns]);
 
@@ -37,22 +56,22 @@ export default function ColumnsManager() {
 
   const handleLabelChange = (id: string, value: string) => {
     setColumns((prev) =>
-      prev.map((field) =>
-        field.id === id ? { ...field, label: value } : field
-      )
+      prev.map((field) => (field.id === id ? { ...field, label: value } : field))
     );
   };
 
   const handleAddField = () => {
     const trimmedName = newFieldName.trim();
     if (!trimmedName) return;
+
     const nextIndex = fields.length + 1;
     const newField: ColumnConfigItem = {
       id: `field-${Date.now()}`,
       label: trimmedName || `New field ${nextIndex}`,
-      checked: true,
+      checked: defaultNewFieldChecked,
       required: false,
     };
+
     setColumns((prev) => normalizeColumns([...prev, newField]));
     setNewFieldName("");
     setShowAddInput(false);
@@ -61,93 +80,92 @@ export default function ColumnsManager() {
   return (
     <section className="bg-white p-5 shadow-sm">
       <div
-        className={`max-w-[460px] rounded-md border-1 border-[#D9D9D9] bg-gray-50/40 p-4 ${isDisabled ? "pointer-events-none opacity-60" : ""
-          }`}
+        className={`max-w-[460px] rounded-md border border-[#D9D9D9] bg-gray-50/40 p-4 ${
+          disabled ? "pointer-events-none opacity-60" : ""
+        }`}
       >
         <div className="space-y-1">
           <p className="text-xs font-semibold text-gray-500">Rows</p>
           <p className="text-xs text-gray-400">
-            Active rows will appear on the campaign dashboard. Required rows
-            cannot be unchecked.
+            Active rows will appear on the campaign dashboard. Required rows cannot be unchecked.
           </p>
         </div>
+
         <div className="mt-4 max-w-[460px] space-y-2">
           {fields.map((field) => (
-            <div
-              key={field.id}
-              className="flex flex-wrap items-center gap-3 bg-white px-3 py-2"
-            >
+            <div key={field.id} className="flex flex-wrap items-center gap-3 bg-white px-3 py-2">
               <Checkbox
                 checked={field.required ? true : field.checked}
-                onChange={(checked) =>
-                  handleToggleEnabled(field.id, checked)
-                }
+                onChange={(checked) => handleToggleEnabled(field.id, checked)}
                 className="!h-4 !w-4"
+                disabled={disabled}
               />
+
               <input
                 type="text"
                 value={field.label}
-                onChange={(event) =>
-                  handleLabelChange(field.id, event.target.value)
-                }
+                onChange={(event) => handleLabelChange(field.id, event.target.value)}
                 className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+                disabled={disabled}
               />
+
               <div className="ml-auto flex items-center gap-2">
                 <ToggleSwitch
                   checked={field.required ?? false}
                   onChange={(checked) => handleToggleRequired(field.id, checked)}
                   size="sm"
+                  disabled={disabled}
                 />
-                <span className="text-[11px] text-gray-500">
-                  Required
-                </span>
+                <span className="text-[11px] text-gray-500">Required</span>
               </div>
-
             </div>
           ))}
-        </div>
-        {showAddInput ? (
-          <div className="mt-2 flex flex-wrap items-center gap-3 bg-white px-3 py-2">
-            {/* Empty checkbox placeholder — keeps input aligned with rows above */}
-            <span className="h-4 w-4 flex-shrink-0" />
 
-            {/* Input — same flex-1 as label inputs above */}
-            <input
-              type="text"
-              placeholder="Enter field name"
-              value={newFieldName}
-              onChange={(event) => setNewFieldName(event.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddField()}
-              className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
-            />
+          {showAddInput ? (
+            <div className="flex flex-wrap items-center gap-3 bg-white px-3 py-2">
+              <span className="h-4 w-4 flex-shrink-0" />
 
-            {/* Add button — same position as toggle+Required above */}
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleAddField}
-                disabled={!newFieldName.trim()}
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-lg font-semibold transition ${newFieldName.trim()
-                    ? "bg-[#FFEAE6] text-[var(--color-secondary-500)]"
-                    : "bg-[#FFEAE6] text-gray-300 cursor-not-allowed"
+              <input
+                type="text"
+                placeholder="Enter field name"
+                value={newFieldName}
+                onChange={(event) => setNewFieldName(event.target.value)}
+                onKeyDown={(event) => event.key === "Enter" && handleAddField()}
+                className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+                disabled={disabled}
+              />
+
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAddField}
+                  disabled={disabled || !newFieldName.trim()}
+                  className={`flex h-7 w-7 items-center justify-center rounded-full text-lg font-semibold transition ${
+                    !disabled && newFieldName.trim()
+                      ? "bg-[#FFEAE6] text-[var(--color-secondary-500)]"
+                      : "cursor-not-allowed bg-[#FFEAE6] text-gray-300"
                   }`}
-                aria-label="Add field"
-              >
-                +
-              </button>
-              <span className="text-[11px] text-transparent select-none">Required</span>
+                  aria-label="Add field"
+                >
+                  +
+                </button>
+                <span className="select-none text-[11px] text-transparent">Required</span>
+              </div>
             </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowAddInput(true)}
-            className="mt-4 text-xs font-semibold text-[var(--color-secondary-500)]"
-          >
-            + Add field
-          </button>
-        )}
+          ) : null}
+        </div>
       </div>
+
+      {!showAddInput ? (
+        <button
+          type="button"
+          onClick={() => setShowAddInput(true)}
+          disabled={disabled}
+          className="mt-3 text-xs font-semibold text-[var(--color-secondary-500)] disabled:cursor-not-allowed disabled:text-gray-300"
+        >
+          + Add field
+        </button>
+      ) : null}
     </section>
   );
 }

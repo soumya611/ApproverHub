@@ -36,10 +36,10 @@ interface AdminSettingItem {
   onClickPath?: string;
 }
 
-const SETTINGS_TABS: Array<{ id: AdminSettingsTab; label: string }> = [
+const SETTINGS_TABS: Array<{ id: AdminSettingsTab; label: string; onClickPath?: string }> = [
   { id: "general", label: "General" },
   { id: "people", label: "People" },
-  { id: "campaigns", label: "Campaigns" },
+  { id: "campaigns", label: "Campaigns", onClickPath: "/campaign-setting" },
   { id: "jobs", label: "Jobs" },
   { id: "workflow", label: "Workflow" },
   { id: "checklist", label: "Checklist" },
@@ -103,10 +103,50 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     tab: "campaigns",
   },
   {
+    id: "email",
+    icon: JobIcon,
+    title: "Email",
+    description: "customize email notification and communication templates sent to users.",
+    tab: "jobs",
+    onClickPath: "/settings/jobs/job-information",
+  },
+   {
+    id: "email_templates",
+    icon: JobIcon,
+    title: "Email Templates",
+    description: "Create and manage reusable templates for common emails to ensure consistent messaging.",
+    tab: "jobs",
+    onClickPath: "/settings/jobs/job-information",
+  },
+   {
+    id: "expiry_management",
+    icon: JobIcon,
+    title: "Expiry Management",
+    description: "Set rules for job expiration dates and automatic notifications to keep projects on track.",
+    tab: "jobs",
+    onClickPath: "/settings/jobs/job-information",
+  },
+   {
+    id: "archiving",
+    icon: JobIcon,
+    title: "Archiving",
+    description: "Define rules for when and how jobs are automatically or manually archived",
+    tab: "jobs",
+    onClickPath: "/settings/jobs/job-information",
+  },
+   {
     id: "job_information",
     icon: JobIcon,
     title: "Job Information",
-    description: "Manage job templates, fields, and branching logic.",
+    description: "Define metadata questions that can later be linked to job creation",
+    tab: "jobs",
+    onClickPath: "/settings/jobs/job-information",
+  },
+   {
+    id: "comments",
+    icon: JobIcon,
+    title: "Comments",
+    description: "configure how tags can be labelled",
     tab: "jobs",
     onClickPath: "/settings/jobs/job-information",
   },
@@ -137,6 +177,14 @@ export default function AdminSettingsView() {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
   const [activeTab, setActiveTab] = useState<AdminSettingsTab>("general");
+
+  const handleTabChange = (nextTab: AdminSettingsTab) => {
+    setActiveTab(nextTab);
+    const tab = SETTINGS_TABS.find((item) => item.id === nextTab);
+    if (tab?.onClickPath) {
+      navigate(tab.onClickPath);
+    }
+  };
 
   const filteredItems = useMemo(() => {
     const term = searchValue.trim().toLowerCase();
@@ -170,7 +218,7 @@ export default function AdminSettingsView() {
           <UnderlineTabs
             tabs={SETTINGS_TABS}
             activeTab={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
             className="flex flex-wrap items-end gap-8"
             tabClassName="-mb-px border-b-2 px-1 pb-3 pt-3 text-base transition"
             activeClassName="border-[#007B8C] font-semibold text-[#007B8C]"

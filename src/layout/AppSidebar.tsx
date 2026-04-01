@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 import { HomeIcon, JobIcon, GroupIcon, ListIcon, AnalyticsIcon, ChevronDownIcon } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { resolveLabel, type LocalizationKey } from "../data/localization";
 import { useLocalizationStore } from "../stores/localizationStore";
+import { useAppSettingsStore } from "../stores/appSettingsStore";
 
 type NavItem = {
   labelKey: LocalizationKey;
@@ -46,6 +47,7 @@ const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered } = useSidebar();
   const location = useLocation();
   const localizationOverrides = useLocalizationStore((s) => s.overrides);
+  const isCampaignsDisabled = useAppSettingsStore((state) => state.isCampaignsDisabled);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -55,6 +57,11 @@ const AppSidebar: React.FC = () => {
     {}
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const visibleNavItems = useMemo(
+    () =>
+      navItems.filter((item) => (item.path === "/campaigns" ? !isCampaignsDisabled : true)),
+    [isCampaignsDisabled]
+  );
 
   const isActive = useCallback(
     (path: string) =>
@@ -74,7 +81,6 @@ const AppSidebar: React.FC = () => {
       }
     }
   }, [openSubmenu]);
-  const { toggleSidebar, toggleMobileSidebar } = useSidebar();
 
   const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
     setOpenSubmenu((prevOpenSubmenu) => {
@@ -229,7 +235,7 @@ const AppSidebar: React.FC = () => {
       <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin no-scrollbar scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400" onWheel={(e) => e.stopPropagation()}>
         <nav className="mb-6 px-3 pb-6">
           <div className="flex flex-col gap-4">
-            <div>{renderMenuItems(navItems, "main")}</div>
+            <div>{renderMenuItems(visibleNavItems, "main")}</div>
 
           </div>
         </nav>

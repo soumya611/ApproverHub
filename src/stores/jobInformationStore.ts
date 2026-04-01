@@ -15,7 +15,7 @@ interface JobInformationState {
   duplicateTemplate: (id: string) => void;
 }
 
-const STORAGE_KEY = "job_information_store_v1";
+export const JOB_INFORMATION_STORAGE_KEY = "job_information_store_v1";
 
 const createOption = (label: string): JobInfoOption => ({
   id: `opt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -62,7 +62,7 @@ const DEFAULT_TEMPLATES: JobInfoTemplate[] = [
 const readStoredState = () => {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(JOB_INFORMATION_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as {
       enabled: boolean;
@@ -78,7 +78,7 @@ const readStoredState = () => {
 const persistState = (state: { enabled: boolean; templates: JobInfoTemplate[] }) => {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(JOB_INFORMATION_STORAGE_KEY, JSON.stringify(state));
   } catch {
     // Ignore persistence errors.
   }
@@ -116,12 +116,20 @@ const cloneQuestions = (questions: JobInfoQuestion[]): JobInfoQuestion[] => {
   }));
 };
 
-const bumpVersion = (version: string) => {
-  const match = version.match(/V(\d+)/i);
-  if (!match) return `${version} Copy`;
-  const current = Number(match[1]);
-  if (!Number.isFinite(current)) return `${version} Copy`;
-  return `V${current + 1}`;
+const getVersionNumber = (value: string) => {
+  const match = value.match(/V(\d+)/i);
+  if (!match) return null;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getNextVersion = (templates: JobInfoTemplate[]) => {
+  const highestVersion = templates.reduce((maxVersion, template) => {
+    const versionNumber = getVersionNumber(template.version);
+    if (versionNumber === null) return maxVersion;
+    return Math.max(maxVersion, versionNumber);
+  }, 0);
+  return `V${highestVersion + 1}`;
 };
 
 export const useJobInformationStore = create<JobInformationState>((set, get) => {
@@ -129,43 +137,43 @@ export const useJobInformationStore = create<JobInformationState>((set, get) => 
   const initialTemplates = stored?.templates ?? DEFAULT_TEMPLATES;
   const initialEnabled = stored?.enabled ?? true;
 
-  const persist = () => {
-    const { enabled, templates } = get();
-    persistState({ enabled, templates });
-  };
-
   return {
     enabled: initialEnabled,
     templates: initialTemplates,
     setEnabled: (enabled) => {
-      set({ enabled });
-      persist();
+      set((state) => {
+        persistState({ enabled, templates: state.templates });
+        return { enabled };
+      });
     },
     addTemplate: (template) => {
-      set((state) => ({
-        templates: [template, ...state.templates],
-      }));
-      persist();
+      set((state) => {
+        const templates = [template, ...state.templates];
+        persistState({ enabled: state.enabled, templates });
+        return { templates };
+      });
     },
     updateTemplate: (id, updates) => {
-      set((state) => ({
-        templates: state.templates.map((template) =>
+      set((state) => {
+        const templates = state.templates.map((template) =>
           template.id === id ? { ...template, ...updates } : template
-        ),
-      }));
-      persist();
+        );
+        persistState({ enabled: state.enabled, templates });
+        return { templates };
+      });
     },
     setActiveTemplate: (id, active) => {
-      set((state) => ({
-        templates: state.templates.map((template) =>
+      set((state) => {
+        const templates = state.templates.map((template) =>
           template.id === id
             ? { ...template, isActive: active }
             : active
               ? { ...template, isActive: false }
               : template
-        ),
-      }));
-      persist();
+        );
+        persistState({ enabled: state.enabled, templates });
+        return { templates };
+      });
     },
     duplicateTemplate: (id) => {
       const template = get().templates.find((item) => item.id === id);
@@ -173,14 +181,15 @@ export const useJobInformationStore = create<JobInformationState>((set, get) => 
       const duplicated: JobInfoTemplate = {
         ...template,
         id: `job-info-${Date.now()}`,
-        version: bumpVersion(template.version),
+        version: getNextVersion(get().templates),
         isActive: false,
         questions: cloneQuestions(template.questions),
       };
-      set((state) => ({
-        templates: [duplicated, ...state.templates],
-      }));
-      persist();
+      set((state) => {
+        const templates = [duplicated, ...state.templates];
+        persistState({ enabled: state.enabled, templates });
+        return { templates };
+      });
     },
   };
 });

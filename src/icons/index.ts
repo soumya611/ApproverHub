@@ -153,6 +153,7 @@ import { ReactComponent as JobTrackerIcon } from "./job-tracker.svg?react";
 import { ReactComponent as CuBadgeIcon } from "./cu-badge.svg?react";
 import { ReactComponent as AddIcon } from "./add-icon.svg?react";
 import { ReactComponent as CampaignIcon } from "./campaigns.svg?react";
+import { ReactComponent as Export_Icon } from "./export.svg?react";
 
 
 export {
@@ -308,6 +309,7 @@ export {
   CuBadgeIcon,
   AddIcon,
   CampaignIcon,
+  Export_Icon,
 };
 
 export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;

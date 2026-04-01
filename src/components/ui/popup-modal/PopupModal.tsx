@@ -6,7 +6,7 @@ import CloseButton from "../close-button/CloseButton";
 interface PopupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: ReactNode;
   children: ReactNode;
   showCloseButton?: boolean;
   headerRight?: ReactNode;

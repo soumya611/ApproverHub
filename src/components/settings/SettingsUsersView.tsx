@@ -7,7 +7,7 @@ import {
   ChevronLeftIcon,
   CloseIcon,
   EditDetailsIcon,
-  ExportIcon,
+  Export_Icon,
   FilterIcon,
   InfoIcon,
   Search,
@@ -30,6 +30,8 @@ import PopupModal from "../ui/popup-modal/PopupModal";
 import { TableHeaderRow } from "../ui/table";
 import TextInput from "../ui/text-input/TextInput";
 import { JobsFAB } from "../jobs";
+import AppIcon from "../ui/icon/AppIcon";
+import PageHeader from "../ui/page-header/PageHeader";
 
 type SettingsUserRow = UnifiedUser;
 type InviteState = UnifiedUser["inviteState"];
@@ -954,30 +956,18 @@ export default function SettingsUsersView() {
       </p>
 
       <PageContentContainer className="relative min-h-[660px] p-0">
-        <div className="border-b border-gray-200 px-6 py-4">
-          <div className="flex items-start gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/settings")}
-              className="mt-0.5 rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-[#007B8C]"
-              aria-label="Back to settings"
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </button>
-            <div>
-              <h2 className="text-2xl font-semibold text-[#007B8C]">Users</h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Manage individual user profiles, their assignments, roles, and activity status
-                across campaigns and jobs.
-              </p>
-            </div>
-          </div>
-        </div>
+             <PageHeader
+             className="!px-4 py-3"
+                        title="Users"
+                        description=" Manage individual user profiles, their assignments, roles, and activity status
+                across campaigns and jobs."
+                onBackClick={() => navigate("/settings")}
+                    />
 
-        <div className="border-b border-gray-200 px-4 py-3">
+        <div className="px-4 py-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex items-center gap-2">
-              <div className="w-[250px] rounded-lg border border-gray-200 bg-white px-3 py-2 sm:w-[300px]">
+              <div className="w-[250px] rounded-full border border-gray-200 bg-white px-3 py-2 sm:w-[300px]">
                 <SearchInput
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
@@ -1005,7 +995,7 @@ export default function SettingsUsersView() {
                   className="rounded-md border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-gray-50"
                   aria-label="Import or export users"
                 >
-                  <ExportIcon className="h-4 w-4" />
+                  <Export_Icon className="h-4 w-4" />
                 </button>
 
                 {isImportMenuOpen ? (
@@ -1054,9 +1044,9 @@ export default function SettingsUsersView() {
           </div>
         </div>
 
-        <div className="p-4">
-          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white px-3 py-3">
-            <table className="w-full min-w-[1100px] border-separate border-spacing-y-3 text-sm">
+        <div className="px-4">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white px-3 py-1">
+            <table className="w-full min-w-[1100px] border-separate border-spacing-y-3  text-sm">
               <thead>
                 <TableHeaderRow
                   className="text-left text-sm text-gray-700"
@@ -1065,7 +1055,7 @@ export default function SettingsUsersView() {
                   renderColumn={(column) =>
                     column.id === "name" ? (
                       <span>
-                        Name <span className="font-normal text-gray-400">({filteredUsers.length} People)</span>
+                        Name <span className="font-normal text-gray-400">({(pageSize<=filteredUsers?.length)?pageSize:filteredUsers.length} People)</span>
                       </span>
                     ) : (
                       column.label
@@ -1079,7 +1069,7 @@ export default function SettingsUsersView() {
                         <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
                           <input
                             type="checkbox"
-                            className="columns-checkbox h-4 w-4 rounded-sm"
+                            className="columns-checkbox h-4 w-4"
                             checked={allCurrentPageSelected}
                             onChange={toggleSelectAllCurrentPage}
                           />
@@ -1103,7 +1093,7 @@ export default function SettingsUsersView() {
                       <td className={leftCellClass}>
                         <input
                           type="checkbox"
-                          className="columns-checkbox h-4 w-4 rounded-sm"
+                          className="columns-checkbox h-4 w-4"
                           checked={selectedIds.has(user.id)}
                           onChange={() => toggleSelectUser(user.id)}
                           aria-label={`Select ${user.name}`}
@@ -1164,6 +1154,7 @@ export default function SettingsUsersView() {
       {selectedIds.size > 0 ? (
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
           <SelectedItem
+            selectedCountClassName="text-[var(--color-gray-500)] !font-bold"
             selectedCount={selectedIds.size}
             actions={selectionActions}
             onClose={clearSelection}
@@ -1264,9 +1255,17 @@ export default function SettingsUsersView() {
       <PopupModal
         isOpen={isAddUserModalOpen}
         onClose={closeAddUserModal}
-        title="Add User"
-        className="max-w-[980px]"
+        title={
+          <span className="inline-flex flex-wrap items-baseline gap-2">
+            <span>Add User</span>
+            <span className="text-sm font-normal italic text-gray-400">
+              (You can add {remainingUserSlots} more people)
+            </span>
+          </span>
+        }
+        className="max-w-[980px] rounded-md"
         contentClassName="!p-8"
+        titleClassName="!text-gray-900"
         headerRight={
           <div className="users-modal-import-menu relative">
             <button
@@ -1275,9 +1274,14 @@ export default function SettingsUsersView() {
               className="rounded-md bg-[#FFF4F2] p-2 text-[var(--color-secondary-500)] transition hover:bg-[#FFE8E3]"
               aria-label="Import or export users"
             >
-              <ExportIcon className="h-4 w-4" />
+              <AppIcon
+                icon={Export_Icon}
+                size={16}
+                color="var(--color-secondary-400)"
+                strokeWidth={0.2}
+                forceColor
+              />
             </button>
-
             {isAddModalImportMenuOpen ? (
               <div className="absolute right-0 top-full z-40 mt-2">
                 <Popup items={addUserImportMenuItems} className="!min-w-[170px] rounded-lg" />
@@ -1287,8 +1291,6 @@ export default function SettingsUsersView() {
         }
       >
         <div className="space-y-5">
-          <p className="text-sm italic text-gray-500">You can add {remainingUserSlots} more people</p>
-
           <div className="space-y-3">
             {addUserRows.map((row) => {
               const isInvalidEmail = row.email.trim() !== "" && !EMAIL_PATTERN.test(row.email.trim());

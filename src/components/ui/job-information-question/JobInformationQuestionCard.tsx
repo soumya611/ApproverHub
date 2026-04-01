@@ -110,7 +110,7 @@ export default function JobInformationQuestionCard({
           <span className="cursor-grab rounded p-1 text-gray-400">
             <GripDotsIcon className="h-4 w-4" />
           </span>
-          <span className="text-xs font-semibold text-gray-400">
+          <span className="text-xs font-bold">
             Q.{index + 1}
           </span>
           <input
@@ -152,7 +152,7 @@ export default function JobInformationQuestionCard({
       {showTypeSelector ? (
         <div className="mt-4 flex flex-col gap-2">
           <span className="text-xs font-semibold text-gray-500">Type</span>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {typeOptions.map((option) => {
               const isActive = question.type === option.id;
               const indicator =
@@ -162,19 +162,16 @@ export default function JobInformationQuestionCard({
                       isActive ? "border-black" : "border-gray-300"
                     }`}
                   >
-                    {isActive ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-black" />
-                    ) : null}
+                    {
+                      <span className="h-2 w-2 rounded-full bg-black" />
+                    }
                   </span>
                 ) : (
                   <span
-                    className={`flex h-3.5 w-3.5 items-center justify-center rounded border ${
-                      isActive ? "border-black bg-black" : "border-gray-300"
-                    }`}
+                    className={"flex h-3.5 w-3.5 items-center justify-center rounded border border-secondary-500 bg-secondary-500"}
                   >
-                    {isActive ? (
-                      <CheckLineIcon className="h-3 w-3 text-white" />
-                    ) : null}
+                    {
+                      <CheckLineIcon className="h-3 w-3 text-white" />}
                   </span>
                 );
               return (
@@ -182,10 +179,10 @@ export default function JobInformationQuestionCard({
                   key={option.id}
                   type="button"
                   onClick={() => handleTypeSelect(option.id)}
-                  className={`flex items-center gap-2 rounded-md border px-3 py-1 text-xs font-semibold transition ${
+                  className={`inline-flex items-center gap-2 rounded border px-2.5 py-1 text-[11px] font-semibold leading-none transition ${
                     isActive
-                      ? "border-[#F25C54] bg-[#F25C54]/10 text-[#F25C54]"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      ? "border-secondary-400 bg-[#F25C54]/10 text-gray-500"
+                      : "border-secondary-200 text-gray-500 hover:border-gray-300"
                   }`}
                 >
                   {indicator}

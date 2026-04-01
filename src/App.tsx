@@ -23,6 +23,7 @@ import ProfileNotifications from "./pages/ProfileNotifications";
 import Settings from "./pages/Settings";
 import SettingsUsers from "./pages/SettingsUsers";
 import SettingsUserDetail from "./pages/SettingsUserDetail";
+import CampaignsRouteGuard from "./components/common/CampaignsRouteGuard";
 
 export default function App() {
   return (
@@ -39,9 +40,30 @@ export default function App() {
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/jobs/new" element={<CreateJob />} />
               <Route path="/jobs/:jobId/edit" element={<JobDetails />} />
-              <Route path="/campaigns" element={<Campaigns />} />
-              <Route path="/campaigns/new" element={<CreateCampaign />} />
-              <Route path="/campaigns/:campaignId/edit" element={<CreateCampaign />} />
+              <Route
+                path="/campaigns"
+                element={
+                  <CampaignsRouteGuard>
+                    <Campaigns />
+                  </CampaignsRouteGuard>
+                }
+              />
+              <Route
+                path="/campaigns/new"
+                element={
+                  <CampaignsRouteGuard>
+                    <CreateCampaign />
+                  </CampaignsRouteGuard>
+                }
+              />
+              <Route
+                path="/campaigns/:campaignId/edit"
+                element={
+                  <CampaignsRouteGuard>
+                    <CreateCampaign />
+                  </CampaignsRouteGuard>
+                }
+              />
               <Route path="/job-tracker" element={<JobTracker />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/campaign-setting" element={<CampaignSetting />} />

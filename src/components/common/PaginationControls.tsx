@@ -35,7 +35,7 @@ export default function PaginationControls({
   const [isRowsMenuOpen, setIsRowsMenuOpen] = useState(false);
   const rowsMenuRef = useRef<HTMLDivElement | null>(null);
   const baseButtonClass =
-    "inline-flex h-8 w-8 items-center justify-center rounded-md border transition";
+    "inline-flex h-8 w-8 items-center justify-center rounded-md transition";
   const canManageRows =
     typeof onPageSizeChange === "function" &&
     pageSizeOptions.length > 0 &&
@@ -96,8 +96,8 @@ export default function PaginationControls({
           disabled={!canGoPrevious}
           className={`${baseButtonClass} ${
             canGoPrevious
-              ? "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              : "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+              ? "bg-white text-gray-600 hover:bg-gray-50"
+              : "cursor-not-allowed bg-gray-50 text-gray-300"
           }`}
           aria-label="Previous page"
         >
@@ -109,8 +109,8 @@ export default function PaginationControls({
           disabled={!canGoNext}
           className={`${baseButtonClass} ${
             canGoNext
-              ? "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              : "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+              ? "bg-white text-gray-600 hover:bg-gray-50"
+              : "cursor-not-allowed bg-gray-50 text-gray-300"
           }`}
           aria-label="Next page"
         >

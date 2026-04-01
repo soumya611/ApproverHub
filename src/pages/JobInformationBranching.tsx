@@ -111,46 +111,52 @@ export default function JobInformationBranching() {
             </h2>
             <p className="mt-1 text-xs text-gray-500">{name}</p>
 
-            <div className="mt-6">
-              <div className="relative inline-block min-w-max">
-                <div className="flex items-center gap-12">
-                  {rowOne.map((question, index) => (
-                    <div key={question.id} className="flex items-center gap-12">
-                      <FlowNode
-                        question={question}
-                        index={index}
-                        indexMap={indexMap}
-                      />
-                      {index < rowOne.length - 1 ? (
-                        <div className="h-px w-20 bg-gray-300" />
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-
-                {rowTwo.length ? (
-                  <div className="mt-16 flex min-w-full items-center gap-12">
-                    {rowTwo.map((question, index) => (
+            {questions.length === 0 ? (
+              <p className="mt-6 text-sm text-gray-500">
+                No questions found for this Job Information yet.
+              </p>
+            ) : (
+              <div className="mt-6">
+                <div className="relative inline-block min-w-max">
+                  <div className="flex items-center gap-12">
+                    {rowOne.map((question, index) => (
                       <div key={question.id} className="flex items-center gap-12">
                         <FlowNode
                           question={question}
-                          index={rowOne.length + index}
+                          index={index}
                           indexMap={indexMap}
                         />
-                        {index < rowTwo.length - 1 ? (
+                        {index < rowOne.length - 1 ? (
                           <div className="h-px w-20 bg-gray-300" />
                         ) : null}
                       </div>
                     ))}
-                    <div className="h-px flex-1 bg-gray-300" />
                   </div>
-                ) : null}
 
-                {rowTwo.length ? (
-                  <div className="absolute right-0 top-[88px] h-[140px] w-px bg-gray-300" />
-                ) : null}
+                  {rowTwo.length ? (
+                    <div className="mt-16 flex min-w-full items-center gap-12">
+                      {rowTwo.map((question, index) => (
+                        <div key={question.id} className="flex items-center gap-12">
+                          <FlowNode
+                            question={question}
+                            index={rowOne.length + index}
+                            indexMap={indexMap}
+                          />
+                          {index < rowTwo.length - 1 ? (
+                            <div className="h-px w-20 bg-gray-300" />
+                          ) : null}
+                        </div>
+                      ))}
+                      <div className="h-px flex-1 bg-gray-300" />
+                    </div>
+                  ) : null}
+
+                  {rowTwo.length ? (
+                    <div className="absolute right-0 top-[88px] h-[140px] w-px bg-gray-300" />
+                  ) : null}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </PageContentContainer>
       </div>
