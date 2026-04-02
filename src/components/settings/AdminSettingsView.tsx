@@ -12,6 +12,17 @@ import {
   UserIcon,
   WebIcon,
   ColorIcon,
+  BrandingIcon,
+  AssigneeIcon,
+  SiteInfoIcon,
+  CustomisationIcon,
+  DashboardSetting,
+  UserSettingIcon,
+  EmailSettingIcon,
+  EmailTemplateIcon,
+  ExpiryIcon,
+  ArchiveIcon,
+  CommentSettingIcon,
 } from "../../icons";
 import PageContentContainer from "../layout/PageContentContainer";
 import SearchInput from "../ui/search-input/SearchInput";
@@ -49,7 +60,7 @@ const SETTINGS_TABS: Array<{ id: AdminSettingsTab; label: string; onClickPath?: 
 const SETTINGS_ITEMS: AdminSettingItem[] = [
   {
     id: "branding",
-    icon: ColorIcon,
+    icon: BrandingIcon,
     title: "Branding",
     description:
       "Manage your organisation logo, colors, and themes to personalise the appearance of the platform.",
@@ -57,7 +68,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
   {
     id: "assignee",
-    icon: AddpeopleIcon,
+    icon: AssigneeIcon,
     title: "Assignee",
     description:
       "Set default assignment rules and preferences for jobs to streamline workflows.",
@@ -65,7 +76,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
   {
     id: "site_info",
-    icon: WebIcon,
+    icon: SiteInfoIcon,
     title: "Site Info",
     description:
       "Adjust language, date formats, and regional settings to support local preferences and global accessibility.",
@@ -73,7 +84,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
   {
     id: "customisation",
-    icon: TableRulerIcon,
+    icon: CustomisationIcon,
     title: "Customisation",
     description: "Change the name of columns and titles",
     tab: "general",
@@ -81,7 +92,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
   {
     id: "dashboard",
-    icon: DashboardIcon,
+    icon: DashboardSetting,
     title: "Dashboard",
     description:
       "Customise the layout, widgets, and display preferences of dashboards for personalized data visualization.",
@@ -89,7 +100,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
   {
     id: "people_roles",
-    icon: UserIcon,
+    icon: UserSettingIcon,
     title: "Users",
     description: "Add,edit,or remove users and manage their access to the system.",
     tab: "people",
@@ -104,7 +115,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
   {
     id: "email",
-    icon: JobIcon,
+    icon: EmailSettingIcon,
     title: "Email",
     description: "customize email notification and communication templates sent to users.",
     tab: "jobs",
@@ -112,7 +123,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
    {
     id: "email_templates",
-    icon: JobIcon,
+    icon: EmailTemplateIcon,
     title: "Email Templates",
     description: "Create and manage reusable templates for common emails to ensure consistent messaging.",
     tab: "jobs",
@@ -120,7 +131,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
    {
     id: "expiry_management",
-    icon: JobIcon,
+    icon: ExpiryIcon,
     title: "Expiry Management",
     description: "Set rules for job expiration dates and automatic notifications to keep projects on track.",
     tab: "jobs",
@@ -128,7 +139,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
    {
     id: "archiving",
-    icon: JobIcon,
+    icon: ArchiveIcon,
     title: "Archiving",
     description: "Define rules for when and how jobs are automatically or manually archived",
     tab: "jobs",
@@ -144,11 +155,11 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
    {
     id: "comments",
-    icon: JobIcon,
+    icon: CommentSettingIcon,
     title: "Comments",
     description: "configure how tags can be labelled",
     tab: "jobs",
-    onClickPath: "/settings/jobs/job-information",
+    onClickPath: "/settings/jobs/comment",
   },
   {
     id: "workflow_permissions",

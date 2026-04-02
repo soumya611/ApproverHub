@@ -24,6 +24,7 @@ import Settings from "./pages/Settings";
 import SettingsUsers from "./pages/SettingsUsers";
 import SettingsUserDetail from "./pages/SettingsUserDetail";
 import CampaignsRouteGuard from "./components/common/CampaignsRouteGuard";
+import CommentSetting from "./pages/CommentSetting";
 
 export default function App() {
   return (
@@ -67,6 +68,7 @@ export default function App() {
               <Route path="/job-tracker" element={<JobTracker />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/campaign-setting" element={<CampaignSetting />} />
+              <Route path="/comment-setting" element={<CommentSetting />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/settings/people/users" element={<SettingsUsers />} />
@@ -76,6 +78,10 @@ export default function App() {
               <Route
                 path="/settings/jobs/job-information"
                 element={<JobInformationSettings />}
+              />
+              <Route
+                path="/settings/jobs/comment"
+                element={<CommentSetting />}
               />
               <Route
                 path="/settings/jobs/job-information/new"

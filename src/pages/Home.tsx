@@ -17,6 +17,8 @@ import {
   PinnedJobCard,
 } from "../components/home";
 import { MyPinIcon } from "../icons";
+import NotesCard from "../components/home/NotesCard";
+import MentionedCard from "../components/home/MentionedCard";
 
 export default function Home() {
   const { data, loading, error } = useHomeDashboard();
@@ -91,6 +93,12 @@ export default function Home() {
                 <PinnedJobCard key={job.id} job={job} onUnpin={unpinJob} />
               ))}
             </div>
+          </div>
+          {/* Notes columns */}
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <NotesCard />
+            {/* Placeholder for Mentioned you — add your component here */}
+            <MentionedCard/>
           </div>
         </section>
       ) : null}

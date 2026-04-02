@@ -154,6 +154,18 @@ import { ReactComponent as CuBadgeIcon } from "./cu-badge.svg?react";
 import { ReactComponent as AddIcon } from "./add-icon.svg?react";
 import { ReactComponent as CampaignIcon } from "./campaigns.svg?react";
 import { ReactComponent as Export_Icon } from "./export.svg?react";
+import { ReactComponent as BrandingIcon } from "./branding-icon.svg?react";
+import { ReactComponent as AssigneeIcon } from "./assignee-icon.svg?react";
+import { ReactComponent as SiteInfoIcon } from "./site-info.svg?react";
+import { ReactComponent as CustomisationIcon } from "./customisation.svg?react";
+import { ReactComponent as DashboardSetting } from "./dashboard-setting.svg?react";
+import { ReactComponent as UserSettingIcon } from "./user-setting.svg?react";
+import { ReactComponent as EmailSettingIcon } from "./emails-setting.svg?react";
+import { ReactComponent as EmailTemplateIcon } from "./email-template.svg?react";
+import { ReactComponent as ArchiveIcon } from "./archive-icon.svg?react";
+import { ReactComponent as CommentSettingIcon } from "./comment-setting.svg?react";
+import { ReactComponent as ExpiryIcon } from "./expiry-setting.svg?react";
+
 
 
 export {
@@ -310,6 +322,17 @@ export {
   AddIcon,
   CampaignIcon,
   Export_Icon,
+  BrandingIcon,
+  AssigneeIcon,
+  SiteInfoIcon,
+  CustomisationIcon,
+  DashboardSetting,
+  UserSettingIcon,
+  EmailSettingIcon,
+  EmailTemplateIcon,
+  ArchiveIcon,
+  CommentSettingIcon,
+  ExpiryIcon
 };
 
 export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;
