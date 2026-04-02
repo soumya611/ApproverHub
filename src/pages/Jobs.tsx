@@ -29,7 +29,7 @@ import AddAssigneePopup, {
 } from "../components/analytics/AddAssigneePopup";
 import { JobsFAB, JobsTable, type JobTag, type JobRowType } from "../components/jobs";
 import type { JobMember } from "../components/jobs/types";
-import { FilterIcon, GridIcon, ListIcon, VerticalDots } from "../icons";
+import { FilterIcon, GridIcon, ListIcon, ListViewIcon, VerticalDots } from "../icons";
 import { resolveLabel } from "../data/localization";
 import { normalizeColumns } from "../data/columnsConfig";
 import { useLocalizationStore } from "../stores/localizationStore";
@@ -1015,7 +1015,7 @@ export default function Jobs() {
                 className="rounded-sm border border-gray-200 bg-white p-1 text-gray-500 transition hover:bg-gray-50"
                 aria-label="Open filters"
               >
-                <FilterIcon className="h-3 w-3" />
+                <FilterIcon className="h-3.5 w-3.5" />
               </button>
               <div
                 className={`absolute right-0 top-full z-30 mt-3 transition ${
@@ -1046,24 +1046,24 @@ export default function Jobs() {
               onClick={() => setViewMode("grid")}
               className={`rounded-sm border p-1 transition ${
                 viewMode === "grid"
-                  ? "border-[#007B8C] bg-[#007B8C]/10 text-[#007B8C]"
+                  ? "border-transparent bg-[#007B8C]/10 text-[#007B8C]"
                   : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
               }`}
               aria-label="Grid view"
             >
-              <GridIcon className="h-4 w-4" />
+              <GridIcon className="h-3.5 w-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setViewMode("list")}
               className={`rounded-sm border p-1 transition ${
                 viewMode === "list"
-                  ? "border-[#007B8C] bg-[#007B8C]/10 text-[#007B8C]"
+                  ? "border-transparent bg-[#007B8C]/10 text-[#007B8C]"
                   : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
               }`}
               aria-label="List view"
             >
-              <ListIcon className="h-4 w-4" />
+              <ListViewIcon className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

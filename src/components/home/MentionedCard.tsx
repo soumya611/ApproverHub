@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AnalyticsNoteItem from "../analytics/AnalyticsNoteItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
+import { EmailSettingIcon } from "../../icons";
 
 interface MentionItem {
   id: string;
@@ -24,13 +25,19 @@ const MOCK_MENTIONS: MentionItem[] = [
 export default function MentionedCard() {
   const [selectedFilter, setSelectedFilter] = useState("Latest updates");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [mentions, setMentions] = useState<MentionItem[]>(MOCK_MENTIONS);
+
+  const handleDelete = (id: string) =>
+    setMentions((prev) => prev.filter((m) => m.id !== id));
+
+  const handleClearAll = () => setMentions([]);
 
   return (
-    <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden min-h-[320px]">
+    <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden h-[480px] shadow-[2px_4px_10px_0px_#0000000F]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500 text-sm">@</span>
+        <div className="flex items-center justify-center gap-2">
+          <EmailSettingIcon />
           <span className="text-sm font-medium text-gray-700">Mentioned you</span>
         </div>
 
@@ -40,7 +47,7 @@ export default function MentionedCard() {
             <button
               type="button"
               onClick={() => setIsDropdownOpen((v) => !v)}
-              className="dropdown-toggle flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition"
+              className="dropdown-toggle cursor-pointer flex items-center gap-1 text-sm font-medium text-[#808080]"
             >
               {selectedFilter}
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -51,7 +58,7 @@ export default function MentionedCard() {
             <Dropdown
               isOpen={isDropdownOpen}
               onClose={() => setIsDropdownOpen(false)}
-              className="mt-1 min-w-[140px] py-1"
+              className="mt-1 min-w-[140px] py-1 rounded-none shadow-[0px_4px_4px_0px_#00000040]"
             >
               {FILTER_OPTIONS.map((option) => (
                 <button
@@ -73,7 +80,8 @@ export default function MentionedCard() {
 
           <button
             type="button"
-            className="rounded-md border bg-[#FFEAE6] border-[#E74C3C] px-3 py-1 text-xs font-semibold text-[#E74C3C] hover:bg-[#E74C3C]/5 transition"
+            onClick={handleClearAll}
+            className="rounded-sm bg-[#FFEAE6] px-3 py-1 text-xs font-semibold text-[#E74C3C] hover:bg-[#E74C3C]/20 transition"
           >
             Clear all
           </button>
@@ -82,17 +90,22 @@ export default function MentionedCard() {
 
       {/* Mention list */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {MOCK_MENTIONS.map((mention) => (
-          <AnalyticsNoteItem
-            key={mention.id}
-            variant="mention"
-            userName={mention.userName}
-            message={mention.message}
-            description={mention.description}
-            date={mention.date}
-            avatarUrl={mention.avatarUrl}
-          />
-        ))}
+        {mentions.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center pt-8">No mentions</p>
+        ) : (
+          mentions.map((mention) => (
+            <AnalyticsNoteItem
+              key={mention.id}
+              variant="mention"
+              userName={mention.userName}
+              message={mention.message}
+              description={mention.description}
+              date={mention.date}
+              avatarUrl={mention.avatarUrl}
+              onDelete={() => handleDelete(mention.id)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

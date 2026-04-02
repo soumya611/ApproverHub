@@ -113,7 +113,7 @@ export default function JobRow({
     switch (columnId) {
       case "campaign_id":
         return (
-          <td key={columnId} className="py-3 px-4">
+          <td key={columnId} className="py-3 px-4 text-center align-middle">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
                 <svg
@@ -139,14 +139,14 @@ export default function JobRow({
         );
       case "job_number":
         return (
-          <td key={columnId} className="py-3 px-4 text-gray-600 text-sm">
+          <td key={columnId} className="py-3 px-4 text-gray-600 text-center align-middle text-sm">
             {job.jobNumber}
           </td>
         );
       case "job_name":
         return (
-          <td key={columnId} className="py-3 px-4">
-            <div className="flex flex-col gap-0.5">
+          <td key={columnId} className="py-3 px-4 text-left align-middle">
+            <div className="flex flex-col justify-center gap-0.5 ml-18">
               {job.tag && <span className={TAG_CLASS}>{job.tag}</span>}
               <span className="text-gray-900">{job.jobName}</span>
             </div>
@@ -154,15 +154,15 @@ export default function JobRow({
         );
       case "created":
         return (
-          <td key={columnId} className="py-3 px-4 text-gray-600 text-sm">
+          <td key={columnId} className="py-3 px-4 text-gray-600 text-center align-middle text-sm">
             {job.created}
           </td>
         );
       case "status":
         return (
-          <td key={columnId} className="py-3 px-4">
+          <td key={columnId} className="py-3 px-4 text-center align-middle">
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusClass(
+              className={`inline-flex items-center gap-1 px-4.5 py-1 rounded-full text-xs font-medium ${getStatusClass(
                 job.status
               )}`}
             >
@@ -180,7 +180,7 @@ export default function JobRow({
         );
       case "action":
         return (
-          <td key={columnId} className="py-3 px-4">
+          <td key={columnId} className="py-3 px-4 text-center align-middle">
             {hasActions ? (
               <div className="job-action-menu relative inline-flex">
                 <button
@@ -206,38 +206,42 @@ export default function JobRow({
         );
       case "owner":
         return (
-          <td key={columnId} className="py-3 px-4">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-400">
-              {job.owner}
-            </span>
+          <td key={columnId} className="py-3 px-4 text-center align-middle">
+            <div className="flex justify-center">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-400">
+                {job.owner}
+              </span>
+            </div>
           </td>
         );
       case "assignee":
         return (
-          <td key={columnId} className="py-3 px-4">
-            {job.assignee ? (
-              <Avatar
-                src=""
-                alt={job.assignee}
-                size="small"
-                fallbackType="initials"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => onAssigneeClick?.(job.id)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-amber-600 transition hover:bg-amber-200"
-                aria-label="Add assignee"
-                title="Add assignee"
-              >
-               <StatusIcon className="h-8 w-8" />
-              </button>
-            )}
+          <td key={columnId} className="py-3 px-4 text-center align-middle">
+            <div className="flex justify-center">
+              {job.assignee ? (
+                <Avatar
+                  src=""
+                  alt={job.assignee}
+                  size="small"
+                  fallbackType="initials"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onAssigneeClick?.(job.id)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-amber-600 transition hover:bg-amber-200"
+                  aria-label="Add assignee"
+                  title="Add assignee"
+                >
+                  <StatusIcon className="h-8 w-8" />
+                </button>
+              )}
+            </div>
           </td>
         );
       default:
         return (
-          <td key={columnId} className="py-3 px-4 text-gray-300">
+          <td key={columnId} className="py-3 px-4 text-center align-middle text-gray-300">
             --
           </td>
         );
@@ -246,7 +250,7 @@ export default function JobRow({
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors">
-      <td className="py-3 px-4 w-10">
+      <td className="py-3 px-4 w-10 align-middle">
         {showSelection ? (
           <input
             type="checkbox"
@@ -257,7 +261,7 @@ export default function JobRow({
         ) : null}
       </td>
       {resolvedColumns.map((columnId) => renderCell(columnId))}
-      <td className="py-3 px-4 w-10">
+      <td className="py-3 px-4 w-10 align-middle">
         {showEdit ? (
           <button
             type="button"
@@ -269,7 +273,7 @@ export default function JobRow({
           </button>
         ) : null}
       </td>
-      <td className="py-3 px-4 w-10" />
+      <td className="py-3 px-4 w-10 align-middle" />
     </tr>
   );
 }

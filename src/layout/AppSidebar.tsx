@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
-import { HomeIcon, JobIcon, GroupIcon, ListIcon, AnalyticsIcon, ChevronDownIcon } from "../icons";
+import { HomeIcon, JobIcon, GroupIcon, AnalyticsIcon, ChevronDownIcon ,JobTrackerIcon, CampaignIcon } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { resolveLabel, type LocalizationKey } from "../data/localization";
 import { useLocalizationStore } from "../stores/localizationStore";
@@ -26,12 +26,12 @@ const navItems: NavItem[] = [
     path: "/jobs",
   },
   {
-    icon: <GroupIcon />,
+    icon: <CampaignIcon />,
     labelKey: "nav.campaigns",
     path: "/campaigns",
   },
   {
-    icon: <ListIcon />,
+    icon: <JobTrackerIcon />,
     labelKey: "nav.jobTracker",
     path: "/job-tracker",
   },

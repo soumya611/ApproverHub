@@ -1,6 +1,6 @@
 import PopupTitle from "../ui/popup-title/PopupTitle";
 import DescriptionText from "../ui/description-text/DescriptionText";
-import { PencilIcon, TrashBinIcon } from "../../icons";
+import { NotesDelIcon, NotesEditIcon, PencilIcon, TrashBinIcon } from "../../icons";
 
 interface AnalyticsNoteItemProps {
   variant: "note" | "mention";
@@ -37,7 +37,7 @@ export default function AnalyticsNoteItem({
 
   return (
     <div
-      className={`group flex items-start justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 transition-colors hover:bg-gray-100 ${className}`}
+      className={`group flex items-start justify-between  rounded-lg border border-gray-200 bg-white px-4 py-3 transition-colors hover:bg-[#EFF0F0] ${className}`}
     >
       <div className="min-w-0 flex items-start gap-3">
         {showAvatar ? (
@@ -82,22 +82,22 @@ export default function AnalyticsNoteItem({
       </div>
 
       {(date || showActions) && (
-        <div className="relative ml-4 flex w-20 shrink-0 self-stretch">
+        <div className="relative flex w-12 shrink-0 self-stretch">
           {date ? (
             <span className="self-start text-xs text-gray-500 transition-opacity group-hover:opacity-0">
               {date}
             </span>
           ) : null}
           {showActions ? (
-            <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 transition-opacity group-hover:opacity-100">
               {showEditAction ? (
                 <button
                   type="button"
                   onClick={onEdit}
                   aria-label="Edit"
-                  className="rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded p-1 text-gray-500 transition-colors"
                 >
-                  <PencilIcon className="h-4 w-4" />
+                  <NotesEditIcon/>
                 </button>
               ) : null}
               {showDeleteAction ? (
@@ -105,9 +105,9 @@ export default function AnalyticsNoteItem({
                   type="button"
                   onClick={onDelete}
                   aria-label="Delete"
-                  className="rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded p-1 text-gray-500 transition-colors"
                 >
-                  <TrashBinIcon className="h-4 w-4" />
+                  <NotesDelIcon className="h-4 w-4" />
                 </button>
               ) : null}
             </div>

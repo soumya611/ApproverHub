@@ -41,14 +41,13 @@ export default function JobsTable({
   );
 
   return (
-    <div className="overflow-x-auto">
       <table
         className="w-full min-w-[900px] text-sm"
         style={minWidth ? { minWidth: `${minWidth}px` } : undefined}
       >
         <thead>
           <TableHeaderRow
-            className="border-b border-gray-200 bg-gray-50/80 text-left text-[12px] font-bold text-gray-600"
+            className="border-b border-gray-200 bg-gray-50/80 text-center text-[12px] font-bold text-gray-600"
             columns={columns}
             getColumnKey={(column) => column.id}
             renderColumn={(column) => column.label}
@@ -96,6 +95,6 @@ export default function JobsTable({
           ))}
         </tbody>
       </table>
-    </div>
+   
   );
 }

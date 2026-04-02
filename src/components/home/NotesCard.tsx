@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PencilIcon, PlusIcon, CloseIcon } from "../../icons";
+import { PencilIcon, PlusIcon, CloseIcon, NotesIcon, NotesPlusIcon } from "../../icons";
 import AnalyticsNoteItem from "../analytics/AnalyticsNoteItem";
 
 export interface NoteItem {
@@ -63,9 +63,9 @@ export default function NotesCard() {
 
   // ── Shared header ──────────────────────────────────────
   const header = (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
+    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0 shadow-[2px_4px_10px_0px_#0000000F]">
       <div className="flex items-center gap-2">
-        <PencilIcon className="h-4 w-4 text-gray-500" />
+        <NotesIcon/>
         <span className="text-sm font-medium text-gray-700">Notes</span>
       </div>
 
@@ -83,7 +83,7 @@ export default function NotesCard() {
             type="button"
             onClick={handleSave}
             disabled={!editorText.trim()}
-            className="rounded-md bg-[#E74C3C] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#c0392b] disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="rounded-sm bg-[#E74C3C] px-4 py-1 text-sm font-semibold text-white hover:bg-[#c0392b] disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             Save
           </button>
@@ -95,7 +95,7 @@ export default function NotesCard() {
           className="flex h-7 w-7 items-center justify-center rounded-md bg-[#E74C3C]/10 text-[#E74C3C] hover:bg-[#E74C3C]/20 transition"
           aria-label="Add note"
         >
-          <PlusIcon className="h-4 w-4" />
+          <NotesPlusIcon className="w-3 h-3"/>
         </button>
       )}
     </div>
@@ -104,7 +104,7 @@ export default function NotesCard() {
   // ── Editor view ────────────────────────────────────────
   if (isEditing) {
     return (
-      <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden h-full min-h-[320px]">
+      <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden h-[480px]">
         {header}
         <textarea
           autoFocus
@@ -119,7 +119,7 @@ export default function NotesCard() {
 
   // ── List view ──────────────────────────────────────────
   return (
-    <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden h-full min-h-[320px]">
+    <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden h-[480px]">
       {header}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {notes.length === 0 ? (

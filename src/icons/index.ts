@@ -165,6 +165,12 @@ import { ReactComponent as EmailTemplateIcon } from "./email-template.svg?react"
 import { ReactComponent as ArchiveIcon } from "./archive-icon.svg?react";
 import { ReactComponent as CommentSettingIcon } from "./comment-setting.svg?react";
 import { ReactComponent as ExpiryIcon } from "./expiry-setting.svg?react";
+import { ReactComponent as NotesIcon } from "./notes-icon.svg?react";
+import { ReactComponent as NotesPlusIcon } from "./note-plus.svg?react";
+import { ReactComponent as NotesEditIcon } from "./notes-edit.svg?react";
+import { ReactComponent as NotesDelIcon } from "./notes-del.svg?react";
+import { ReactComponent as ListViewIcon } from "./listview-icon.svg?react";
+
 
 
 
@@ -332,7 +338,12 @@ export {
   EmailTemplateIcon,
   ArchiveIcon,
   CommentSettingIcon,
-  ExpiryIcon
+  ExpiryIcon,
+  NotesIcon,
+  NotesPlusIcon,
+  NotesDelIcon,
+  NotesEditIcon,
+  ListViewIcon
 };
 
 export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;
