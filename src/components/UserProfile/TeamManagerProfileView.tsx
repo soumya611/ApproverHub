@@ -13,6 +13,7 @@ import {
 import { useJobsStore } from "../../stores/jobsStore";
 import { useUsersStore } from "../../stores/usersStore";
 import { clearStoredUserIdentity, getStoredUserIdentity } from "../../utils/userIdentity";
+import AppBreadcrumb from "../common/AppBreadcrumb";
 import UserAvatar from "../common/UserAvatar";
 import PageContentContainer from "../layout/PageContentContainer";
 import Button from "../ui/button/Button";
@@ -157,12 +158,10 @@ export default function TeamManagerProfileView() {
   };
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        Settings / People / <span className="font-semibold text-[#007B8C]">Profile</span>
-      </p>
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <AppBreadcrumb />
 
-      <PageContentContainer className="p-0">
+      <PageContentContainer className="min-h-0 flex-1 p-0">
         <div className="border-b border-gray-200 px-6 py-5">
           <h2 className="text-xl font-semibold text-primary">Profile</h2>
         </div>

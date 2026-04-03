@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { ChevronLeftIcon } from "../../../icons";
+import AppBreadcrumb from "../../common/AppBreadcrumb";
 import PageContentContainer from "../../layout/PageContentContainer";
 
 interface ProfileSettingsPageContainerProps {
@@ -29,17 +30,21 @@ export default function ProfileSettingsPageContainer({
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       {breadcrumbOverride ? (
         breadcrumbOverride
       ) : (
-        <p className="text-sm text-gray-500">
-          Settings / People / Profile /{" "}
-          <span className="font-semibold text-[#007B8C]">{breadcrumbCurrent}</span>
-        </p>
+        <AppBreadcrumb
+          items={[
+            { label: "Settings", to: "/settings" },
+            { label: "People", to: "/settings/people/users" },
+            { label: "Profile", to: "/profile" },
+            { label: breadcrumbCurrent },
+          ]}
+        />
       )}
 
-      <PageContentContainer className="p-0">
+      <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
         <div className="border-b border-gray-200 px-6 py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-start gap-3">
@@ -63,7 +68,7 @@ export default function ProfileSettingsPageContainer({
           </div>
         </div>
 
-        <div className={contentClassName}>{children}</div>
+        <div className={`min-h-0 flex-1 overflow-y-auto ${contentClassName}`}>{children}</div>
       </PageContentContainer>
     </div>
   );

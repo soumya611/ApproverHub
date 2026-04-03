@@ -4,7 +4,7 @@ import Popup from "../popup/Popup";
 import {
   CheckLineIcon,
   GripDotsIcon,
-  TrashBinIcon,
+  JobInfor_trash_Icon,
   VerticalDots,
 } from "../../../icons";
 import type { JobInfoQuestion, JobInfoQuestionType } from "../../../types/jobInformation";
@@ -100,8 +100,8 @@ export default function JobInformationQuestionCard({
 
   const optionIndicator =
     question.type === "choice"
-      ? "rounded-full border border-gray-300 h-4 w-4"
-      : "rounded border border-gray-300 h-4 w-4";
+      ? "h-4 w-4 rounded-full border border-gray-300"
+      : "h-4 w-4 rounded border border-gray-300";
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -119,7 +119,7 @@ export default function JobInformationQuestionCard({
               onChange({ ...question, text: event.target.value })
             }
             placeholder="Enter question"
-            className="w-full max-w-xl border-b border-gray-200 px-1 pb-1 text-sm text-gray-700 focus:border-[#007B8C] focus:outline-none"
+            className="w-full max-w-xl border border-gray-200 p-1 text-sm text-gray-700 focus:border-[#007B8C] focus:outline-none"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export default function JobInformationQuestionCard({
             className="rounded-full p-1 text-gray-400 hover:text-[#F25C54]"
             aria-label="Delete question"
           >
-            <TrashBinIcon className="h-4 w-4" />
+            <JobInfor_trash_Icon className="h-4 w-4" />
           </button>
           <div className="job-info-question-menu relative">
             <button
@@ -150,7 +150,7 @@ export default function JobInformationQuestionCard({
       </div>
 
       {showTypeSelector ? (
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="ml-16 mt-4 flex flex-col gap-2">
           <span className="text-xs font-semibold text-gray-500">Type</span>
           <div className="flex flex-wrap items-center gap-2">
             {typeOptions.map((option) => {
@@ -193,18 +193,15 @@ export default function JobInformationQuestionCard({
           </div>
         </div>
       ) : (
-        <div className="mt-4 space-y-2">
+        <div className="ml-16 mt-4 space-y-2">
           {question.options.map((option) => (
-            <div
-              key={option.id}
-              className="flex items-center gap-2 rounded-md border border-gray-100 px-2 py-2"
-            >
+            <div key={option.id} className="flex items-center gap-2">
               <span className={optionIndicator} />
               <input
                 value={option.label}
                 onChange={(event) => updateOptionLabel(option.id, event.target.value)}
                 placeholder="Option"
-                className="w-full max-w-[240px] bg-transparent text-sm text-gray-700 outline-none"
+                className="h-7 w-[120px] rounded border border-gray-200 px-2 text-sm text-gray-700 outline-none focus:border-[#007B8C]"
               />
               <button
                 type="button"
@@ -212,15 +209,16 @@ export default function JobInformationQuestionCard({
                 className="shrink-0 rounded-full p-1 text-gray-400 hover:text-[#F25C54]"
                 aria-label="Remove option"
               >
-                <TrashBinIcon className="h-4 w-4" />
+                <JobInfor_trash_Icon className="h-4 w-4" />
               </button>
             </div>
           ))}
           <button
             type="button"
             onClick={handleAddOption}
-            className="text-xs font-semibold text-[#F25C54] hover:text-[#E34A41]"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-[#F25C54] hover:text-[#E34A41]"
           >
+            <span className={optionIndicator} />
             + Add option
           </button>
         </div>

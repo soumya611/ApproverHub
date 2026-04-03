@@ -332,14 +332,14 @@ export default function JobDetails() {
     return (
       <>
         <PageMeta title="Job details" description="Job details" />
-        <div className="space-y-4">
+        <div className="flex h-full min-h-0 flex-col gap-4">
           <p className="text-sm text-gray-500">
             <Link to="/jobs" className="text-gray-600 hover:text-[#007B8C]">
               Jobs
             </Link>{" "}
             / <span className="text-[#007B8C]">Job details</span>
           </p>
-          <PageContentContainer className="p-6">
+          <PageContentContainer className="min-h-0 flex-1 p-6">
             <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
               We could not find this job.
             </div>
@@ -487,14 +487,14 @@ export default function JobDetails() {
   return (
     <>
       <PageMeta title="Job details" description="Job details" />
-      <div className="space-y-4">
+      <div className="flex h-full min-h-0 flex-col gap-4">
         <p className="text-sm text-gray-500">
           <Link to="/jobs" className="text-gray-600 hover:text-[#007B8C]">
             Jobs
           </Link>{" "}
           / <span className="text-[#007B8C]">Job details</span>
         </p>
-        <PageContentContainer className="p-6">
+        <PageContentContainer className="min-h-0 flex-1 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-lg font-semibold text-gray-900">

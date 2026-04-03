@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import PageMeta from "../components/common/PageMeta";
+import AppBreadcrumb from "../components/common/AppBreadcrumb";
 import PageContentContainer from "../components/layout/PageContentContainer";
 import Button from "../components/ui/button/Button";
 import DescriptionText from "../components/ui/description-text/DescriptionText";
@@ -11,7 +12,7 @@ import {
 import JobInformationQuestionCard from "../components/ui/job-information-question/JobInformationQuestionCard";
 import PopupModal from "../components/ui/popup-modal/PopupModal";
 import PopupTitle from "../components/ui/popup-title/PopupTitle";
-import { ChevronLeftIcon, EditPenIcon, SettingOnIcon, TrashBinIcon } from "../icons";
+import { ChevronLeftIcon, EditPenIcon, JobInfor_trash_Icon, Material_Symbols_Icon } from "../icons";
 import { useJobInformationStore } from "../stores/jobInformationStore";
 import type { JobInfoQuestion, JobInfoTemplate } from "../types/jobInformation";
 
@@ -565,12 +566,9 @@ export default function JobInformationEditor() {
   return (
     <>
       <PageMeta title="Job information" description="Job information" />
-      <div className="space-y-4">
-        <p className="text-sm text-gray-500">
-          Home / Settings / Jobs /{" "}
-          <span className="text-[#007B8C]">Job Information</span>
-        </p>
-        <PageContentContainer className="overflow-hidden p-0">
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <AppBreadcrumb />
+        <PageContentContainer className="flex flex-1 flex-col overflow-hidden p-0">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-4">
             <div className="flex flex-1 items-start gap-3">
               <button
@@ -600,26 +598,28 @@ export default function JobInformationEditor() {
                 ) : null}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleShowConditions}
-              className="flex items-center gap-2 text-xs font-semibold text-[#F25C54]"
-            >
-              <SettingOnIcon className="h-4 w-4" />
-              Show Conditions
-            </button>
           </div>
 
-          <div className="space-y-4 p-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="flex flex-wrap items-center gap-3 border-b border-gray-200  max-w-1/4">
-                <input
-                  value={name}
-                  onChange={(event) => handleNameChange(event.target.value)}
-                  placeholder="Enter Name"
-                  className="w-full max-w-[360px] px-1 pb-1 text-sm text-gray-700 focus:border-[#007B8C] focus:outline-none"
-                />
-                <EditPenIcon className="h-4 w-4 text-gray-400" />
+          <div className="flex-1 overflow-y-auto">
+            <div className="rounded-xl bg-white p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex w-full max-w-[360px] items-center gap-3  border-b border-gray-200">
+                  <input
+                    value={name}
+                    onChange={(event) => handleNameChange(event.target.value)}
+                    placeholder="Enter Name"
+                    className="w-full px-1 pb-1 text-sm text-gray-700 focus:border-[#007B8C] focus:outline-none"
+                  />
+                  <EditPenIcon className="h-4 w-4 text-gray-400" />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleShowConditions}
+                  className="flex items-center gap-2 text-xs font-semibold text-[#F25C54]"
+                >
+                  <Material_Symbols_Icon className="h-4 w-4" />
+                  Show Conditions
+                </button>
               </div>
 
               <div className="mt-5 space-y-4">
@@ -651,7 +651,7 @@ export default function JobInformationEditor() {
                   type="button"
                   size="sm"
                   variant="primary"
-                  className="!rounded-md !px-4 !py-2 text-xs"
+                  className="!rounded-sm !px-4 !py-2 text-xs"
                   onClick={handleAddQuestion}
                 >
                   Add Questions
@@ -748,7 +748,7 @@ export default function JobInformationEditor() {
                           className="rounded-full p-1 text-gray-400 hover:text-[#F25C54]"
                           aria-label="Remove condition"
                         >
-                          <TrashBinIcon className="h-4 w-4" />
+                          <JobInfor_trash_Icon className="h-4 w-4" />
                         </button>
                       ) : null}
                     </div>
@@ -783,7 +783,7 @@ export default function JobInformationEditor() {
                     }`}
                     aria-label={`Remove rule ${ruleIndex + 1}`}
                   >
-                    <TrashBinIcon className="h-4 w-4" />
+                    <JobInfor_trash_Icon className="h-4 w-4" />
                   </button>
                   <span className="text-xs font-semibold">Then</span>
                   <span className="inline-flex h-8 items-center rounded border border-gray-200 bg-white px-3 text-xs font-semibold">

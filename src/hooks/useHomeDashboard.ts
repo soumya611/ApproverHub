@@ -59,6 +59,7 @@ async function fetchHomeDashboard(): Promise<HomeDashboardData> {
         description:
           "Review finished tasks and measure completion outcomes with ease.",
         icon: "document",
+        path: "/jobs?filter=completed",
       },
       {
         id: "analytics",

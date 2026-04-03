@@ -12,7 +12,9 @@ interface PageContentContainerProps {
  */
 export default function PageContentContainer({ children, className = "" }: PageContentContainerProps) {
   return (
-    <div className={`rounded-xl shadow-[2px_4px_10px_0px_#0000000F] bg-white overflow-hidden ${className}`}>
+    <div
+      className={`custom-scrollbar flex h-full min-h-0 flex-1 flex-col rounded-xl bg-white shadow-[2px_4px_10px_0px_#0000000F] overflow-x-hidden overflow-y-auto ${className}`}
+    >
       {children}
     </div>
   );

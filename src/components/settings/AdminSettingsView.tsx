@@ -197,10 +197,10 @@ export default function AdminSettingsView() {
   }, [activeTab, searchValue]);
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       <p className="text-sm font-semibold text-[#007B8C]">Settings</p>
 
-      <PageContentContainer className="min-h-[660px] p-0">
+      <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
         <div className="border-b border-gray-200 px-6 py-4">
             <SearchInput
               value={searchValue}
@@ -226,7 +226,7 @@ export default function AdminSettingsView() {
           />
         </div>
 
-        <div className="p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <div className="max-w-[780px] space-y-4">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (

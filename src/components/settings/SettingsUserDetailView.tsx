@@ -14,6 +14,7 @@ import {
   VerticalDots,
 } from "../../icons";
 import UserAvatar from "../common/UserAvatar";
+import AppBreadcrumb from "../common/AppBreadcrumb";
 import PageContentContainer from "../layout/PageContentContainer";
 import SearchInput from "../ui/search-input/SearchInput";
 import UnderlineTabs from "../ui/tabs/UnderlineTabs";
@@ -415,10 +416,8 @@ export default function SettingsUserDetailView() {
 
   if (!user) {
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-gray-500">
-          Settings / People / <span className="font-semibold text-[#007B8C]">User Detail</span>
-        </p>
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <AppBreadcrumb />
         <PageContentContainer className="p-8">
           <p className="text-sm text-gray-500">User not found.</p>
         </PageContentContainer>
@@ -427,10 +426,8 @@ export default function SettingsUserDetailView() {
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        Settings / People / <span className="font-semibold text-[#007B8C]">User Detail</span>
-      </p>
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <AppBreadcrumb />
 
       <PageContentContainer className="p-0">
         <div className="border-b border-gray-200 px-6 py-5">

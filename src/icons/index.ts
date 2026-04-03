@@ -154,6 +154,8 @@ import { ReactComponent as CuBadgeIcon } from "./cu-badge.svg?react";
 import { ReactComponent as AddIcon } from "./add-icon.svg?react";
 import { ReactComponent as CampaignIcon } from "./campaigns.svg?react";
 import { ReactComponent as Export_Icon } from "./export.svg?react";
+import { ReactComponent as Material_Symbols_Icon } from "./material-symbols_account-tree-outline-rounded.svg?react";
+import { ReactComponent as JobInfor_trash_Icon } from "./jobinfo_trash.svg?react";
 
 
 export {
@@ -310,6 +312,8 @@ export {
   AddIcon,
   CampaignIcon,
   Export_Icon,
+  Material_Symbols_Icon,
+  JobInfor_trash_Icon,
 };
 
 export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;
