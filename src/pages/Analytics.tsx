@@ -543,8 +543,10 @@ export default function Analytics() {
     <>
       <PageMeta title={analyticsTitle} description="Analytics dashboard" />
 
-      <PageContentContainer className="p-6">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex h-full min-h-0 flex-col">
+        <PageContentContainer className="min-h-0 flex-1 !h-[calc(100vh-120px)] !max-h-[calc(100vh-120px)] !overflow-hidden p-0">
+          <div className="custom-scrollbar h-full min-h-0 flex-1 overflow-y-auto p-6">
+            <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold text-gray-800">{analyticsTitle}</h1>
           <div className="ml-auto flex flex-wrap items-center gap-3">
             <button
@@ -1434,13 +1436,14 @@ export default function Analytics() {
           ))}
         </div>
 
-        <div className="mt-6 space-y-3">
-          <Link to="/campaign-setting" className="text-sm text-white bg-secondary px-2 py-1 rounded-sm inline-block">
-            Campaign Setting
-          </Link>
-        </div>
-
-      </PageContentContainer>
+            <div className="mt-6 space-y-3">
+              <Link to="/campaign-setting" className="text-sm text-white bg-secondary px-2 py-1 rounded-sm inline-block">
+                Campaign Setting
+              </Link>
+            </div>
+          </div>
+        </PageContentContainer>
+      </div>
 
       <EmailReviewersPopup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />
       <AddAssigneePopup

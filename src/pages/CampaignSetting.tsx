@@ -1,4 +1,5 @@
 import PageMeta from "../components/common/PageMeta";
+import AppBreadcrumb from "../components/common/AppBreadcrumb";
 import PageContentContainer from "../components/layout/PageContentContainer";
 import { ColumnsConfigProvider } from "../context/ColumnsConfigContext";
 import ColumnsManager from "../components/ui/columns-filter/ColumnsManager";
@@ -37,12 +38,10 @@ export default function CampaignSetting() {
           description="Manage campaign columns and visibility settings"
         />
 
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            Settings / <span className="font-semibold text-[#007B8C]">Campaign Settings</span>
-          </p>
+        <div className="flex h-full min-h-0 flex-col gap-4">
+          <AppBreadcrumb />
 
-          <PageContentContainer className="p-0">
+          <PageContentContainer className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
             <PageHeader
               title="Campaign"
               description="Define Campaign section edit tab name and columns name"
@@ -54,12 +53,14 @@ export default function CampaignSetting() {
               onBackClick={() => goBack({ fallbackTo: "/settings" })}
               className="!px-4 py-4"
             />
-            <ColumnsManager
-              disabled={isCampaignsDisabled}
-              defaultNewFieldChecked={isNewFieldDefaultChecked}
-              addFieldInputVisible={isAddFieldInputVisible}
-              onAddFieldInputVisibleChange={handleAddFieldInputVisibleChange}
-            />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <ColumnsManager
+                disabled={isCampaignsDisabled}
+                defaultNewFieldChecked={isNewFieldDefaultChecked}
+                addFieldInputVisible={isAddFieldInputVisible}
+                onAddFieldInputVisibleChange={handleAddFieldInputVisibleChange}
+              />
+            </div>
           </PageContentContainer>
         </div>
       </>

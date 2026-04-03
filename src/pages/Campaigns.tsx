@@ -592,8 +592,10 @@ export default function Campaigns() {
   const handleTableWheel = (event: WheelEvent<HTMLDivElement>) => {
     const container = tableScrollRef.current;
     if (!container) return;
-    if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
-    container.scrollLeft += event.deltaY;
+
+    // Keep vertical wheel scrolling for the page; only custom-handle horizontal gestures.
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+    container.scrollLeft += event.deltaX;
     event.preventDefault();
   };
 
@@ -654,7 +656,7 @@ export default function Campaigns() {
     <>
       <PageMeta title={campaignsTitle} description="Manage campaigns" />
 
-      <PageContentContainer className="p-6 overflow-visible">
+      <PageContentContainer className="p-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-bold text-[#007B8C]">{campaignsTitle}</h1>
         </div>

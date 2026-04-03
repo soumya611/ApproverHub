@@ -676,8 +676,10 @@ export default function Jobs() {
   const handleTableWheel = (event: WheelEvent<HTMLDivElement>) => {
     const container = tableScrollRef.current;
     if (!container) return;
-    if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
-    container.scrollLeft += event.deltaY;
+
+    // Keep vertical wheel scrolling for the page; only custom-handle horizontal gestures.
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+    container.scrollLeft += event.deltaX;
     event.preventDefault();
   };
 
@@ -915,9 +917,9 @@ export default function Jobs() {
     <>
       <PageMeta title={jobsTitle} description="Manage jobs and campaigns" />
 
-      <PageContentContainer className="p-6 overflow-visible">
+      <PageContentContainer className="p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-bold text-[#007B8C]">{jobsTitle}</h1>
+          <h1 className="text-xl font-bold text-primary">{jobsTitle}</h1>
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -1082,7 +1084,7 @@ export default function Jobs() {
         <div className="mt-6 bg-white">
           {viewMode === "grid" ? (
             visibleJobs.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
                 {jobCards.map((card) => (
                   <JobCard key={`${card.title}-${card.date}`} card={card} />
                 ))}

@@ -244,7 +244,7 @@ export default function CreateCampaign() {
   return (
     <>
       <PageMeta title="Create new campaign" description="Create campaign" />
-      <div className="space-y-4">
+      <div className="flex h-full min-h-0 flex-col gap-4">
         <p className="text-sm text-gray-500">
           <Link to="/campaigns" className="text-gray-600 hover:text-[#007B8C]">
             Campaign
@@ -255,7 +255,7 @@ export default function CreateCampaign() {
           </span>
         </p>
 
-        <PageContentContainer className="p-6">
+        <PageContentContainer className="min-h-0 flex-1 p-6">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-full max-w-[360px]">

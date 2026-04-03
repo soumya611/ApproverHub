@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AngleUpIcon } from "../../icons";
+import AppBreadcrumb from "../common/AppBreadcrumb";
 import Button from "../ui/button/Button";
 import ProfileSettingsPageContainer from "../ui/profile/ProfileSettingsPageContainer";
 import ToggleSwitch from "../ui/toggle/ToggleSwitch";
@@ -61,9 +62,14 @@ export default function TeamManagerWorkScheduleView() {
       title="Work Schedule"
       breadcrumbCurrent="Work Schedule"
       breadcrumbOverride={
-        <p className="text-sm text-gray-500">
-          Settings / People / <span className="font-semibold text-[#007B8C]">User Profile</span>
-        </p>
+        <AppBreadcrumb
+          items={[
+            { label: "Settings", to: "/settings" },
+            { label: "People", to: "/settings/people/users" },
+            { label: "User Profile", to: "/profile" },
+            { label: "Work Schedule" },
+          ]}
+        />
       }
       headerRight={
         <div className="flex items-center gap-3">

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router";
 import { getRoleLabel, normalizeAppRole, type AppUserRole } from "../../data/appUsers";
 import {
   ChevronDownIcon,
-  ChevronLeftIcon,
   CloseIcon,
   EditDetailsIcon,
   Export_Icon,
@@ -15,6 +14,7 @@ import {
 } from "../../icons";
 import { type UnifiedUser, useUsersStore } from "../../stores/usersStore";
 import PaginationControls from "../common/PaginationControls";
+import AppBreadcrumb from "../common/AppBreadcrumb";
 import PageContentContainer from "../layout/PageContentContainer";
 import Button from "../ui/button/Button";
 import SearchInput from "../ui/search-input/SearchInput";
@@ -950,12 +950,10 @@ export default function SettingsUsersView() {
   ];
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        Settings / People / <span className="font-semibold text-[#007B8C]">User Detail</span>
-      </p>
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <AppBreadcrumb />
 
-      <PageContentContainer className="relative min-h-[660px] p-0">
+      <PageContentContainer className="relative min-h-0 flex-1 p-0">
              <PageHeader
              className="!px-4 py-3"
                         title="Users"

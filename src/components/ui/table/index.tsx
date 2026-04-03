@@ -41,7 +41,7 @@ export interface TableHeaderRowProps<T> {
   renderColumn: (column: T) => ReactNode;
   getColumnKey?: (column: T, index: number) => string;
   className?: string;
-  columnClassName?: string;
+  columnClassName?: string | ((column: T, index: number) => string);
   prefixCells?: HeaderCellConfig[];
   suffixCells?: HeaderCellConfig[];
 }
@@ -106,11 +106,17 @@ const TableHeaderRow = <T,>({
           {cell.content}
         </th>
       ))}
-      {columns.map((column, index) => (
-        <th key={resolveKey(column, index)} className={columnClassName}>
-          {renderColumn(column)}
-        </th>
-      ))}
+      {columns.map((column, index) => {
+        const resolvedColumnClassName =
+          typeof columnClassName === "function"
+            ? columnClassName(column, index)
+            : columnClassName;
+        return (
+          <th key={resolveKey(column, index)} className={resolvedColumnClassName}>
+            {renderColumn(column)}
+          </th>
+        );
+      })}
       {suffixCells.map((cell, index) => (
         <th key={`suffix-${index}`} className={cell.className}>
           {cell.content}

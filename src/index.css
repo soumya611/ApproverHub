@@ -1279,6 +1279,37 @@ video::cue {
   background: rgba(120, 17, 17, 0.25);
 }
 
+.custom-scrol {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+  scrollbar-gutter: stable;
+}
+
+.mainview-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mainview-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mainview-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+
+.mainview-scroll:hover::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+}
+
+.dark .custom-scrol {
+  scrollbar-color: #475467 transparent;
+}
+
+.dark .mainview-scroll::-webkit-scrollbar-thumb {
+  background: #475467;
+}
+
 .columns-scroll::-webkit-scrollbar {
   width: 6px;
   height: 6px;

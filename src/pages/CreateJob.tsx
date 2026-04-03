@@ -245,7 +245,7 @@ export default function CreateJob() {
         title={isEditMode ? "Edit job" : "Create new job"}
         description="Create job"
       />
-      <div className="space-y-4">
+      <div className="flex h-full min-h-0 flex-col gap-4">
         <p className="text-sm text-gray-500">
           <Link to="/jobs" className="text-gray-600 hover:text-[#007B8C]">
             Jobs
@@ -255,7 +255,7 @@ export default function CreateJob() {
             {isEditMode ? "Edit job" : "Create new job"}
           </span>
         </p>
-        <PageContentContainer className="p-6 overflow-visible">
+        <PageContentContainer className="min-h-0 flex-1 p-6">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <input

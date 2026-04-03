@@ -172,6 +172,8 @@ import { ReactComponent as NotesDelIcon } from "./notes-del.svg?react";
 import { ReactComponent as ListViewIcon } from "./listview-icon.svg?react";
 
 
+import { ReactComponent as Material_Symbols_Icon } from "./material-symbols_account-tree-outline-rounded.svg?react";
+import { ReactComponent as JobInfor_trash_Icon } from "./jobinfo_trash.svg?react";
 
 
 export {
@@ -344,6 +346,8 @@ export {
   NotesDelIcon,
   NotesEditIcon,
   ListViewIcon
+  Material_Symbols_Icon,
+  JobInfor_trash_Icon,
 };
 
 export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;

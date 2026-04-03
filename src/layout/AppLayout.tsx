@@ -7,19 +7,27 @@ import AppSidebar from "./AppSidebar";
 const HIDE_SIDEBAR_PATHS = ["/home"];
 
 const LayoutContent: React.FC = () => {
-  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const { isExpanded, isMobileOpen } = useSidebar();
   const location = useLocation();
   const hideSidebar = HIDE_SIDEBAR_PATHS.includes(location.pathname);
+  const pageWrapperClass = hideSidebar
+    ? "w-full h-full min-h-0 max-w-[1050px]"
+    : "w-full h-full min-h-0 min-w-0";
+  const routeContentClass = hideSidebar
+    ? "h-full min-h-0"
+    : "flex h-full min-h-0 flex-col";
+  const mainOverflowClass = hideSidebar ? "overflow-y-auto" : "overflow-hidden";
+  const bodySpacingClass = hideSidebar ? "pt-20" : "pb-[10px] pt-[90px]";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* 🟦 Full-width Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800 shadow-sm">
         <AppHeader />
       </div>
 
       {/* 🟩 Main Body (below header) */}
-      <div className="flex flex-1 bg-[#EFF0F0]">
+      <div className={`flex min-h-0 flex-1 ${bodySpacingClass}`}>
         {/* Sidebar - hidden on Home */}
         {!hideSidebar && (
           <>
@@ -30,13 +38,21 @@ const LayoutContent: React.FC = () => {
 
         {/* Page Content - full width when no sidebar */}
         <main
-          className={`flex-1 mt-20 overflow-y-auto no-scrollbar transition-all duration-300 ease-in-out
+          className={`min-h-0 min-w-0 flex-1 ${mainOverflowClass} no-scrollbar transition-all duration-300 ease-in-out
     ${hideSidebar ? "ml-0" : `ml-[90px] ${isExpanded ? "sm:ml-[335px]" : "sm:ml-[140px]"} ${isMobileOpen ? "ml-0" : ""}`}
   `}
         >
-          <div className={hideSidebar ? "min-h-screen flex justify-center px-6 py-6" : "p-6"}>
-            <div className={hideSidebar ? "w-full max-w-[1050px]" : "w-full"}>
-              <Outlet key={location.pathname} />
+          <div
+            className={
+              hideSidebar
+                ? "flex h-full min-h-0 justify-center px-6 py-6"
+                : "h-full min-h-0 px-6 pt-4"
+            }
+          >
+            <div className={pageWrapperClass}>
+              <div className={routeContentClass}>
+                <Outlet key={location.pathname} />
+              </div>
             </div>
           </div>
         </main>
