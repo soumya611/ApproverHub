@@ -345,7 +345,7 @@ export {
   NotesPlusIcon,
   NotesDelIcon,
   NotesEditIcon,
-  ListViewIcon
+  ListViewIcon,
   Material_Symbols_Icon,
   JobInfor_trash_Icon,
 };

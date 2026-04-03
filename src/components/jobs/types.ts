@@ -89,6 +89,7 @@ export interface JobRow {
   assetFormat?: string;
   workflowConfig?: JobWorkflowConfig;
   versions?: JobVersion[];
+  thumbnailUrl?: string;
 }
 
 const toWorkflowMembers = (members: JobMember[]): WorkflowMember[] =>

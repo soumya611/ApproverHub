@@ -116,20 +116,7 @@ export default function JobRow({
           <td key={columnId} className="py-3 px-4 text-center align-middle">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="text-gray-400"
-                >
-                  <path d="M3 3v18h18" />
-                  <path d="M18 9V3" />
-                  <path d="M12 3v6" />
-                  <path d="M6 3v12" />
-                </svg>
+                 <img src="/thumbnail-img.png" alt={job.campaignId} className="w-full h-full object-cover" />
               </div>
               <span className="font-medium text-gray-900">
                 {job.campaignId}
