@@ -701,21 +701,25 @@ export default function SettingsUsersView() {
     const label = user.inviteState === "resend" ? "Resend Invite" : "Send Invite";
 
     return (
-      <button
+      <Button
         type="button"
+        variant="orangebutton"
+        size="sm"
         onClick={() => markUsersAsInvited([user.id])}
-        className="group relative inline-flex items-center gap-1 rounded-md border border-[var(--color-secondary-500)] bg-[#FFF4F2] px-3 py-1 text-xs font-medium text-[var(--color-secondary-500)]"
+        className="group relative font-semibold !p-1 rounded-sm !text-[10px]"
       >
         {label}
         {user.inviteState === "resend" ? (
           <span className="relative inline-flex items-center">
-            <InfoIcon className="h-3.5 w-3.5" />
+            <AppIcon icon={InfoIcon}  size={12} 
+  strokeWidth={0.1}
+  forceColor={true} />
             <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600 opacity-0 shadow-lg transition group-hover:opacity-100">
               {user.lastSent ?? "Last sent recently"}
             </span>
           </span>
         ) : null}
-      </button>
+      </Button>
     );
   };
 
@@ -953,7 +957,7 @@ export default function SettingsUsersView() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <AppBreadcrumb />
 
-      <PageContentContainer className="relative min-h-0 flex-1 p-0">
+      <PageContentContainer className="relative min-h-0  flex-1 p-0">
              <PageHeader
              className="!px-4 py-3"
                         title="Users"
@@ -1043,7 +1047,7 @@ export default function SettingsUsersView() {
         </div>
 
         <div className="px-4">
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white px-3 py-1">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white px-3 py-1 custom-scrollbar">
             <table className="w-full min-w-[1100px] border-separate border-spacing-y-3  text-sm">
               <thead>
                 <TableHeaderRow
@@ -1136,7 +1140,15 @@ export default function SettingsUsersView() {
                 })}
               </tbody>
             </table>
-            <JobsFAB onClick={() => setIsAddUserModalOpen(true)} />
+            <JobsFAB
+              className="!rounded-[10px]"
+              iconSize={20}
+              iconStrokeWidth={2}
+              side="right"
+              offsetX={32}
+              offsetY={32}
+              onClick={() => setIsAddUserModalOpen(true)}
+            />
           </div>
         </div>
       </PageContentContainer>
@@ -1255,21 +1267,23 @@ export default function SettingsUsersView() {
         onClose={closeAddUserModal}
         title={
           <span className="inline-flex flex-wrap items-baseline gap-2">
-            <span>Add User</span>
+            <span className="text-[18px]">Add User</span>
             <span className="text-sm font-normal italic text-gray-400">
               (You can add {remainingUserSlots} more people)
             </span>
           </span>
         }
         className="max-w-[980px] rounded-md"
-        contentClassName="!p-8"
+        contentClassName="!px-6 !py-4"
         titleClassName="!text-gray-900"
         headerRight={
           <div className="users-modal-import-menu relative">
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="orangebutton"
               onClick={() => setIsAddModalImportMenuOpen((previous) => !previous)}
-              className="rounded-md bg-[#FFF4F2] p-2 text-[var(--color-secondary-500)] transition hover:bg-[#FFE8E3]"
+              className="!p-1 rounded-none border-none"
               aria-label="Import or export users"
             >
               <AppIcon
@@ -1279,7 +1293,7 @@ export default function SettingsUsersView() {
                 strokeWidth={0.2}
                 forceColor
               />
-            </button>
+            </Button>
             {isAddModalImportMenuOpen ? (
               <div className="absolute right-0 top-full z-40 mt-2">
                 <Popup items={addUserImportMenuItems} className="!min-w-[170px] rounded-lg" />
@@ -1354,7 +1368,7 @@ export default function SettingsUsersView() {
                         <select
                           value={row.role}
                           onChange={(event) => updateAddUserRow(row.id, "role", event.target.value)}
-                          className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 focus:border-[#007B8C] focus:outline-none"
+                          className="h-11 w-full appearance-none rounded-sm border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 focus:border-[#007B8C] focus:outline-none"
                         >
                           {ROLE_OPTIONS.map((roleOption) => (
                             <option key={roleOption.value} value={roleOption.value}>
@@ -1396,7 +1410,7 @@ export default function SettingsUsersView() {
               variant="primary"
               onClick={saveAddedUsers}
               disabled={!canSaveAddedUsers}
-              className="!min-w-[120px] !rounded-md !py-2"
+              className="!min-w-[120px] !rounded-sm !py-2"
             >
               Save
             </Button>

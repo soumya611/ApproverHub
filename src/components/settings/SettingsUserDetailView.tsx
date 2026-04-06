@@ -4,14 +4,14 @@ import type { JobRow as JobRowType } from "../jobs/types";
 import { useJobsStore } from "../../stores/jobsStore";
 import { useUsersStore } from "../../stores/usersStore";
 import {
+  CameraIcon,
   CalenderIcon,
-  ChevronLeftIcon,
   EditDetailsIcon,
   EnvelopeIcon,
-  ExportIcon,
   Search,
-  UserIcon,
   VerticalDots,
+  Ep_sort_Icon,
+  Call_Icon,
 } from "../../icons";
 import UserAvatar from "../common/UserAvatar";
 import AppBreadcrumb from "../common/AppBreadcrumb";
@@ -27,9 +27,10 @@ import ProfileTableCheckbox from "../ui/profile/ProfileTableCheckbox";
 import UserCell from "../ui/user-cell/UserCell";
 import { TableHeaderRow } from "../ui/table";
 import Popup, { type PopupItem } from "../ui/popup/Popup";
+import PageHeader from "../ui/page-header/PageHeader";
 
 type UserDetailTab = "associated_jobs" | "associated_workflow";
-type JobSortOption = "late" | "today" | "tomorrow" | "this_week" | "next_week" | "no_date";
+type JobSortOption = "late" | "today" | "tomorrow" | "others";
 
 type WorkflowMeta = {
   workflow: ProfileWorkflowRow;
@@ -56,10 +57,22 @@ const SORT_ITEMS: Array<{ id: JobSortOption; label: string }> = [
   { id: "late", label: "Late" },
   { id: "today", label: "Today" },
   { id: "tomorrow", label: "Tomorrow" },
-  { id: "this_week", label: "This week" },
-  { id: "next_week", label: "Next week" },
-  { id: "no_date", label: "No Date" },
+  { id: "others", label: "Others" },
 ];
+
+const USER_ASSOCIATED_JOB_OVERRIDES: Record<string, string[]> = {
+  ID1002451: ["1", "3", "5", "7"],
+  ID1234656: ["1", "6", "7", "5"],
+  ID1008842: ["6", "7", "1", "5"],
+};
+
+const USER_DETAIL_BREADCRUMB_ITEMS = [
+  { label: "Settings", to: "/settings" },
+  { label: "People", to: "/settings/people/users" },
+  { label: "User Detail" },
+];
+
+const USER_DETAIL_CHECKBOX_CLASS = "!border !border-[#F8C9C9] !bg-white";
 
 const getInitials = (name: string) => {
   const parts = name.trim().split(/\s+/);
@@ -83,11 +96,11 @@ const getStatusClassName = (status: JobRowType["status"]) => {
     case "In Progress":
       return "bg-[#D6EEF1] text-[#007B8C]";
     case "Complete":
-      return "bg-green-100 text-green-700";
+      return "bg-[#DDEDD6] text-[#5C9A3F]";
     case "Changes required":
-      return "bg-[#FFF4E0] text-[#D98B00]";
+      return "bg-[#F8EFDC] text-[#D29019]";
     case "On hold":
-      return "bg-[#FDEDED] text-[#E74C3C]";
+      return "bg-[#FCEAEA] text-[#E76558]";
     default:
       return "bg-gray-100 text-gray-500";
   }
@@ -98,28 +111,15 @@ const isSameDay = (left: Date, right: Date) =>
   left.getMonth() === right.getMonth() &&
   left.getDate() === right.getDate();
 
-const isDateInRange = (value: Date, start: Date, end: Date) => value >= start && value <= end;
-
 const matchesSortByDates = (dates: Date[], hasLateTag: boolean, sort: JobSortOption) => {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  if (sort === "no_date") return dates.length === 0;
+  if (sort === "others") return true;
   if (dates.length === 0) return false;
 
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
-
-  const weekday = (now.getDay() + 6) % 7;
-  const thisWeekStart = new Date(now);
-  thisWeekStart.setDate(now.getDate() - weekday);
-  const thisWeekEnd = new Date(thisWeekStart);
-  thisWeekEnd.setDate(thisWeekStart.getDate() + 6);
-
-  const nextWeekStart = new Date(thisWeekEnd);
-  nextWeekStart.setDate(thisWeekEnd.getDate() + 1);
-  const nextWeekEnd = new Date(nextWeekStart);
-  nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
 
   switch (sort) {
     case "late":
@@ -128,10 +128,6 @@ const matchesSortByDates = (dates: Date[], hasLateTag: boolean, sort: JobSortOpt
       return dates.some((date) => isSameDay(date, now));
     case "tomorrow":
       return dates.some((date) => isSameDay(date, tomorrow));
-    case "this_week":
-      return dates.some((date) => isDateInRange(date, thisWeekStart, thisWeekEnd));
-    case "next_week":
-      return dates.some((date) => isDateInRange(date, nextWeekStart, nextWeekEnd));
     default:
       return true;
   }
@@ -142,22 +138,11 @@ const matchesSort = (job: JobRowType, sort: JobSortOption) => {
   now.setHours(0, 0, 0, 0);
   const deadlineDate = parseDate(getDeadline(job));
 
-  if (sort === "no_date") return !deadlineDate;
+  if (sort === "others") return true;
   if (!deadlineDate) return false;
 
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
-
-  const weekday = (now.getDay() + 6) % 7;
-  const thisWeekStart = new Date(now);
-  thisWeekStart.setDate(now.getDate() - weekday);
-  const thisWeekEnd = new Date(thisWeekStart);
-  thisWeekEnd.setDate(thisWeekStart.getDate() + 6);
-
-  const nextWeekStart = new Date(thisWeekEnd);
-  nextWeekStart.setDate(thisWeekEnd.getDate() + 1);
-  const nextWeekEnd = new Date(nextWeekStart);
-  nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
 
   switch (sort) {
     case "late":
@@ -166,10 +151,6 @@ const matchesSort = (job: JobRowType, sort: JobSortOption) => {
       return isSameDay(deadlineDate, now);
     case "tomorrow":
       return isSameDay(deadlineDate, tomorrow);
-    case "this_week":
-      return isDateInRange(deadlineDate, thisWeekStart, thisWeekEnd);
-    case "next_week":
-      return isDateInRange(deadlineDate, nextWeekStart, nextWeekEnd);
     default:
       return true;
   }
@@ -184,8 +165,8 @@ export default function SettingsUserDetailView() {
   const [activeTab, setActiveTab] = useState<UserDetailTab>("associated_jobs");
   const [jobsSearchValue, setJobsSearchValue] = useState("");
   const [workflowsSearchValue, setWorkflowsSearchValue] = useState("");
-  const [selectedJobsSort, setSelectedJobsSort] = useState<JobSortOption>("late");
-  const [selectedWorkflowSort, setSelectedWorkflowSort] = useState<JobSortOption>("late");
+  const [selectedJobsSort, setSelectedJobsSort] = useState<JobSortOption>("others");
+  const [selectedWorkflowSort, setSelectedWorkflowSort] = useState<JobSortOption>("others");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isWorkflowSortOpen, setIsWorkflowSortOpen] = useState(false);
   const [openJobActionId, setOpenJobActionId] = useState<string | null>(null);
@@ -214,6 +195,11 @@ export default function SettingsUserDetailView() {
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, []);
 
+  useEffect(() => {
+    setIsSortOpen(false);
+    setIsWorkflowSortOpen(false);
+  }, [activeTab]);
+
   const autoMatchedJobs = useMemo(() => {
     if (!user) return [];
     const normalizedEmail = user.email.trim().toLowerCase();
@@ -238,7 +224,17 @@ export default function SettingsUserDetailView() {
     return matchedJobs;
   }, [jobs, user, userInitials]);
 
-  const associatedJobs = useMemo(() => autoMatchedJobs, [autoMatchedJobs]);
+  const associatedJobs = useMemo(() => {
+    if (!user) return [];
+    if (autoMatchedJobs.length > 0) return autoMatchedJobs;
+
+    const overrideJobIds = USER_ASSOCIATED_JOB_OVERRIDES[user.id] ?? [];
+    if (overrideJobIds.length === 0) return [];
+
+    return overrideJobIds
+      .map((jobId) => jobs.find((job) => job.id === jobId))
+      .filter((job): job is JobRowType => Boolean(job));
+  }, [autoMatchedJobs, jobs, user]);
 
   const associatedWorkflowMeta = useMemo<WorkflowMeta[]>(() => {
     const workflowMap = new Map<string, WorkflowMeta>();
@@ -414,10 +410,23 @@ export default function SettingsUserDetailView() {
     },
   }));
 
+  const activeSearchValue =
+    activeTab === "associated_jobs" ? jobsSearchValue : workflowsSearchValue;
+  const activeSearchPlaceholder =
+    activeTab === "associated_jobs" ? "Search jobs" : "Search workflow";
+  const activeSortOpen =
+    activeTab === "associated_jobs" ? isSortOpen : isWorkflowSortOpen;
+  const activeSortMenuClass =
+    activeTab === "associated_jobs"
+      ? "user-details-sort-menu"
+      : "user-details-workflow-sort-menu";
+  const activeSortPopupItems =
+    activeTab === "associated_jobs" ? jobsSortPopupItems : workflowsSortPopupItems;
+
   if (!user) {
     return (
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <AppBreadcrumb />
+        <AppBreadcrumb items={USER_DETAIL_BREADCRUMB_ITEMS} />
         <PageContentContainer className="p-8">
           <p className="text-sm text-gray-500">User not found.</p>
         </PageContentContainer>
@@ -427,131 +436,150 @@ export default function SettingsUserDetailView() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <AppBreadcrumb />
+      <AppBreadcrumb items={USER_DETAIL_BREADCRUMB_ITEMS} />
 
-      <PageContentContainer className="p-0">
-        <div className="border-b border-gray-200 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/settings/people/users")}
-              className="rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-[#007B8C]"
-              aria-label="Back to users"
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </button>
-            <h2 className="text-[30px] font-semibold text-[#007B8C]">Users Details</h2>
-          </div>
-        </div>
+      <PageContentContainer className="relative min-h-0 flex-1 overflow-y-auto p-0">
+        <PageHeader
+          title="Users Details"
+          titleClassName="!text-[18px]"
+          onBackClick={() => navigate("/settings/people/users")}
+        />
 
-        <div className="space-y-6 p-6">
-          <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-            <div className="rounded-sm border border-gray-200 bg-white p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-4">
-                  <UserAvatar
-                    size="large"
-                    name={user.name}
-                    avatarUrl={user.avatarUrl}
-                    className="!h-[104px] !w-[104px] text-2xl"
-                  />
-                  <div>
-                    <h3 className="text-[28px] font-semibold text-gray-900">{user.name}</h3>
-                    <p className="text-sm text-gray-500">Employee ID:{user.id}</p>
-                    <div className="mt-2 flex items-center text-base font-normal text-gray-600">
-                      {user.role} <span className="mx-1">|</span>{" "}
-                      <ProfileStatusIndicator status={user.accountStatus ?? "active"} />
+        <div className="min-h-full space-y-6 p-6">
+          <div className="w-full xl:w-[68%]">
+            <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+              <div className="rounded-sm border border-gray-200 bg-white p-4">
+                <div className="flex min-h-[144px] items-start justify-between gap-4">
+                  <div className="flex flex-1 items-center gap-4">
+                    <div className="relative">
+                      <UserAvatar
+                        size="large"
+                        name={user.name}
+                        avatarUrl={user.avatarUrl}
+                        className="!h-[102px] !w-[102px] text-2xl"
+                      />
+                      <span className="absolute bottom-0 right-0 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white bg-gray-100 text-gray-500">
+                        <CameraIcon className="h-3.5 w-3.5" />
+                      </span>
                     </div>
-                    <p className="mt-3 text-base text-gray-600">
-                      Department: {user.title || "Department"}
-                    </p>
-                    <p className="text-base text-gray-600">Teams: {user.team || "Teams"}</p>
+                    <div className="py-1">
+                      <h3 className="text-[22px] font-semibold text-gray-900">
+                        {user.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">Employee ID:{user.id}</p>
+                      <div className="mt-2 flex items-center text-[15px] font-normal text-gray-600">
+                        {user.role} <span className="mx-1">|</span>{" "}
+                        <ProfileStatusIndicator status={user.accountStatus ?? "active"} />
+                      </div>
+                      <p className="mt-3 text-sm text-gray-600">
+                        {user.title ? `${user.title}` : ""}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {user.team ? `${user.team}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                    aria-label="Edit user details"
+                  >
+                    <EditDetailsIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
+                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-5">
+                  <span className="flex items-center gap-3 text-base text-gray-800">
+                    <EnvelopeIcon className="h-5 w-5 text-gray-500" />
+                    Email
+                  </span>
+                  <span className="text-sm text-gray-500">{user.email || "--"}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-5">
+                  <span className="flex items-center gap-3 text-base text-gray-800">
+                    <Call_Icon className="h-5 w-5 text-gray-500" />
+                    Contact info
+                  </span>
+                  <span className="text-sm text-gray-500">{user.phone || "--"}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-5">
+                  <span className="flex items-center gap-3 text-base text-gray-800">
+                    <CalenderIcon className="h-5 w-5 text-gray-500" />
+                    Work schedule
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {user.workSchedule || "Mon Fri"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-white">
+            <div className="border-b border-gray-200 px-5 pt-2">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <UnderlineTabs
+                  tabs={TABS}
+                  activeTab={activeTab}
+                  onChange={setActiveTab}
+                  className="flex flex-wrap items-end gap-8"
+                  tabClassName="-mb-px border-b-2 px-1 pb-3 pt-3 text-base transition"
+                  activeClassName="border-[#007B8C] font-semibold text-[#007B8C]"
+                  inactiveClassName="border-transparent font-medium text-gray-400 hover:text-gray-700"
+                />
+
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="w-[240px] rounded-full border border-gray-200 bg-white px-3 py-1">
+                    <SearchInput
+                      value={activeSearchValue}
+                      onChange={(event) => {
+                        if (activeTab === "associated_jobs") {
+                          setJobsSearchValue(event.target.value);
+                        } else {
+                          setWorkflowsSearchValue(event.target.value);
+                        }
+                      }}
+                      placeholder={activeSearchPlaceholder}
+                      containerClassName="gap-2"
+                      icon={<Search className="h-5 w-5 text-gray-400" />}
+                      className="text-sm text-gray-700"
+                      inputClassName="text-sm text-gray-700"
+                    />
+                  </div>
+
+                  <div className={`${activeSortMenuClass} relative`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activeTab === "associated_jobs") {
+                          setIsSortOpen((previous) => !previous);
+                        } else {
+                          setIsWorkflowSortOpen((previous) => !previous);
+                        }
+                      }}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-sm border border-gray-200 bg-white text-sm text-gray-600 transition hover:bg-gray-50"
+                      aria-label={`Filter ${activeTab === "associated_jobs" ? "jobs" : "workflows"}`}
+                    >
+                      <Ep_sort_Icon className="h-4 w-4 text-gray-400" />
+                    </button>
+                    {activeSortOpen ? (
+                      <div className="absolute right-0 top-full z-40 mt-2">
+                        <Popup items={activeSortPopupItems} className="!min-w-[120px] rounded-lg" />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                  aria-label="Edit user details"
-                >
-                  <EditDetailsIcon className="h-4 w-4" />
-                </button>
               </div>
-            </div>
-
-            <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-5">
-                <span className="flex items-center gap-3 text-base text-gray-800">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-500" />
-                  Email
-                </span>
-                <span className="text-sm text-gray-500">{user.email || "--"}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-5">
-                <span className="flex items-center gap-3 text-base text-gray-800">
-                  <UserIcon className="h-4 w-4 text-gray-500" />
-                  Contact info
-                </span>
-                <span className="text-sm text-gray-500">{user.phone || "--"}</span>
-              </div>
-              <div className="flex items-center justify-between px-4 py-5">
-                <span className="flex items-center gap-3 text-base text-gray-800">
-                  <CalenderIcon className="h-4 w-4 text-gray-500" />
-                  Work schedule
-                </span>
-                <span className="text-sm text-gray-500">{user.workSchedule || "Mon Fri"}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="border-b border-gray-200 px-4 pt-2">
-              <UnderlineTabs
-                tabs={TABS}
-                activeTab={activeTab}
-                onChange={setActiveTab}
-                className="flex flex-wrap items-end gap-8"
-                tabClassName="-mb-px border-b-2 px-1 pb-3 pt-3 text-base transition"
-                activeClassName="border-[#007B8C] font-semibold text-[#007B8C]"
-                inactiveClassName="border-transparent font-medium text-gray-400 hover:text-gray-700"
-              />
             </div>
 
             {activeTab === "associated_jobs" ? (
-              <div className="space-y-3 p-3">
+              <div className="p-4 pt-2 border border-gray-200 ">
                 {associatedJobs.length > 0 ? (
                   <>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <div className="w-full max-w-[280px] rounded-lg border border-gray-200 bg-white px-3 py-2">
-                        <SearchInput
-                          value={jobsSearchValue}
-                          onChange={(event) => setJobsSearchValue(event.target.value)}
-                          placeholder="Search jobs"
-                          containerClassName="gap-2"
-                          icon={<Search className="h-5 w-5 text-gray-400" />}
-                          className="text-sm text-gray-700"
-                          inputClassName="text-sm text-gray-700"
-                        />
-                      </div>
-
-                      <div className="user-details-sort-menu relative">
-                        <button
-                          type="button"
-                          onClick={() => setIsSortOpen((previous) => !previous)}
-                          className="rounded-md border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-gray-50"
-                          aria-label="Sort jobs"
-                        >
-                          <ExportIcon className="h-4 w-4" />
-                        </button>
-                        {isSortOpen ? (
-                          <div className="absolute right-0 top-full z-40 mt-2">
-                            <Popup items={jobsSortPopupItems} className="!min-w-[130px] rounded-lg" />
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
                     <div className="overflow-x-auto">
-                      <table className="w-full min-w-[1120px] border-separate border-spacing-y-3 text-sm">
+                      <table className="w-full min-w-[1090px] border-separate border-spacing-y-3 text-sm">
                         <thead>
                           <TableHeaderRow
                             className="text-left text-sm text-gray-700"
@@ -567,6 +595,7 @@ export default function SettingsUserDetailView() {
                                     checked={allJobsSelected}
                                     onChange={toggleSelectAllJobs}
                                     label="Select all"
+                                    inputClassName={USER_DETAIL_CHECKBOX_CLASS}
                                   />
                                 ),
                               },
@@ -597,6 +626,7 @@ export default function SettingsUserDetailView() {
                                       checked={selectedJobIds.has(job.id)}
                                       onChange={() => toggleSelectJob(job.id)}
                                       aria-label={`Select ${job.jobName}`}
+                                      inputClassName={USER_DETAIL_CHECKBOX_CLASS}
                                     />
                                   </td>
                                   <td className={baseCellClass}>{job.campaignId}</td>
@@ -611,7 +641,7 @@ export default function SettingsUserDetailView() {
                                   <td className={baseCellClass}>{getDeadline(job) || "No Date"}</td>
                                   <td className={baseCellClass}>
                                     <span
-                                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-normal ${getStatusClassName(
+                                      className={`inline-flex items-center rounded-full px-4 py-1 text-xs font-normal ${getStatusClassName(
                                         job.status
                                       )}`}
                                     >
@@ -674,48 +704,16 @@ export default function SettingsUserDetailView() {
                 )}
               </div>
             ) : (
-              <div className="space-y-3 p-3">
+              <div className="p-4 pt-2 border border-gray-200 ">
                 {associatedWorkflows.length > 0 ? (
                   <>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <div className="w-full max-w-[280px] rounded-lg border border-gray-200 bg-white px-3 py-2">
-                        <SearchInput
-                          value={workflowsSearchValue}
-                          onChange={(event) => setWorkflowsSearchValue(event.target.value)}
-                          placeholder="Search workflow"
-                          containerClassName="gap-2"
-                          icon={<Search className="h-5 w-5 text-gray-400" />}
-                          className="text-sm text-gray-700"
-                          inputClassName="text-sm text-gray-700"
-                        />
-                      </div>
-
-                      <div className="user-details-workflow-sort-menu relative">
-                        <button
-                          type="button"
-                          onClick={() => setIsWorkflowSortOpen((previous) => !previous)}
-                          className="rounded-md border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-gray-50"
-                          aria-label="Filter workflows"
-                        >
-                          <ExportIcon className="h-4 w-4" />
-                        </button>
-                        {isWorkflowSortOpen ? (
-                          <div className="absolute right-0 top-full z-40 mt-2">
-                            <Popup
-                              items={workflowsSortPopupItems}
-                              className="!min-w-[130px] rounded-lg"
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
                     {filteredWorkflows.length > 0 ? (
                       <ProfileAssociatedWorkflowTable
                         workflows={filteredWorkflows}
                         selectedIds={selectedWorkflowIds}
                         onToggleSelectAll={toggleSelectAllWorkflows}
                         onToggleSelect={toggleSelectWorkflow}
+                        checkboxClassName={USER_DETAIL_CHECKBOX_CLASS}
                       />
                     ) : (
                       <div className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-5 text-center text-sm text-gray-500">

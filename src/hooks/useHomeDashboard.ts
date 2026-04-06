@@ -67,6 +67,7 @@ async function fetchHomeDashboard(): Promise<HomeDashboardData> {
         description:
           "Gain insights from key metrics to improve performance and strategy.",
         icon: "chart",
+        path: "/analytics",
       },
       {
         id: "job-tracker",

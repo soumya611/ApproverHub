@@ -16,11 +16,18 @@ const LayoutContent: React.FC = () => {
   const routeContentClass = hideSidebar
     ? "h-full min-h-0"
     : "flex h-full min-h-0 flex-col";
-  const mainOverflowClass = hideSidebar ? "overflow-y-auto" : "overflow-hidden";
-  const bodySpacingClass = hideSidebar ? "pt-20" : "pb-[10px] pt-[90px]";
+  const mainOverflowClass = "overflow-y-auto";
+  const bodySpacingClass = hideSidebar ? "pt-20" : "pb-3 pt-[90px]";
+  const sidebarOffsetClass = hideSidebar
+    ? "ml-0"
+    : isMobileOpen
+      ? "ml-0"
+      : isExpanded
+        ? "sm:ml-[337px]"
+        : "sm:ml-[145px]";
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#E9E9E9] dark:bg-gray-900">
       {/* 🟦 Full-width Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800 shadow-sm">
         <AppHeader />
@@ -39,7 +46,7 @@ const LayoutContent: React.FC = () => {
         {/* Page Content - full width when no sidebar */}
         <main
           className={`min-h-0 min-w-0 flex-1 ${mainOverflowClass} no-scrollbar transition-all duration-300 ease-in-out
-    ${hideSidebar ? "ml-0" : `ml-[90px] ${isExpanded ? "sm:ml-[335px]" : "sm:ml-[140px]"} ${isMobileOpen ? "ml-0" : ""}`}
+    ${sidebarOffsetClass}
   `}
         >
           <div

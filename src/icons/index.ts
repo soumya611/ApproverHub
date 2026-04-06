@@ -174,6 +174,10 @@ import { ReactComponent as ListViewIcon } from "./listview-icon.svg?react";
 
 import { ReactComponent as Material_Symbols_Icon } from "./material-symbols_account-tree-outline-rounded.svg?react";
 import { ReactComponent as JobInfor_trash_Icon } from "./jobinfo_trash.svg?react";
+import { ReactComponent as Ep_sort_Icon } from "./ep_sort.svg?react";
+import { ReactComponent as Call_Icon } from "./mdi-light_phone.svg?react";
+import { ReactComponent as Export_Filter_Icon } from "./export-filter.svg?react";
+import { ReactComponent as Clear_Icon } from "./f7_clear.svg?react";
 
 
 export {
@@ -348,6 +352,10 @@ export {
   ListViewIcon,
   Material_Symbols_Icon,
   JobInfor_trash_Icon,
+  Ep_sort_Icon,
+  Call_Icon,
+  Export_Filter_Icon,
+  Clear_Icon,
 };
 
 export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;

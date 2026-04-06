@@ -40,6 +40,7 @@ interface ProfileAssociatedWorkflowTableProps {
   selectedIds: Set<string>;
   onToggleSelectAll: () => void;
   onToggleSelect: (workflowId: string) => void;
+  checkboxClassName?: string;
 }
 
 export default function ProfileAssociatedWorkflowTable({
@@ -47,6 +48,7 @@ export default function ProfileAssociatedWorkflowTable({
   selectedIds,
   onToggleSelectAll,
   onToggleSelect,
+  checkboxClassName = "",
 }: ProfileAssociatedWorkflowTableProps) {
   const allSelected = workflows.length > 0 && selectedIds.size === workflows.length;
   const hasRows = workflows.length > 0;
@@ -69,6 +71,7 @@ export default function ProfileAssociatedWorkflowTable({
                     checked={allSelected}
                     onChange={onToggleSelectAll}
                     label="Select all"
+                    inputClassName={checkboxClassName}
                   />
                 ),
               },
@@ -90,6 +93,7 @@ export default function ProfileAssociatedWorkflowTable({
                       checked={selectedIds.has(workflow.id)}
                       onChange={() => onToggleSelect(workflow.id)}
                       aria-label={`Select ${workflow.workflowName}`}
+                      inputClassName={checkboxClassName}
                     />
                   </td>
                   <td className={baseCellClass}>{workflow.workflowId}</td>

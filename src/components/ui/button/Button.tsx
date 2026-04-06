@@ -45,7 +45,7 @@ const Button: React.FC<ButtonProps> = ({
     secondary:
       "bg-[#FFFFFF] text-[#333333] border border-[#D5D5D5] rounded-[7px] hover:bg-gray-50",
     orangebutton:
-      "bg-[#FFE6E1] text-[var(--color-secondary-500)] border border-[var(--color-secondary-500)] rounded-[7px] text-[16px]",
+      "bg-[#FFE6E1] text-[var(--color-secondary-500)] border border-[var(--color-secondary-500)] rounded-[7px] text-[16px] font-medium",
     passbutton:
       "bg-white text-[#5EBDB2] border border-[#E5E5E5] rounded-[22px] transition-colors",
     failbutton:
@@ -66,7 +66,7 @@ const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {startIcon && (
-        <span className="inline-flex items-center justify-center leading-none">
+        <span className="inline-flex items-center justify-center leading-none pr-2">
           {startIcon}
         </span>
       )}

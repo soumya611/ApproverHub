@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Button from "../button/Button";
 import FilterCheckboxItem from "./FilterCheckboxItem";
 import FilterDropdown, { FilterDropdownOption } from "./FilterDropdown";
-import { CloseIcon } from "../../../icons";
+import { Clear_Icon, CloseIcon, Export_Filter_Icon } from "../../../icons";
+import AppIcon from "../icon/AppIcon";
 
 export type FilterRow = {
   id: string;
@@ -120,12 +121,6 @@ const AdvanceFilter = ({
       condition: "",
       value: "",
     },
-    {
-      id: "row-2",
-      column: "owner",
-      condition: "is",
-      value: "todo",
-    },
   ];
 
   const initialRows = defaultRows ?? fallbackRows;
@@ -146,6 +141,28 @@ const AdvanceFilter = ({
 
   const [quickSelections, setQuickSelections] =
     useState<Record<string, boolean>>(quickFilterState);
+
+  const hasQuickFilterSelection = useMemo(
+    () =>
+      Object.entries(quickSelections).some(
+        ([key, checked]) => !key.endsWith("-__header__") && checked
+      ),
+    [quickSelections]
+  );
+
+  const hasAdvancedFilterSelection = useMemo(
+    () =>
+      rows.some(
+        (row) =>
+          row.column.trim() !== "" &&
+          row.condition.trim() !== "" &&
+          row.value.trim() !== ""
+      ),
+    [rows]
+  );
+
+  const hasActiveSelection =
+    activeTab === "quick" ? hasQuickFilterSelection : hasAdvancedFilterSelection;
 
   const handleRowChange = (id: string, field: keyof FilterRow, value: string) => {
     setRows((prev) =>
@@ -232,16 +249,47 @@ const AdvanceFilter = ({
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <button type="button" className="text-[var(--color-secondary-500)]" onClick={handleClearFilter}>
-            Clear Filter
-          </button>
-          <button type="button" className="text-gray-500">
-            Export
-          </button>
           <Button
+            type="button"
             size="sm"
             variant="secondary"
-            className="border-transparent bg-[var(--color-secondary-50)] text-[var(--color-secondary-500)] shadow-theme-xs hover:bg-[var(--color-secondary-100)]"
+            onClick={handleClearFilter}
+            disabled={!hasActiveSelection}
+            startIcon={
+              <AppIcon
+                icon={Clear_Icon}
+                color="var(--color-secondary-600)"
+                forceColor
+              />
+            }
+            className="!h-auto !gap-1 !border-0 !bg-transparent !px-0 !py-0 !text-[11px] !font-medium text-[var(--color-secondary-500)] hover:!bg-transparent hover:!text-[var(--color-secondary-600)]"
+          >
+            Clear Filter
+          </Button>
+          <span className="h-4 w-px bg-gray-200" />
+           <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={handleClearFilter}
+            disabled={!hasActiveSelection}
+            startIcon={
+              <AppIcon
+                icon={Export_Filter_Icon}
+                color="var(--color-secondary-600)"
+                forceColor
+              />
+            }
+            className="!h-auto !gap-1 !border-0 !bg-transparent !px-0 !py-0 !text-[11px] !font-medium text-[var(--color-secondary-500)] hover:!bg-transparent hover:!text-[var(--color-secondary-600)]"
+          >
+            Export
+          </Button>
+          <span className="h-4 w-px bg-gray-200" />
+          <Button
+            size="sm"
+            variant="orangebutton"
+            disabled={!hasActiveSelection}
+            className="border-transparent !font-semibold !px-4 !py-1 !rounded-sm !text-[11px]"
             onClick={() =>
               onSaveView?.({
                 activeTab,

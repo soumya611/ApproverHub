@@ -6,7 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type WheelEvent,
 } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import PageContentContainer from "../components/layout/PageContentContainer";
 import PaginationControls from "../components/common/PaginationControls";
@@ -29,12 +29,13 @@ import AddAssigneePopup, {
 } from "../components/analytics/AddAssigneePopup";
 import { JobsFAB, JobsTable, type JobTag, type JobRowType } from "../components/jobs";
 import type { JobMember } from "../components/jobs/types";
-import { FilterIcon, GridIcon, ListIcon, ListViewIcon, VerticalDots } from "../icons";
+import { FilterIcon, GridIcon, ListViewIcon, VerticalDots } from "../icons";
 import { resolveLabel } from "../data/localization";
 import { normalizeColumns } from "../data/columnsConfig";
 import { useLocalizationStore } from "../stores/localizationStore";
 import { useJobsStore } from "../stores/jobsStore";
 import { useJobsColumnsConfig } from "../context/JobsColumnsConfigContext";
+import { useColumnsConfig } from "../context/ColumnsConfigContext";
 import type { WorkflowMember } from "../types/workflow.types";
 
 type SavedView = {
@@ -61,6 +62,42 @@ const STATUS_ORDER = [
   "Changes required",
   "On hold",
 ];
+
+const QUERY_FILTER_TO_STATUS: Record<string, JobRowType["status"]> = {
+  complete: "Complete",
+  completed: "Complete",
+  in_progress: "In Progress",
+  "in-progress": "In Progress",
+  start_pending: "Start Pending",
+  "start-pending": "Start Pending",
+  uploading: "Uploading...",
+  upload_failed: "Upload Failed",
+  "upload-failed": "Upload Failed",
+  changes_required: "Changes required",
+  "changes-required": "Changes required",
+  on_hold: "On hold",
+  "on-hold": "On hold",
+};
+
+const normalizeStatusToken = (value: string) =>
+  value.trim().toLowerCase().replace(/[\s.-]+/g, "_");
+
+const matchesStatusFilter = (
+  jobStatus: JobRowType["status"] | string,
+  filterStatus: JobRowType["status"]
+) => {
+  const normalizedJobStatus = normalizeStatusToken(String(jobStatus));
+  const normalizedFilterStatus = normalizeStatusToken(filterStatus);
+
+  // Accept both "complete" and "completed" as the same URL filter intent.
+  if (normalizedFilterStatus === "complete") {
+    return (
+      normalizedJobStatus === "complete" || normalizedJobStatus === "completed"
+    );
+  }
+
+  return normalizedJobStatus === normalizedFilterStatus;
+};
 
 const TAG_TONE_MAP: Record<Exclude<JobTag, null>, JobCardTagTone> = {
   Urgent: "red",
@@ -238,6 +275,14 @@ const applyFilters = (
   return filtered;
 };
 
+const applyStatusParamFilter = (
+  data: JobRowType[],
+  statusFilter: JobRowType["status"] | null
+) => {
+  if (!statusFilter) return data;
+  return data.filter((job) => matchesStatusFilter(job.status, statusFilter));
+};
+
 const getUniqueValues = (items: Array<string | null | undefined>) =>
   Array.from(new Set(items.filter(Boolean) as string[]));
 
@@ -264,8 +309,66 @@ const sortByPinned = (items: JobRowType[], pinnedIds: Set<string>) => {
   return [...pinned, ...rest];
 };
 
+const getStatusFilterFromSearch = (
+  search: string
+): JobRowType["status"] | null => {
+  const params = new URLSearchParams(search);
+  const rawFilter = params.get("filter") ?? params.get("status");
+  if (!rawFilter) return null;
+
+  const normalized = normalizeStatusToken(rawFilter);
+  return QUERY_FILTER_TO_STATUS[normalized] ?? null;
+};
+
+const CORE_JOB_COLUMN_IDS = new Set([
+  "campaign_id",
+  "job_number",
+  "job_name",
+  "created",
+  "status",
+  "action",
+  "owner",
+  "assignee",
+]);
+
+const mergeJobsColumnsWithCampaignFields = (
+  jobColumns: ColumnItem[],
+  campaignColumns: ColumnItem[]
+) => {
+  const mergedColumns = normalizeColumns(jobColumns);
+  const columnIndexById = new Map(
+    mergedColumns.map((column, index) => [column.id, index])
+  );
+
+  campaignColumns.forEach((campaignColumn) => {
+    if (CORE_JOB_COLUMN_IDS.has(campaignColumn.id)) {
+      return;
+    }
+
+    const existingIndex = columnIndexById.get(campaignColumn.id);
+    if (existingIndex !== undefined) {
+      const existing = mergedColumns[existingIndex];
+      if (existing.label !== campaignColumn.label) {
+        mergedColumns[existingIndex] = { ...existing, label: campaignColumn.label };
+      }
+      return;
+    }
+
+    mergedColumns.push({
+      id: campaignColumn.id,
+      label: campaignColumn.label,
+      checked: false,
+      required: false,
+    });
+    columnIndexById.set(campaignColumn.id, mergedColumns.length - 1);
+  });
+
+  return normalizeColumns(mergedColumns);
+};
+
 export default function Jobs() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -296,7 +399,8 @@ export default function Jobs() {
   const resetJobsPagination = useJobsStore((state) => state.resetPagination);
   const localizationOverrides = useLocalizationStore((s) => s.overrides);
   const jobsTitle = resolveLabel("page.jobs.title", localizationOverrides);
-  const { columns, setColumns } = useJobsColumnsConfig();
+  const { columns: jobsColumns, setColumns: setJobsColumns } = useJobsColumnsConfig();
+  const { columns: campaignColumns } = useColumnsConfig();
 
   const assigneeUsers = useMemo<AssigneeOption[]>(() => {
     const map = new Map<string, AssigneeOption>();
@@ -424,9 +528,14 @@ export default function Jobs() {
     ]
   );
 
+  const mergedColumns = useMemo(
+    () => mergeJobsColumnsWithCampaignFields(jobsColumns, campaignColumns),
+    [jobsColumns, campaignColumns]
+  );
+
   const visibleColumns = useMemo(
-    () => columns.filter((item) => item.checked),
-    [columns]
+    () => mergedColumns.filter((item) => item.checked),
+    [mergedColumns]
   );
 
   const tableMinWidth = useMemo(() => {
@@ -443,9 +552,14 @@ export default function Jobs() {
     return view?.filterState ?? currentFilterState;
   }, [activeViewId, savedViews, currentFilterState]);
 
+  const statusFilterFromParams = useMemo(
+    () => getStatusFilterFromSearch(location.search),
+    [location.search]
+  );
+
   const filteredJobs = useMemo(
-    () => applyFilters(jobs, activeFilterState),
-    [activeFilterState, jobs]
+    () => applyStatusParamFilter(applyFilters(jobs, activeFilterState), statusFilterFromParams),
+    [activeFilterState, jobs, statusFilterFromParams]
   );
 
   const searchedJobs = useMemo(
@@ -663,12 +777,12 @@ export default function Jobs() {
 
   const handleColumnsOpen = () => {
     setIsColumnsOpen(true);
-    setColumnsDraft(columns);
+    setColumnsDraft(mergedColumns);
   };
 
   const handleColumnsSave = (nextItems: ColumnItem[]) => {
     const normalized = normalizeColumns(nextItems);
-    setColumns(normalized);
+    setJobsColumns(normalized);
     setColumnsDraft(normalized);
     setIsColumnsOpen(false);
   };
@@ -717,7 +831,7 @@ export default function Jobs() {
         onClick={() => {
           if (isColumnsOpen) {
             setIsColumnsOpen(false);
-            setColumnsDraft(columns);
+            setColumnsDraft(mergedColumns);
           } else {
             handleColumnsOpen();
           }
@@ -844,6 +958,22 @@ export default function Jobs() {
   );
 
   useEffect(() => {
+    const statusFilter = getStatusFilterFromSearch(location.search);
+    if (!statusFilter) return;
+
+    setActiveViewId("all");
+    setOpenViewMenuId(null);
+    setCurrentFilterState({
+      activeTab: "quick",
+      rows: DEFAULT_FILTER_ROWS,
+      quickSelections: {
+        [`Status-${statusFilter}`]: true,
+      },
+    });
+    resetJobsPagination();
+  }, [location.search, resetJobsPagination]);
+
+  useEffect(() => {
     if (!isFilterOpen) return;
     const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
@@ -879,18 +1009,18 @@ export default function Jobs() {
         !columnsPanelRef.current.contains(event.target as Node)
       ) {
         setIsColumnsOpen(false);
-        setColumnsDraft(columns);
+        setColumnsDraft(mergedColumns);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isColumnsOpen, columns]);
+  }, [isColumnsOpen, mergedColumns]);
 
   useEffect(() => {
     if (!isColumnsOpen) {
-      setColumnsDraft(columns);
+      setColumnsDraft(mergedColumns);
     }
-  }, [columns, isColumnsOpen]);
+  }, [mergedColumns, isColumnsOpen]);
 
   useEffect(() => {
     setSelectedIds((prev) => {
@@ -903,9 +1033,9 @@ export default function Jobs() {
 
   useEffect(() => {
     if (columnsDraft.length === 0) {
-      setColumnsDraft(columns);
+      setColumnsDraft(mergedColumns);
     }
-  }, [columns, columnsDraft.length]);
+  }, [mergedColumns, columnsDraft.length]);
 
   useEffect(() => {
     if (jobsCurrentPage > totalJobPages) {

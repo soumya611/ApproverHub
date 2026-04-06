@@ -90,7 +90,7 @@ const ROUTE_RESOLVERS: BreadcrumbResolver[] = [
     resolve: () => [
       { label: "Settings", to: "/settings" },
       { label: "People", to: "/settings/people/users" },
-      { label: "Users" },
+      { label: "User Detail" },
     ],
   },
   {

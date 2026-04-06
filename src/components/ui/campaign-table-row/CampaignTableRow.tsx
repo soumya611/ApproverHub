@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import Avatar from "../avatar/Avatar";
 import Popup, { type PopupItem } from "../popup/Popup";
 import { ChevronDownIcon, ChevronUpIcon, EditDetailsIcon } from "../../../icons";
+import Tag, { TagTone } from "../tag";
+import { JobTag } from "../../jobs";
 
 export type CampaignStatus = "Start Pending" | "Started" | "Completed";
 export type CampaignColumnId = string;
@@ -16,6 +18,12 @@ const DEFAULT_COLUMN_ORDER: CampaignColumnId[] = [
   "owner",
 ];
 
+const TAG_TONE_MAP: Record<Exclude<JobTag, null>, TagTone> = {
+  Urgent: "urgent",
+  "Expiry Due": "warning",
+  Late: "urgent",
+  Expired: "neutral",
+};
 export interface CampaignSubRow {
   id: string;
   jobNumber: string;
@@ -202,9 +210,12 @@ export default function CampaignTableRow({
           <td key={columnId} className={baseCellClass}>
             <div className="flex flex-col gap-1">
               {jobStatusTag ? (
-                <span className="inline-flex w-fit items-center rounded-sm border border-red-400 bg-red-100 px-2 py-0.1 text-[9px] font-semibold text-red-600">
-                  {jobStatusTag}
-                </span>
+                <Tag tone={TAG_TONE_MAP[jobStatusTag]} size="xs" rounded="none">
+                                  {jobStatusTag}
+                                </Tag>
+                // <span className="inline-flex w-fit items-center border border-red-400 bg-red-100 px-2 py-0.1 text-[9px] font-semibold text-red-600">
+                //   {jobStatusTag}
+                // </span>
               ) : null}
               <span className="font-medium text-gray-800">{jobProgress}</span>
             </div>
@@ -232,7 +243,7 @@ export default function CampaignTableRow({
                       prev === "parent" ? null : "parent"
                     )
                   }
-                  className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                  className="inline-flex items-center gap-1 bg-gray-200 px-4 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                   aria-haspopup="menu"
                   aria-expanded={openActionId === "parent"}
                 >
