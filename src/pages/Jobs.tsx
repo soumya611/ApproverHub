@@ -839,6 +839,7 @@ export default function Jobs() {
         status: job.status,
         tag: job.tag ?? undefined,
         tagTone: job.tag ? TAG_TONE_MAP[job.tag] : undefined,
+        thumbnailSrc: "/thumbnail-img.png",
       })),
     [paginatedJobs]
   );

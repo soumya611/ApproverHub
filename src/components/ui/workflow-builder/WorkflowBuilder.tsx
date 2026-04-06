@@ -3,6 +3,8 @@ import Button from "../button/Button";
 import PopupModal from "../popup-modal/PopupModal";
 import SearchInput from "../search-input/SearchInput";
 import UserCell from "../user-cell/UserCell";
+import { Dropdown } from "../dropdown/Dropdown";
+import { DropdownItem } from "../dropdown/DropdownItem";
 import {
   AlertIcon,
   CalenderIcon,
@@ -18,6 +20,8 @@ import {
   SkipIcon,
   AddpeopleIcon,
   CalculationIcon,
+  DeadlineIcon,
+  DropDownArrowIcon,
 } from "../../../icons";
 import {
   StageStepList,
@@ -32,7 +36,7 @@ import type {
   JobWorkflowStageConfig,
 } from "../../jobs/types";
 
-export interface WorkflowBuilderValue extends JobWorkflowConfig {}
+export interface WorkflowBuilderValue extends JobWorkflowConfig { }
 
 interface WorkflowBuilderProps {
   value?: WorkflowBuilderValue | null;
@@ -254,27 +258,45 @@ function BuilderSelect({
   className?: string;
   selectClassName?: string;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedLabel =
+    options.find((o) => o.value === value)?.label ?? placeholder ?? "Select";
+
   return (
     <div className={`relative ${className}`}>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={`h-9 w-full appearance-none rounded-md border border-gray-200 bg-white px-3 pr-8 text-xs font-gilroy-regular focus:border-[#007B8C] focus:outline-none ${
-          value ? "text-gray-700" : "text-gray-400"
-        } ${selectClassName}`}
+      <button
+        type="button"
+        onClick={() => setIsOpen((v) => !v)}
+        className={`dropdown-toggle flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-left focus:border-[#007B8C] focus:outline-none ${selectClassName}`}
       >
-        {placeholder ? (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        ) : null}
+        <span className={`truncate text-[15px] font-medium ${value ? "text-[#666666]" : "text-gray-400"}`}>
+          {selectedLabel}
+        </span>
+        <DropDownArrowIcon
+          className={`h-3 w-3 shrink-0 text-[#808080] transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+      <Dropdown
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        className="left-0 right-auto min-w-full py-1 mt-1 rounded-none"
+      >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <DropdownItem
+            key={option.value}
+            onClick={() => {
+              onChange(option.value);
+              setIsOpen(false);
+            }}
+            baseClassName={`block w-full text-left px-4 py-2 text-sm transition hover:bg-gray-50 ${value === option.value
+              ? "font-semibold text-[#007B8C]"
+              : "text-gray-700"
+              }`}
+          >
             {option.label}
-          </option>
+          </DropdownItem>
         ))}
-      </select>
-      <ChevronDownIcon className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+      </Dropdown>
     </div>
   );
 }
@@ -330,19 +352,17 @@ function ChecklistDropdown({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-8 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-xs font-gilroy-regular shadow-sm"
+        className="flex h-8 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-[15px] text-[#666666] font-medium"
       >
         <span
-          className={`truncate ${
-            selectedLabels.length ? "text-gray-700" : "text-gray-400"
-          }`}
+          className={`truncate ${selectedLabels.length ? "text-gray-700" : "text-gray-400"
+            }`}
         >
           {displayLabel}
         </span>
         <CheckListArrow
-          className={`h-3.5 w-3.5 text-gray-400 transition ${
-            open ? "rotate-180" : ""
-          }`}
+          className={`h-3.5 w-3.5 text-gray-400 transition ${open ? "rotate-180" : ""
+            }`}
         />
       </button>
       {open ? (
@@ -435,7 +455,7 @@ export default function WorkflowBuilder({
   const [selectedReviewerIds, setSelectedReviewerIds] = useState<Set<string>>(
     new Set(
       value?.reviewers?.map((reviewer) => reviewer.id) ??
-        baseReviewers.map((reviewer) => reviewer.id)
+      baseReviewers.map((reviewer) => reviewer.id)
     )
   );
   const [permissionsTab, setPermissionsTab] = useState<"stages" | "reviewers">(
@@ -696,18 +716,17 @@ export default function WorkflowBuilder({
             <span className="text-xs text-gray-400">Build your own</span>
           ) : null}
         </div>
-         {!isEditMode ? (<button
+        {!isEditMode ? (<button
           type="button"
           onClick={() => setBuilderOpen((prev) => !prev)}
           className="flex h-0 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-50"
           aria-label="Toggle workflow builder"
         >
           <ChevronDownIcon
-            className={`h-4 w-4 transition-transform ${
-              builderOpen ? "rotate-180" : ""
-            }`}
+            className={`h-4 w-4 transition-transform ${builderOpen ? "rotate-180" : ""
+              }`}
           />
-        </button> ) : null}
+        </button>) : null}
       </div>
 
       {builderOpen ? (
@@ -737,11 +756,10 @@ export default function WorkflowBuilder({
               <button
                 type="button"
                 onClick={() => setShowFlow((prev) => !prev)}
-                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-[11px] font-semibold shadow-sm ${
-                  showFlow
-                    ? "border-[#007B8C] bg-[#E3F3F6] text-[#007B8C]"
-                    : "border-gray-200 bg-gray-200 text-gray-500"
-                }`}
+                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-sm font-semibold ${showFlow
+                  ? "border-[#007B8C] bg-[#E3F3F6] text-[#007B8C]"
+                  : "border-transparent bg-[#9F9F9F26] text-gray-500"
+                  }`}
               >
                 <ShowflowIcon className="h-3.5 w-3.5" />
                 Show flow
@@ -769,478 +787,456 @@ export default function WorkflowBuilder({
             ) : null}
           </div>
 
-        {showFlow ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-3">
-            <div className="no-scrollbar flex items-stretch gap-0 overflow-x-auto overflow-y-visible pr-8">
-              {flowStages.map((stage, index) => (
-                <WorkflowStageCard
-                  key={stage.id}
-                  stage={stage}
-                  variant="fluid"
-                  showRightChevron={index < flowStages.length - 1}
+          {showFlow ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-3">
+              <div className="no-scrollbar flex items-stretch gap-0 overflow-x-auto overflow-y-visible pr-8">
+                {flowStages.map((stage, index) => (
+                  <WorkflowStageCard
+                    key={stage.id}
+                    stage={stage}
+                    variant="fluid"
+                    showRightChevron={index < flowStages.length - 1}
+                  />
+                ))}
+                <div className="w-8 shrink-0" />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid items-start gap-4 lg:grid-cols-[240px_1fr]">
+            <div className="flex h-[360px] flex-col rounded-xl border border-gray-200 bg-gray-50/60 p-3 self-start">
+              <div className="flex-1 overflow-y-auto pr-1">
+                <StageStepList
+                  steps={stageSteps}
+                  className="w-full"
+                  variant={isEditMode ? "filled" : "bordered"}
+                  showConnector={isEditMode}
+                  draggable={!isEditMode}
+                  onReorder={isEditMode ? undefined : handleReorderStage}
+                  onStepClick={(index) => {
+                    const nextStage = stages[index];
+                    if (nextStage) {
+                      setActiveStageId(nextStage.id);
+                    }
+                  }}
                 />
-              ))}
-              <div className="w-8 shrink-0" />
-            </div>
-          </div>
-        ) : null}
-
-        <div className="grid items-start gap-4 lg:grid-cols-[240px_1fr]">
-          <div className="flex h-[360px] flex-col rounded-xl border border-gray-200 bg-gray-50/60 p-3 self-start">
-            <div className="flex-1 overflow-y-auto pr-1">
-              <StageStepList
-                steps={stageSteps}
-                className="w-full"
-                variant={isEditMode ? "filled" : "bordered"}
-                showConnector={isEditMode}
-                draggable={!isEditMode}
-                onReorder={isEditMode ? undefined : handleReorderStage}
-                onStepClick={(index) => {
-                  const nextStage = stages[index];
-                  if (nextStage) {
-                    setActiveStageId(nextStage.id);
-                  }
-                }}
-              />
-            </div>
-           {!isEditMode&&(<button
-              type="button"
-              onClick={handleAddStage}
-              className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#F25C54]"
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#F25C54]">
-                <PlusIcon className="h-3 w-3" />
-              </span>
-              Add Stage
-            </button>)} 
-          </div>
-
-          <div className="space-y-3">
-            <div className="rounded-xl bg-white">
-              <div className="border rounded-xl border-gray-200">
-
-            <div className="flex flex-wrap items-center p-5 gap-3">
-              <span className="bg-[#F25C54]/10 px-2 py-0.5 text-[11px] font-gilroy-semibols text-[#F25C54]">
-                {activeStage?.stepLabel ?? "S1"}
-              </span>
-              <input
-                value={activeStage?.name ?? ""}
-                onChange={(event) => updateStage({ name: event.target.value })}
-                placeholder="Enter stage name"
-                className="w-full max-w-[260px] border border-gray-200 px-2 py-1 text-xs text-gray-700 font-semibold focus:border-[#007B8C] focus:outline-none"
-              />
-              {hasReordered ? (
-                <div className="ml-auto flex items-center gap-2 text-[11px] text-[#F25C54]">
-                  <AlertIcon className="h-4 w-4" />
-                  <span>You reordered stages, some settings may need updating.</span>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="border-t border-gray-200" />
-
-            <div className="grid gap-4 gap-x-70 justify-between w-3/4 p-4 lg:grid-cols-2">
-              <div className="flex">
-                <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
-                  <StartIcon className="h-4 w-4" />
-                </span>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-gilroy-regular">Start</p>
-                    <BuilderSelect
-                      value={activeStartRule}
-                      onChange={(value) => updateStage({ startRule: value })}
-                      options={
-                        isFirstStage ? START_OPTIONS_FIRST_STAGE : START_OPTIONS_LATER_STAGE
-                      }
-                      className="w-40"
-                      selectClassName="h-8 text-[11px]"
-                    />
-                  </div>
-                  {!isFirstStage ? (
-                    <>
-                      <p className="text-[11px] text-gray-500">{startDescription}</p>
-                      <label className="flex items-center gap-2 text-[11px] text-gray-500">
-                        <input
-                          type="checkbox"
-                          checked={activeStage?.startOnDeadline ?? false}
-                          onChange={(event) =>
-                            updateStage({ startOnDeadline: event.target.checked })
-                          }
-                          className="h-3.5 w-3.5"
-                        />
-                        Or when deadline is reached.
-                      </label>
-                    </>
-                  ) : null}
-                </div>
               </div>
-
-              <div className="flex">
-                <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
-                  <Symbols_lock_Icon className="h-4 w-4" />
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-gilroy-regular">Lock</p>
-                    <BuilderSelect
-                      value={activeStage?.lockRule ?? "never"}
-                      onChange={(value) => updateStage({ lockRule: value })}
-                      options={LOCK_OPTIONS}
-                      className="w-40"
-                      selectClassName="h-8 text-[11px]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex">
-                <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
-                  <CalenderIcon className="h-5 w-5" />
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-gilroy-regular">Deadline</p>
-                    <div className="relative w-40">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (deadlineInputRef.current?.showPicker) {
-                            deadlineInputRef.current.showPicker();
-                          } else {
-                            deadlineInputRef.current?.click();
-                          }
-                          deadlineInputRef.current?.focus();
-                        }}
-                        className="flex h-8 w-full items-center gap-2 px-1 text-[11px] text-gray-600"
-                      >
-                        <CalenderIcon className="h-3.5 w-3.5 text-gray-400" />
-                        <span
-                          className={
-                            activeStage?.deadline
-                              ? "text-gray-700"
-                              : "text-gray-400"
-                          }
-                        >
-                          {formatDeadlineLabel(activeStage?.deadline ?? "")}
-                        </span>
-                      </button>
-                      <input
-                        type="datetime-local"
-                        ref={deadlineInputRef}
-                        value={activeStage?.deadline ?? ""}
-                        onChange={(event) =>
-                          updateStage({ deadline: event.target.value })
-                        }
-                        className="absolute inset-0 h-8 w-full cursor-pointer opacity-0 pointer-events-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex">
-                <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
-                  <SkipIcon className="h-4 w-4" />
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-gilroy-regular">Skip</p>
-                    <BuilderSelect
-                      value={activeStage?.skipRule ?? "never"}
-                      onChange={(value) => updateStage({ skipRule: value })}
-                      options={SKIP_OPTIONS}
-                      className="w-40"
-                      selectClassName="h-8 text-[11px]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex">
-                <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
-                  <CalculationIcon className="h-4 w-4" />
-                </span>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-gilroy-regular">
-                      Final Status Calculation
-                    </p>
-                    <BuilderSelect
-                      value={activeStage?.finalStatus ?? ""}
-                      onChange={(value) => updateStage({ finalStatus: value })}
-                      options={FINAL_STATUS_OPTIONS}
-                      placeholder="Select status"
-                      className="w-40"
-                      selectClassName="h-8 text-[11px]"
-                    />
-                  </div>
-                  {activeStage?.finalStatus === "decision_by" ? (
-                    <Button
-                      size="xs"
-                      variant="secondary"
-                      onClick={() => setDecisionPopupOpen(true)}
-                      className="!rounded-md !px-3 !py-1 text-[11px]"
-                    >
-                      Add user
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="flex">
-                <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
-                  <CheckListIcon className="h-4 w-4" />
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-gilroy-regular">Checklist</p>
-                    <div className="w-40">
-                      <ChecklistDropdown
-                        value={activeStage?.checklistIds ?? []}
-                        onChange={(value) => updateStage({ checklistIds: value })}
-                        items={CHECKLIST_ITEMS}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-5 border-t border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-400">
-                  <AddpeopleIcon className="h-5 w-5" />
-                </span>
-                <div className="w-full sm:w-[40%]">
-                  <SearchInput
-                    value={reviewerQuery}
-                    onChange={(event) => setReviewerQuery(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        handleAddReviewerByEmail();
-                      }
-                    }}
-                    placeholder="Search or 'add' reviewer by email address"
-                    containerClassName="gap-2 rounded-full border border-gray-200 px-3 py-2"
-                    inputClassName="text-xs text-gray-600"
-                    className="text-xs text-gray-600"
-                    iconClassName="text-gray-300"
-                    iconSize="!h-4"
-                  />
-                </div>
-              </div>
-            </div>
-              </div>
-
-            {reviewerQuery.trim() && reviewerQuery.includes("@") ? (
-              <button
+              {!isEditMode && (<button
                 type="button"
-                onClick={handleAddReviewerByEmail}
-                className="mt-2 text-xs font-semibold text-[#007B8C]"
+                onClick={handleAddStage}
+                className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#F25C54]"
               >
-                Add "{reviewerQuery.trim()}"
-              </button>
-            ) : null}
+                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#F25C54]">
+                  <PlusIcon className="h-3 w-3" />
+                </span>
+                Add Stage
+              </button>)}
+            </div>
 
-            {showReviewerResults ? (
-              <div className="mt-3 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 text-[11px] text-gray-500">
-                  <label className="flex items-center gap-2">
+            <div className="space-y-3">
+              <div className="rounded-xl bg-white">
+                <div className="border rounded-xl border-gray-200">
+
+                  <div className="flex flex-wrap items-center p-4 gap-3">
+                    <span className="bg-[#F25C54]/10 px-2 py-1 text-sm font-semibold text-[#F15F44] rounded-xs">
+                      {activeStage?.stepLabel ?? "S1"}
+                    </span>
                     <input
-                      type="checkbox"
-                      checked={allReviewersSelected}
-                      onChange={(event) => toggleAllReviewers(event.target.checked)}
-                      className="h-3.5 w-3.5"
+                      value={activeStage?.name ?? ""}
+                      onChange={(event) => updateStage({ name: event.target.value })}
+                      placeholder="Enter stage name"
+                      className="w-full max-w-[300px] border border-gray-200 rounded-sm px-3 py-3 text-base text-gray-700 font-semibold focus:border-[#007B8C] focus:outline-none"
                     />
-                    Select all
-                  </label>
-                  <div className="flex items-center gap-10 pr-2">
-                    <span className="text-[11px] font-semibold text-gray-500">Role</span>
-                    <span className="text-[11px] font-semibold text-gray-500">Share</span>
+                    {hasReordered ? (
+                      <div className="ml-auto flex items-center gap-2 text-[11px] text-[#F25C54]">
+                        <AlertIcon className="h-4 w-4" />
+                        <span>You reordered stages, some settings may need updating.</span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="border-t border-gray-200" />
+
+                  <div className="grid gap-y-8 p-4 grid-cols-1 xl:gap-x-6 xl:pr-42 xl:grid-cols-[minmax(0,400px)_minmax(0,400px)] justify-between">
+                    {/* Start */}
+                    <div className="flex items-start gap-10">
+                      <div className="flex w-32 shrink-0 items-center gap-3 pt-1">
+                        <StartIcon className="h-4 w-4 shrink-0 text-[#818181]" />
+                        <p className="text-sm font-gilroy-regular text-[#000000]">Start</p>
+                      </div>
+                      <div className="w-48 min-w-0 space-y-1">
+                        <BuilderSelect
+                          value={activeStartRule}
+                          onChange={(value) => updateStage({ startRule: value })}
+                          options={
+                            isFirstStage ? START_OPTIONS_FIRST_STAGE : START_OPTIONS_LATER_STAGE
+                          }
+                          className="w-full rounded-xs"
+                          selectClassName="h-8 text-[15px] text-[#666666] font-medium"
+                        />
+                        {!isFirstStage ? (
+                          <>
+                            <p className="text-[11px] text-gray-500">{startDescription}</p>
+                            <label className="flex items-center gap-2 text-[11px] text-gray-500">
+                              <input
+                                type="checkbox"
+                                checked={activeStage?.startOnDeadline ?? false}
+                                onChange={(event) =>
+                                  updateStage({ startOnDeadline: event.target.checked })
+                                }
+                                className="h-3.5 w-3.5"
+                              />
+                              Or when deadline is reached.
+                            </label>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Lock */}
+                    <div className="flex items-center gap-10">
+                      <div className="flex w-32 shrink-0 items-center gap-3">
+                        <Symbols_lock_Icon className="h-4 w-4 shrink-0 text-[#818181]" />
+                        <p className="text-sm font-gilroy-regular text-[#000000]">Lock</p>
+                      </div>
+                      <div className="w-48 min-w-0">
+                        <BuilderSelect
+                          value={activeStage?.lockRule ?? "never"}
+                          onChange={(value) => updateStage({ lockRule: value })}
+                          options={LOCK_OPTIONS}
+                          className="w-full"
+                          selectClassName="h-8 text-[15px] text-[#666666] font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Deadline */}
+                    <div className="flex items-center gap-10">
+                      <div className="flex w-32 shrink-0 items-center gap-3">
+                        <DeadlineIcon className="h-4 w-4 shrink-0 text-[#818181]" />
+                        <p className="text-sm font-gilroy-regular text-[#000000]">Deadline</p>
+                      </div>
+                      <div className="relative w-50 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (deadlineInputRef.current?.showPicker) {
+                              deadlineInputRef.current.showPicker();
+                            } else {
+                              deadlineInputRef.current?.click();
+                            }
+                            deadlineInputRef.current?.focus();
+                          }}
+                          className="flex h-8 w-full items-center gap-2 rounded-md  text-[15px] text-[#666666] font-medium hover:border-[#007B8C]"
+                        >
+                          <CalenderIcon className="h-4 w-4 shrink-0 text-[#666666]" />
+                          <span className={activeStage?.deadline ? "text-[15px] text-[#666666] font-medium" : "text-gray-400"}>
+                            {formatDeadlineLabel(activeStage?.deadline ?? "")}
+                          </span>
+                        </button>
+                        <input
+                          type="datetime-local"
+                          ref={deadlineInputRef}
+                          value={activeStage?.deadline ?? ""}
+                          onChange={(event) => updateStage({ deadline: event.target.value })}
+                          className="absolute inset-0 h-8 w-full cursor-pointer opacity-0 pointer-events-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Skip */}
+                    <div className="flex items-center gap-10">
+                      <div className="flex w-32 shrink-0 items-center gap-3">
+                        <SkipIcon className="h-3 w-4 shrink-0 text-[#818181]" />
+                        <p className="text-sm font-gilroy-regular text-[#000000]">Skip</p>
+                      </div>
+                      <div className="w-48 min-w-0">
+                        <BuilderSelect
+                          value={activeStage?.skipRule ?? "never"}
+                          onChange={(value) => updateStage({ skipRule: value })}
+                          options={SKIP_OPTIONS}
+                          className="w-full"
+                          selectClassName="h-8 text-[15px] text-[#666666] font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Final Status Calculation */}
+                    <div className="flex items-start gap-10">
+                      <div className="flex w-32 shrink-0 items-center gap-3 pt-1">
+                        <CalculationIcon className="h-4 w-4 shrink-0 text-[#818181]" />
+                        <p className="text-sm font-gilroy-regular text-[#000000]">Final Status Calculation</p>
+                      </div>
+                      <div className="w-48 min-w-0 space-y-2">
+                        <BuilderSelect
+                          value={activeStage?.finalStatus ?? ""}
+                          onChange={(value) => updateStage({ finalStatus: value })}
+                          options={FINAL_STATUS_OPTIONS}
+                          placeholder="Select status"
+                          className="w-full"
+                          selectClassName="h-8 text-[15px] text-[#666666] font-medium"
+                        />
+                        {activeStage?.finalStatus === "decision_by" ? (
+                          <Button
+                            size="xs"
+                            variant="secondary"
+                            onClick={() => setDecisionPopupOpen(true)}
+                            className="!rounded-md !px-3 !py-1 text-[11px]"
+                          >
+                            Add user
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Checklist */}
+                    <div className="flex items-center gap-10">
+                      <div className="flex w-32 shrink-0 items-center gap-3">
+                        <CheckListIcon className="h-4 w-4 shrink-0 text-[#818181]" />
+                        <p className="text-sm font-gilroy-regular text-[#000000]">Checklist</p>
+                      </div>
+                      <div className="w-48 min-w-0">
+                        <ChecklistDropdown
+                          value={activeStage?.checklistIds ?? []}
+                          onChange={(value) => updateStage({ checklistIds: value })}
+                          items={CHECKLIST_ITEMS}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-5 border-t border-gray-200 p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="relative flex h-8 w-8 items-center justify-center text-gray-400">
+                        <AddpeopleIcon className="h-5 w-5" />
+                      </span>
+                      <div className="w-full sm:w-[40%]">
+                        <SearchInput
+                          value={reviewerQuery}
+                          onChange={(event) => setReviewerQuery(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              handleAddReviewerByEmail();
+                            }
+                          }}
+                          placeholder="Search or 'add' reviewer by email address"
+                          containerClassName="gap-2 rounded-full border border-gray-200 px-3 py-2"
+                          inputClassName="text-xs text-gray-600"
+                          className="text-xs text-gray-600"
+                          iconClassName="text-gray-300"
+                          iconSize="!h-4"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="divide-y divide-gray-100">
-                  {filteredReviewers.map((reviewer) => {
-                    const isSelected = selectedReviewerIds.has(reviewer.id);
-                    return (
-                      <div
-                        key={reviewer.id}
-                        className="flex items-center gap-2 px-3 py-2 text-xs text-gray-600"
-                      >
+
+                {reviewerQuery.trim() && reviewerQuery.includes("@") ? (
+                  <button
+                    type="button"
+                    onClick={handleAddReviewerByEmail}
+                    className="mt-2 text-xs font-semibold text-[#007B8C]"
+                  >
+                    Add "{reviewerQuery.trim()}"
+                  </button>
+                ) : null}
+
+                {showReviewerResults ? (
+                  <div className="mt-3 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 text-[11px] text-gray-500">
+                      <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleReviewer(reviewer.id)}
+                          checked={allReviewersSelected}
+                          onChange={(event) => toggleAllReviewers(event.target.checked)}
                           className="h-3.5 w-3.5"
                         />
-                        <UserCell
-                          title={reviewer.name}
-                          subtitle={reviewer.email ?? reviewer.id}
-                          avatarUrl={reviewer.avatarUrl}
-                          avatarAlt={reviewer.name}
-                          avatarSize="xsmall"
-                          avatarFallback="initials"
-                          className="min-w-0 flex-1 gap-2"
-                          titleClassName="text-[11px] font-medium text-gray-700"
-                          subtitleClassName="text-[10px] text-gray-400"
-                        />
-                        <div className="w-28">
-                          <BuilderSelect
-                            value={reviewer.role ?? "Approver"}
-                            onChange={(value) =>
-                              updateReviewer(reviewer.id, {
-                                role: value as JobMember["role"],
-                              })
-                            }
-                            options={ROLE_OPTIONS}
-                            className="w-full"
-                            selectClassName="h-8 text-[11px]"
-                          />
-                        </div>
-                        <div className="flex w-12 justify-center">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(reviewer.share)}
-                            onChange={(event) =>
-                              updateReviewer(reviewer.id, {
-                                share: event.target.checked,
-                              })
-                            }
-                            className="h-3.5 w-3.5"
-                          />
-                        </div>
+                        Select all
+                      </label>
+                      <div className="flex items-center gap-10 pr-2">
+                        <span className="text-[11px] font-semibold text-gray-500">Role</span>
+                        <span className="text-[11px] font-semibold text-gray-500">Share</span>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {isEditMode ? (
-              <div className="my-4 rounded-xl border border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setChecklistOpen((prev) => !prev)}
-                  className="flex w-full items-center justify-between px-4 py-3 text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                      <CheckListIcon className="h-4 w-4" />
-                    </span>
-                    <span className="text-sm font-semibold text-gray-700">
-                      Checklist
-                    </span>
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F25C54]/10 text-[11px] font-semibold text-[#F25C54]">
-                      {activeChecklistItems.length}
-                    </span>
-                  </div>
-                  <ChevronDownIcon
-                    className={`h-4 w-4 transition-transform ${
-                      checklistOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {checklistOpen ? (
-                  <div className="border-t border-gray-200 px-4 pb-4 pt-3">
-                    {activeChecklistItems.length ? (
-                      <div className="space-y-2">
-                        {activeChecklistItems.map((item) => (
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {filteredReviewers.map((reviewer) => {
+                        const isSelected = selectedReviewerIds.has(reviewer.id);
+                        return (
                           <div
-                            key={item.id}
-                            className="flex items-center justify-between text-xs text-gray-600"
+                            key={reviewer.id}
+                            className="flex items-center gap-2 px-3 py-2 text-xs text-gray-600"
                           >
-                            <span>{item.label}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveChecklistItem(item.id)}
-                              className="text-[11px] font-semibold text-[#F25C54]"
-                            >
-                              Remove
-                            </button>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleReviewer(reviewer.id)}
+                              className="h-3.5 w-3.5"
+                            />
+                            <UserCell
+                              title={reviewer.name}
+                              subtitle={reviewer.email ?? reviewer.id}
+                              avatarUrl={reviewer.avatarUrl}
+                              avatarAlt={reviewer.name}
+                              avatarSize="xsmall"
+                              avatarFallback="initials"
+                              className="min-w-0 flex-1 gap-2"
+                              titleWrap={true}
+                              titleClassName="text-[11px] font-medium text-gray-700"
+                              subtitleClassName="text-[10px] text-gray-400"
+                            />
+                            <div className="w-28">
+                              <BuilderSelect
+                                value={reviewer.role ?? "Approver"}
+                                onChange={(value) =>
+                                  updateReviewer(reviewer.id, {
+                                    role: value as JobMember["role"],
+                                  })
+                                }
+                                options={ROLE_OPTIONS}
+                                className="w-full"
+                                selectClassName="h-8 text-[11px]"
+                              />
+                            </div>
+                            <div className="flex w-12 justify-center">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(reviewer.share)}
+                                onChange={(event) =>
+                                  updateReviewer(reviewer.id, {
+                                    share: event.target.checked,
+                                  })
+                                }
+                                className="h-3.5 w-3.5"
+                              />
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-400">
-                        No checklist items added.
-                      </p>
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
-              </div>
-            ) : null}
 
-            <div className="rounded-xl my-4 border border-gray-200">
-              <button
-                type="button"
-                onClick={() => setPermissionsOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between px-4 py-3 text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                    <SettingIcon className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm font-semibold text-gray-700">
-                    Manage Permissions
-                  </span>
-                </div>
-                <ChevronDownIcon
-                  className={`h-4 w-4 transition-transform ${
-                    permissionsOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {permissionsOpen ? (
-                <div className="border-t border-gray-200 px-4 pb-4 pt-3">
-                  <div className="flex items-center gap-6 border-b border-gray-200 text-xs font-semibold text-gray-500">
-                    {[
-                      { id: "stages", label: "Stages" },
-                      { id: "reviewers", label: "Reviewers" },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() =>
-                          setPermissionsTab(tab.id as "stages" | "reviewers")
-                        }
-                        className={`pb-2 ${
-                          permissionsTab === tab.id
-                            ? "border-b-2 border-[#007B8C] text-[#007B8C]"
-                            : ""
+                {isEditMode ? (
+                  <div className="my-4 rounded-xl border border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => setChecklistOpen((prev) => !prev)}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                          <CheckListIcon className="h-4 w-4" />
+                        </span>
+                        <span className="text-sm font-semibold text-gray-700">
+                          Checklist
+                        </span>
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F25C54]/10 text-[11px] font-semibold text-[#F25C54]">
+                          {activeChecklistItems.length}
+                        </span>
+                      </div>
+                      <ChevronDownIcon
+                        className={`h-4 w-4 transition-transform ${checklistOpen ? "rotate-180" : ""
+                          }`}
+                      />
+                    </button>
+                    {checklistOpen ? (
+                      <div className="border-t border-gray-200 px-4 pb-4 pt-3">
+                        {activeChecklistItems.length ? (
+                          <div className="space-y-2">
+                            {activeChecklistItems.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-center justify-between text-xs text-gray-600"
+                              >
+                                <span>{item.label}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveChecklistItem(item.id)}
+                                  className="text-[11px] font-semibold text-[#F25C54]"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400">
+                            No checklist items added.
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className="rounded-xl my-4 border border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setPermissionsOpen((prev) => !prev)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                        <SettingIcon className="h-4 w-4" />
+                      </span>
+                      <span className="text-sm font-semibold text-gray-700">
+                        Manage Permissions
+                      </span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 transition-transform ${permissionsOpen ? "rotate-180" : ""
                         }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {(permissionsTab === "stages"
-                      ? STAGE_PERMISSION_OPTIONS
-                      : REVIEWER_PERMISSION_OPTIONS
-                    ).map((item) => (
-                      <label
-                        key={item.id}
-                        className="flex items-center gap-2 text-xs text-gray-600"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={permissions[permissionsTab][item.id] ?? false}
-                          onChange={() =>
-                            handleTogglePermission(permissionsTab, item.id)
-                          }
-                          className="h-4 w-4"
-                        />
-                        {item.label}
-                      </label>
-                    ))}
-                  </div>
+                    />
+                  </button>
+                  {permissionsOpen ? (
+                    <div className="border-t border-gray-200 px-4 pb-4 pt-3">
+                      <div className="flex items-center gap-6 border-b border-gray-200 text-xs font-semibold text-gray-500">
+                        {[
+                          { id: "stages", label: "Stages" },
+                          { id: "reviewers", label: "Reviewers" },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() =>
+                              setPermissionsTab(tab.id as "stages" | "reviewers")
+                            }
+                            className={`pb-2 ${permissionsTab === tab.id
+                              ? "border-b-2 border-[#007B8C] text-[#007B8C]"
+                              : ""
+                              }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {(permissionsTab === "stages"
+                          ? STAGE_PERMISSION_OPTIONS
+                          : REVIEWER_PERMISSION_OPTIONS
+                        ).map((item) => (
+                          <label
+                            key={item.id}
+                            className="flex items-center gap-2 text-xs text-gray-600"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={permissions[permissionsTab][item.id] ?? false}
+                              onChange={() =>
+                                handleTogglePermission(permissionsTab, item.id)
+                              }
+                              className="h-4 w-4"
+                            />
+                            {item.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
+              </div>
             </div>
           </div>
-        </div>
-        </div>
         </div>
       ) : null}
 

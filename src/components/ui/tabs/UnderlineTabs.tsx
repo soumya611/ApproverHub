@@ -18,7 +18,7 @@ export default function UnderlineTabs<T extends string>({
   activeTab,
   onChange,
   className = "flex flex-wrap items-end gap-6",
-  tabClassName = "-mb-px border-b-3 px-1 pb-3 pt-3 text-sm transition",
+  tabClassName = "-mb-px border-b-3 px-1 pb-3 pt-3 text-lg transition",
   activeClassName = "border-[#007B8C] font-bold text-primary",
   inactiveClassName = "border-transparent font-medium text-gray-400 hover:text-gray-700",
 }: UnderlineTabsProps<T>) {

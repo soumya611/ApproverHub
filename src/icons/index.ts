@@ -170,6 +170,8 @@ import { ReactComponent as NotesPlusIcon } from "./note-plus.svg?react";
 import { ReactComponent as NotesEditIcon } from "./notes-edit.svg?react";
 import { ReactComponent as NotesDelIcon } from "./notes-del.svg?react";
 import { ReactComponent as ListViewIcon } from "./listview-icon.svg?react";
+import { ReactComponent as DropDownArrowIcon } from "./dropdown-arrow.svg?react";
+
 
 
 import { ReactComponent as Material_Symbols_Icon } from "./material-symbols_account-tree-outline-rounded.svg?react";
@@ -348,6 +350,7 @@ export {
   ListViewIcon,
   Material_Symbols_Icon,
   JobInfor_trash_Icon,
+  DropDownArrowIcon,
 };
 
 export type AppSvgIcon = ComponentType<SVGProps<SVGSVGElement>>;

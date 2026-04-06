@@ -49,7 +49,7 @@ export default function Popup({
   }, []);
 
   const baseClassName =
-    "w-fit min-w-[220px] border border-gray-200 bg-white shadow-[0_14px_36px_-18px_rgba(15,23,42,0.5)]";
+    "w-fit min-w-[180px] border border-gray-200 bg-white shadow-[0_14px_36px_-18px_rgba(15,23,42,0.5)]";
 
   const renderPopup = (popupItems: PopupItem[], isNested: boolean) => (
     <div className={`${baseClassName} ${isNested ? "" : className}`}>
@@ -78,7 +78,7 @@ export default function Popup({
               </div>
             </div>
           ) : (
-            <div className="text-sm text-gray-700">{item.label}</div>
+            <div className="text-sm text-gray-700 cursor-pointer">{item.label}</div>
           );
 
           const rowContent = hasSubItems ? (
@@ -127,7 +127,7 @@ export default function Popup({
                   {rowContent}
                 </button>
                 {hasSubItems && isSubmenuOpen ? (
-                  <div className="absolute z-20 m-2">
+                  <div className="absolute z-20 mt-1">
                     {renderPopup(item.subItems ?? [], true)}
                   </div>
                 ) : null}

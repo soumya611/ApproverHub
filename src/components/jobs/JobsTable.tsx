@@ -41,60 +41,60 @@ export default function JobsTable({
   );
 
   return (
-      <table
-        className="w-full min-w-[900px] text-sm"
-        style={minWidth ? { minWidth: `${minWidth}px` } : undefined}
-      >
-        <thead>
-          <TableHeaderRow
-            className="border-b border-gray-200 bg-gray-50/80 text-center text-[12px] font-bold text-gray-600"
-            columns={columns}
-            getColumnKey={(column) => column.id}
-            renderColumn={(column) => column.label}
-            columnClassName="py-3 px-4"
-            prefixCells={[
-              {
-                className: "text-left py-3 px-4 w-10 text-gray-300",
-                content: showSelection ? (
-                  <label className="flex items-center gap-2 text-right whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={onToggleSelectAll}
-                      className="h-4 w-4 columns-checkbox"
-                      aria-label="Select all jobs"
-                    />
-                    Select All
-                  </label>
-                ) : null,
-              },
-            ]}
-            suffixCells={[
-              { className: "w-10 py-3 px-4", content: null },
-              {
-                className: "w-10 py-3 px-4",
-                content: columnsMenu ?? null,
-              },
-            ]}
+    <table
+      className="w-full min-w-[900px] text-sm"
+      style={minWidth ? { minWidth: `${minWidth}px` } : undefined}
+    >
+      <thead>
+        <TableHeaderRow
+          className="border-b border-gray-200 bg-gray-50/80 text-center text-[12px] font-bold text-gray-600"
+          columns={columns}
+          getColumnKey={(column) => column.id}
+          renderColumn={(column) => column.label}
+          columnClassName="py-3 px-4"
+          prefixCells={[
+            {
+              className: "text-left py-3 px-4 text-gray-300",
+              content: showSelection ? (
+                <label className="flex items-center gap-2 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={onToggleSelectAll}
+                    className="h-4 w-4 columns-checkbox cursor-pointer"
+                    aria-label="Select all jobs"
+                  />
+                  Select All
+                </label>
+              ) : null,
+            },
+          ]}
+          suffixCells={[
+            { className: "w-10 py-3 px-4", content: null },
+            {
+              className: "w-10 py-3 px-4",
+              content: columnsMenu ?? null,
+            },
+          ]}
+        />
+      </thead>
+      <tbody>
+        {jobs.map((job) => (
+          <JobRow
+            key={job.id}
+            job={job}
+            isSelected={selectedIds.has(job.id)}
+            onToggleSelect={() => onToggleSelect(job.id)}
+            onEdit={() => onEdit(job.id)}
+            onAssigneeClick={onAssigneeClick}
+            onAction={onAction}
+            visibleColumns={visibleColumnIds}
+            showSelection={showSelection}
+            showEdit={showEdit}
           />
-        </thead>
-        <tbody>
-          {jobs.map((job) => (
-            <JobRow
-              key={job.id}
-              job={job}
-              isSelected={selectedIds.has(job.id)}
-              onToggleSelect={() => onToggleSelect(job.id)}
-              onEdit={() => onEdit(job.id)}
-              onAssigneeClick={onAssigneeClick}
-              onAction={onAction}
-              visibleColumns={visibleColumnIds}
-              showSelection={showSelection}
-              showEdit={showEdit}
-            />
-          ))}
-        </tbody>
-      </table>
-   
+        ))}
+      </tbody>
+    </table>
+
   );
 }

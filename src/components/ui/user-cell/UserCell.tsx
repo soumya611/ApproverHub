@@ -55,7 +55,7 @@ export default function UserCell({
       <div className={`min-w-0 flex-1 ${contentClassName}`}>
         {(title ?? meta) ? (
           <div
-            className={`flex min-w-0 gap-2 ${titleWrap ? "items-start" : "items-center"}`}
+            className={`flex min-w-0 flex-col ${titleWrap ? "items-start" : "items-center"}`}
           >
             {title ? (
               <span

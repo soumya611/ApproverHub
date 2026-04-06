@@ -114,14 +114,7 @@ export default function JobRow({
       case "campaign_id":
         return (
           <td key={columnId} className="py-3 px-4 text-center align-middle">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                 <img src="/thumbnail-img.png" alt={job.campaignId} className="w-full h-full object-cover" />
-              </div>
-              <span className="font-medium text-gray-900">
-                {job.campaignId}
-              </span>
-            </div>
+            <span className="font-medium text-gray-900">{job.campaignId}</span>
           </td>
         );
       case "job_number":
@@ -237,15 +230,20 @@ export default function JobRow({
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors">
-      <td className="py-3 px-4 w-10 align-middle">
-        {showSelection ? (
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={onToggleSelect}
-            className="h-4 w-4 columns-checkbox"
-          />
-        ) : null}
+      <td className="py-3 px-4 w-8 align-middle">
+        <div className="flex items-center gap-6">
+          {showSelection ? (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelect}
+              className="h-4 w-4 columns-checkbox flex-shrink-0 cursor-pointer"
+            />
+          ) : null}
+          <div className="w-14 h-10 rounded-lg overflow-hidden flex-shrink-0">
+            <img src="/thumbnail-img.png" alt="" className="w-full h-full object-cover" />
+          </div>
+        </div>
       </td>
       {resolvedColumns.map((columnId) => renderCell(columnId))}
       <td className="py-3 px-4 w-10 align-middle">

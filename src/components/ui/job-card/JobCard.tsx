@@ -147,7 +147,7 @@ export default function JobCard({ card, className = "", onClick }: JobCardProps)
         {renderThumbnail()}
         {tag ? (
           <span
-            className={`absolute right-2 top-2  px-2 py-0.5 text-[10px] font-semibold ${TAG_TONE_CLASSES[resolvedTagTone]}`}
+            className={`absolute right-0 top-2  px-2 py-0.5 text-[10px] rounded-tl-xs rounded-bl-xs font-semibold ${TAG_TONE_CLASSES[resolvedTagTone]}`}
           >
             {tag}
           </span>

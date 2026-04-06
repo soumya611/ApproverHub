@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import PageMeta from "../components/common/PageMeta";
+import { Dropdown } from "../components/ui/dropdown/Dropdown";
+import { DropdownItem } from "../components/ui/dropdown/DropdownItem";
 import PageContentContainer from "../components/layout/PageContentContainer";
 import SearchInput from "../components/ui/search-input/SearchInput";
 import UnderlineTabs from "../components/ui/tabs/UnderlineTabs";
@@ -219,6 +221,7 @@ export default function JobDetails() {
   const [selectedVersionId, setSelectedVersionId] = useState("");
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [emailReviewersOpen, setEmailReviewersOpen] = useState(false);
+  const [isVersionDropdownOpen, setIsVersionDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [checklistFilter, setChecklistFilter] = useState<
@@ -407,18 +410,17 @@ export default function JobDetails() {
     2
   );
 
-  const menuItems = useMemo<PopupItem[]>(
+ const menuItems = useMemo<PopupItem[]>(
     () => [
-      { id: "rename", label: "Rename job" },
+      { id: "share", label: "Share job details" },
       {
-        id: "manage",
-        label: "Manage",
+        id: "export",
+        label: "Export job details",
         subItems: [
-          { id: "duplicate", label: "Duplicate" },
-          { id: "archive", label: "Archive" },
+          { id: "export-pdf", label: "PDF file" },
+          { id: "export-csv", label: "CSV file" },
         ],
       },
-      { id: "delete", label: "Delete" },
     ],
     []
   );
@@ -497,32 +499,47 @@ export default function JobDetails() {
         <PageContentContainer className="min-h-0 flex-1 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="lg:text-xl font-semibold text-gray-900">
                 {job.jobName}
               </h2>
               {hasMultipleVersions ? (
                 <div className="relative">
-                  <select
-                    value={selectedVersionId || versions[0]?.id || ""}
-                    onChange={(event) =>
-                      setSelectedVersionId(event.target.value)
-                    }
-                    className="h-7 appearance-none rounded-md bg-gray-100 px-1.5 pr-5 text-[11px] font-semibold text-gray-500"
+                  <button
+                    type="button"
+                    onClick={() => setIsVersionDropdownOpen((v) => !v)}
+                    className="dropdown-toggle flex items-center gap-1 h-7 rounded-md bg-[#9F9F9F26] px-2 text-[15px] font-semibold text-gray-500"
+                  >
+                    {versions.find((v) => v.id === (selectedVersionId || versions[0]?.id))?.label}
+                    <AngleDownIcon className={`h-1 w-2 text-gray-400 transition-transform ${isVersionDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  <Dropdown
+                    isOpen={isVersionDropdownOpen}
+                    onClose={() => setIsVersionDropdownOpen(false)}
+                    className="mt-1 min-w-[40px] py-1 rounded-xs"
                   >
                     {versions.map((version) => (
-                      <option key={version.id} value={version.id}>
+                      <DropdownItem
+                        key={version.id}
+                        onClick={() => {
+                          setSelectedVersionId(version.id);
+                          setIsVersionDropdownOpen(false);
+                        }}
+                        baseClassName={`block w-full text-left px-4 py-1 text-[15px] hover:bg-gray-50 ${(selectedVersionId || versions[0]?.id) === version.id
+                            ? "font-semibold text-[#007B8C]"
+                            : "text-gray-500"
+                          }`}
+                      >
                         {version.label}
-                      </option>
+                      </DropdownItem>
                     ))}
-                  </select>
-                  <AngleDownIcon className="pointer-events-none absolute right-2 top-3 h-1 w-2 text-gray-400" />
+                  </Dropdown>
                 </div>
               ) : (
                 <span className="inline-flex h-7 items-center rounded-md border border-gray-200 bg-gray-100 px-2.5 text-[11px] font-semibold text-gray-600">
                   {currentVersion?.label ?? versions[0]?.label ?? "V1"}
                 </span>
               )}
-              <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-300">
+              <span className="rounded-full bg-[#0983991F] px-6 py-1 text- font-medium text-primary-500">
                 {stageLabel} | {stageStatus}
               </span>
             </div>
@@ -532,14 +549,14 @@ export default function JobDetails() {
                 variant="orangebutton"
                 onClick={() => setVersionModalOpen(true)}
                 startIcon={<PlusIcon className="h-4 w-4" />}
-                className="!rounded-sm !px-4 !py-1.5 text-sm bg-secondary-50"
+                className="!rounded-sm !px-4 !py-2.5 text-base font-medium bg-secondary-50"
               >
                 New version
               </Button>
               <Button
                 size="sm"
                 variant="primary"
-                className="!rounded-sm !px-4 !py-2 text-sm"
+                className="!rounded-sm !px-7 !py-3 text-base font-medium"
               >
                 Review Job
               </Button>
@@ -554,7 +571,7 @@ export default function JobDetails() {
               <div ref={menuRef} className="relative">
                 <button
                   type="button"
-                  className="rounded-full p-2 text-gray-500"
+                  className="rounded-full py-2 text-gray-500"
                   aria-label="More options"
                   onClick={() => setMenuOpen((prev) => !prev)}
                 >
@@ -564,7 +581,7 @@ export default function JobDetails() {
                   <div className="absolute right-0 top-full z-30 mt-2">
                     <Popup
                       items={menuItems}
-                      className="!min-w-[180px] rounded-lg"
+                      className="!min-w-[180px] rounded-none"
                     />
                   </div>
                 ) : null}
@@ -575,7 +592,7 @@ export default function JobDetails() {
           <div className="mt-5 rounded-2xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-5 pt-2">
               <UnderlineTabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
-              <div className="mb-2 w-full max-w-[240px] rounded-full border border-gray-200 px-3 py-0.5">
+              <div className="mb-2 w-full max-w-[240px] rounded-full border border-gray-200 px-3 py-1.5">
                 <SearchInput
                   placeholder="Search job details"
                   className="text-xs"
@@ -595,7 +612,7 @@ export default function JobDetails() {
                         {job.tag ? (
                           <Badge
                             variant="solid"
-                            color="error"
+                            color="urgent"
                             size="sm"
                             className="absolute left-0 top-0 rounded-none !rounded-br-xl  z-10 group-hover:opacity-0"
                           >
@@ -624,7 +641,7 @@ export default function JobDetails() {
                             <input
                               value={job.jobNumber}
                               readOnly
-                              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
                             />
                           </div>
                           <div>
@@ -634,7 +651,7 @@ export default function JobDetails() {
                             <input
                               value={job.campaignId}
                               readOnly
-                              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
                             />
                           </div>
                           <div>
@@ -642,7 +659,7 @@ export default function JobDetails() {
                             <input
                               value={job.created}
                               readOnly
-                              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
                             />
                           </div>
                           <div>
@@ -650,7 +667,7 @@ export default function JobDetails() {
                             <input
                               value={activeStage?.dueDate ?? "08 Jan 26"}
                               readOnly
-                              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
                             />
                           </div>
                         </div>
@@ -662,7 +679,9 @@ export default function JobDetails() {
                             avatarAlt={ownerMember?.name ?? job.owner}
                             avatarUrl={ownerMember?.avatarUrl}
                             avatarSize="small"
-                            className="items-center"
+                            className="items-start"
+                            titleWrap={true}
+                            align="start"
                             titleClassName="text-xs font-medium text-gray-700"
                             metaClassName="text-[11px] text-gray-400"
                           />
@@ -780,8 +799,8 @@ export default function JobDetails() {
                             );
                             const isChecked = Array.isArray(answer)
                               ? Boolean(
-                                  yesOption && answer.includes(yesOption.id)
-                                )
+                                yesOption && answer.includes(yesOption.id)
+                              )
                               : yesOption
                                 ? answer === yesOption.id
                                 : Boolean(answer);
@@ -795,7 +814,7 @@ export default function JobDetails() {
                                 </p>
                                 <ToggleSwitch
                                   checked={isChecked}
-                                  onChange={() => {}}
+                                  onChange={() => { }}
                                   showLabel={false}
                                   size="sm"
                                   disabled
@@ -873,11 +892,10 @@ export default function JobDetails() {
                             filter.id as "all" | "passed" | "failed"
                           )
                         }
-                        className={`rounded-md border px-3 py-1 text-xs font-medium ${
-                          checklistFilter === filter.id
+                        className={`rounded-md border px-3 py-1 text-xs font-medium ${checklistFilter === filter.id
                             ? "border-[#007B8C] bg-[#E3F3F6] text-[#007B8C]"
                             : "border-gray-200 text-gray-500"
-                        }`}
+                          }`}
                       >
                         {filter.label}
                       </button>
@@ -895,23 +913,23 @@ export default function JobDetails() {
                     {(job.workflowStages?.length
                       ? job.workflowStages
                       : [
-                          {
-                            id: "stage-1",
-                            stepLabel: "S1",
-                            name: "Design & Layout",
-                            status: "In Progress",
-                            dueDate: "",
-                            members: [],
-                          },
-                          {
-                            id: "stage-2",
-                            stepLabel: "S2",
-                            name: "Design & Layout",
-                            status: "Not Started",
-                            dueDate: "",
-                            members: [],
-                          },
-                        ]
+                        {
+                          id: "stage-1",
+                          stepLabel: "S1",
+                          name: "Design & Layout",
+                          status: "In Progress",
+                          dueDate: "",
+                          members: [],
+                        },
+                        {
+                          id: "stage-2",
+                          stepLabel: "S2",
+                          name: "Design & Layout",
+                          status: "Not Started",
+                          dueDate: "",
+                          members: [],
+                        },
+                      ]
                     ).map((stage, index) => (
                       <ChecklistStageDropdown
                         key={stage.id}
