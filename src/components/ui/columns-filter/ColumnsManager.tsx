@@ -80,20 +80,20 @@ export default function ColumnsManager({
   return (
     <section className="bg-white p-5 shadow-sm">
       <div
-        className={`max-w-[460px] rounded-md border border-[#D9D9D9] bg-gray-50/40 p-4 ${
+        className={`max-w-[480px] rounded-md border border-[#D9D9D9] bg-gray-50/40 p-4 ${
           disabled ? "pointer-events-none opacity-60" : ""
         }`}
       >
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-gray-500">Rows</p>
+          <p className="text-xs font-bold">Rows</p>
           <p className="text-xs text-gray-400">
-            Active rows will appear on the campaign dashboard. Required rows cannot be unchecked.
+            The rows which are active will only appear as columns on campaign dashboard
           </p>
         </div>
 
         <div className="mt-4 max-w-[460px] space-y-2">
           {fields.map((field) => (
-            <div key={field.id} className="flex flex-wrap items-center gap-3 bg-white px-3 py-2">
+            <div key={field.id} className="flex flex-wrap items-center gap-3 bg-[white] pr-10 py-2">
               <Checkbox
                 checked={field.required ? true : field.checked}
                 onChange={(checked) => handleToggleEnabled(field.id, checked)}
@@ -105,7 +105,7 @@ export default function ColumnsManager({
                 type="text"
                 value={field.label}
                 onChange={(event) => handleLabelChange(field.id, event.target.value)}
-                className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+                className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 font-semibold focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
                 disabled={disabled}
               />
 

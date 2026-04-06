@@ -378,7 +378,7 @@ export const MOCK_JOBS: JobRow[] = [
     members: JOB_MEMBERS_B,
     workflowStages: JOB_STAGES_B,
     assetTitle: "Brochure .V1 PPT",
-    assetFormat: "PPT",
+    assetFormat: "PPT"
   },
   {
     id: "7",

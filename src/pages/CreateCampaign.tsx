@@ -256,7 +256,7 @@ export default function CreateCampaign() {
         </p>
 
         <PageContentContainer className="min-h-0 flex-1 p-6">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-full max-w-[360px]">
                 <TextInput
@@ -279,9 +279,9 @@ export default function CreateCampaign() {
               {isEditMode ? (
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="orangebutton"
                   onClick={handleSaveCampaign}
-                  className="!rounded-md !border-[#F25C54] !px-4 !py-2 !text-[#F25C54] hover:!bg-[#F25C54]/5"
+                  className=""
                 >
                   Edit
                 </Button>
@@ -289,9 +289,9 @@ export default function CreateCampaign() {
                 <>
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant="orangebutton"
                     onClick={() => navigate("/campaigns")}
-                    className="!rounded-md !border-[#F25C54] !px-4 !py-2 !text-[#F25C54] hover:!bg-[#F25C54]/5"
+                    className="!rounded-sm !px-3 !py-1.5"
                   >
                     Cancel
                   </Button>
@@ -299,7 +299,7 @@ export default function CreateCampaign() {
                     size="sm"
                     variant="primary"
                     onClick={handleSaveCampaign}
-                    className="!rounded-md !bg-[#F25C54] !px-4 !py-2 !text-white !shadow-none hover:!bg-[#E7544E]"
+                    className="!rounded-sm"
                   >
                     Save
                   </Button>
@@ -308,7 +308,7 @@ export default function CreateCampaign() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_1.2fr] border border-gray-200 rounded-sm bg-white p-6">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] border border-gray-200 rounded-sm bg-white p-6">
             <div className="space-y-4">
               <UserCell
                 title="Krutika Gawankar"
@@ -323,10 +323,9 @@ export default function CreateCampaign() {
                 <TextInput
                   label={
                     <span>
-                      Start Date <span className="text-[#F25C54]">*</span>
+                      Start Date
                     </span>
                   }
-                  placeholder="Select start date"
                   value={startDate}
                   onChange={(event) => setStartDate(event.target.value)}
                   labelClassName="text-xs font-semibold text-gray-500"
@@ -335,10 +334,9 @@ export default function CreateCampaign() {
                 <TextInput
                   label={
                     <span>
-                      Campaign ID <span className="text-[#F25C54]">*</span>
+                      Campaign ID
                     </span>
                   }
-                  placeholder="Enter ID"
                   value={campaignId}
                   onChange={(event) => setCampaignId(event.target.value)}
                   labelClassName="text-xs font-semibold text-gray-500"
@@ -347,10 +345,9 @@ export default function CreateCampaign() {
                 <TextInput
                   label={
                     <span>
-                      End Date <span className="text-[#F25C54]">*</span>
+                      End Date
                     </span>
                   }
-                  placeholder="Select end date"
                   value={endDate}
                   onChange={(event) => setEndDate(event.target.value)}
                   labelClassName="text-xs font-semibold text-gray-500"
@@ -358,7 +355,6 @@ export default function CreateCampaign() {
                 />
                 <TextInput
                   label="Branch"
-                  placeholder="Enter branch"
                   value={branch}
                   onChange={(event) => setBranch(event.target.value)}
                   labelClassName="text-xs font-semibold text-gray-500"
@@ -382,7 +378,7 @@ export default function CreateCampaign() {
                 <span className="absolute -bottom-3 left-5 h-0.5 w-28 bg-[#007B8C]" />
               </div>
               <div className="flex flex-wrap items-center gap-3 pb-2">
-                <div className="rounded-full border border-gray-200 bg-white px-3 py-1">
+                <div className="rounded-full border border-gray-200 bg-white px-3 pr-20 py-1">
                   <SearchInput
                     value={jobSearch}
                     onChange={(event) => setJobSearch(event.target.value)}
@@ -401,7 +397,7 @@ export default function CreateCampaign() {
                     size="sm"
                     variant="primary"
                     onClick={() => navigate("/jobs/new")}
-                    className="!rounded-md !bg-[#F25C54] !px-4 !py-2 !text-white !shadow-none hover:!bg-[#E7544E]"
+                    className="!rounded-sm"
                   >
                     + Job
                   </Button>

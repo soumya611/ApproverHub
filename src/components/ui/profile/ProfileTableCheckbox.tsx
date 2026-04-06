@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 
 export const PROFILE_TABLE_CHECKBOX_CLASS =
-  "columns-checkbox !bg-gray-200 !border-none h-4 w-4 rounded-sm";
+  "columns-checkbox h-4 w-4 rounded-sm shrink-0 cursor-pointer";
 
 interface ProfileTableCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   label?: string;

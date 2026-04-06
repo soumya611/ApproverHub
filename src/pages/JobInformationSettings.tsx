@@ -51,7 +51,7 @@ export default function JobInformationSettings() {
             <div className="flex items-start gap-3">
               <button
                 type="button"
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/settings')}
                 className="mt-0.5 rounded-full p-1 text-gray-400 hover:text-[#007B8C]"
                 aria-label="Back"
               >

@@ -70,7 +70,7 @@ export default function AssociatedJobsTable({
             <tr>
               <td
                 colSpan={ASSOCIATED_COLUMNS.length + 2}
-                className="px-4 py-10 text-center text-sm text-gray-400"
+                className="px-4 py-10 h-[300px] text-center text-sm font-medium"
               >
                 No jobs associated as of now
               </td>

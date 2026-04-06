@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import type { JobColumnId, JobRow as JobRowType, JobStatus } from "./types";
+import type { JobColumnId, JobRow as JobRowType, JobStatus, JobTag } from "./types";
 import { getStatusClass } from "./types";
 import Popup, { type PopupItem } from "../ui/popup/Popup";
 import Avatar from "../ui/avatar/Avatar";
 import { ChevronDownIcon, EditDetailsIcon, InfoIcon, StatusIcon } from "../../icons";
+import Tag, { type TagTone } from "../ui/tag";
 
-const TAG_CLASS =
-  "inline-flex w-fit items-center rounded-sm border border-red-400 bg-red-100 px-2 py-0.1 text-[9px] font-semibold text-red-600";
-
+const TAG_TONE_MAP: Record<Exclude<JobTag, null>, TagTone> = {
+  Urgent: "urgent",
+  "Expiry Due": "warning",
+  Late: "urgent",
+  Expired: "neutral",
+};
 const DEFAULT_COLUMN_ORDER: JobColumnId[] = [
   "campaign_id",
   "job_number",
@@ -127,7 +131,12 @@ export default function JobRow({
         return (
           <td key={columnId} className="py-3 px-4 text-left align-middle">
             <div className="flex flex-col justify-center gap-0.5 ml-18">
-              {job.tag && <span className={TAG_CLASS}>{job.tag}</span>}
+              {job.tag ? (
+                <Tag tone={TAG_TONE_MAP[job.tag]} size="xs" rounded="none">
+                  {job.tag}
+                </Tag>
+              ) : null}
+
               <span className="text-gray-900">{job.jobName}</span>
             </div>
           </td>
@@ -166,7 +175,7 @@ export default function JobRow({
                 <button
                   type="button"
                   onClick={() => setIsActionOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 text-xs font-medium hover:bg-gray-50"
+                  className="inline-flex items-center gap-1 px-4 py-1 bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-50"
                   aria-haspopup="menu"
                   aria-expanded={isActionOpen}
                 >

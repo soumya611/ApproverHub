@@ -683,7 +683,7 @@ export default function Campaigns() {
                 onClick={handleAllClick}
                 className={`rounded-sm border px-2 py-0.5 text-[13px] font-regular transition ${
                   activeViewId === "all"
-                    ? "border-transparent bg-[var(--color-primary-50)] text-[var(--color-primary-500)]"
+                    ? "border-transparent bg-[var(--color-10)] text-[var(--color-primary-500)]"
                     : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                 }`}
               >
@@ -696,7 +696,7 @@ export default function Campaigns() {
                     key={view.id}
                     className={`group relative inline-flex items-center rounded-sm border ${
                       isActive
-                        ? "border-transparent bg-[var(--color-primary-50)] text-[var(--color-primary-500)]"
+                        ? "border-transparent bg-[var(--color-10)] text-[var(--color-primary-500)]"
                         : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                     }`}
                   >

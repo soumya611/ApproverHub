@@ -252,6 +252,10 @@ layer(base);
   --z-index-9999: 9999;
   --z-index-99999: 99999;
   --z-index-999999: 999999;
+
+  /* Add more custom properties as needed COLORS  */
+  --color-10:#E7F0F2;
+  
 }
 
 /*
@@ -1408,10 +1412,16 @@ video::cue {
   flex-shrink: 0;
 }
 
-.app-icon--force,
-.app-icon--force * {
+.app-icon--force [fill]:not([fill="none"]) {
   fill: currentColor !important;
+}
+
+.app-icon--force [stroke]:not([stroke="none"]) {
   stroke: currentColor !important;
+}
+
+.app-icon--stroke-width [stroke]:not([stroke="none"]) {
+  stroke-width: var(--app-icon-stroke-width) !important;
 }
 
 

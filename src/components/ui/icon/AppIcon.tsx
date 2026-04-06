@@ -25,10 +25,17 @@ export default function AppIcon({
     fontSize: computedSize,
     ...style,
   };
+  if (strokeWidth !== undefined) {
+    (
+      mergedStyle as CSSProperties & Record<"--app-icon-stroke-width", string>
+    )["--app-icon-stroke-width"] = String(strokeWidth);
+  }
 
   return (
     <span
-      className={`app-icon ${forceColor ? "app-icon--force" : ""} ${className}`}
+      className={`app-icon ${forceColor ? "app-icon--force" : ""} ${
+        strokeWidth !== undefined ? "app-icon--stroke-width" : ""
+      } ${className}`}
       style={mergedStyle}
       {...rest}
     >
