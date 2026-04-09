@@ -62,6 +62,14 @@ const createQuestion = (): JobInfoQuestion => ({
   options: [],
 });
 
+const hasQuestionName = (question: JobInfoQuestion) => question.text.trim().length > 0;
+
+const hasSelectableOptions = (question: JobInfoQuestion) =>
+  question.options.some((option) => option.label.trim().length > 0);
+
+const isQuestionReadyForNext = (question: JobInfoQuestion) =>
+  hasQuestionName(question) && hasSelectableOptions(question);
+
 const getQuestionLabel = (question: JobInfoQuestion, indexMap: Map<string, number>) =>
   `Q.${indexMap.get(question.id) ?? "?"} ${question.text || "Untitled question"}`;
 
@@ -115,6 +123,11 @@ export default function JobInformationEditor() {
     () => new Map(questions.map((question, index) => [question.id, index + 1])),
     [questions]
   );
+  const canAddQuestion = useMemo(() => {
+    const lastQuestion = questions[questions.length - 1];
+    if (!lastQuestion) return true;
+    return isQuestionReadyForNext(lastQuestion);
+  }, [questions]);
   const hasDraftInput = useMemo(() => {
     return hasMeaningfulInput(name, questions);
   }, [name, questions]);
@@ -277,6 +290,8 @@ export default function JobInformationEditor() {
   };
 
   const handleAddQuestion = () => {
+    if (!canAddQuestion) return;
+
     const nextQuestion: JobInfoQuestion = createQuestion();
     const nextQuestions = [...questions, nextQuestion];
 
@@ -653,9 +668,15 @@ export default function JobInformationEditor() {
                   variant="primary"
                   className="!rounded-sm !px-4 !py-2 text-xs"
                   onClick={handleAddQuestion}
+                  disabled={!canAddQuestion}
                 >
                   Add Questions
                 </Button>
+                {!canAddQuestion ? (
+                  <p className="mt-2 text-xs text-[#F25C54]">
+                    Enter question name and at least one option before adding a new question.
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -682,15 +703,21 @@ export default function JobInformationEditor() {
             const sourceQuestionBadge = `Q${questionIndexMap.get(rule.sourceQuestionId) ?? "?"}`;
             const sourceQuestionOptions = availableSourceQuestions.map((question) => ({
               value: question.id,
-              label: question.text || "Untitled question",
+              label: `Q${questionIndexMap.get(question.id) ?? "?"} ${question.text || "Untitled question"}`,
+              selectedLabel: question.text || "Untitled question",
             }));
-            const sourceOptionOptions = optionList.map((option) => ({
-              value: option.id,
-              label: option.label || "Option",
-            }));
+            const sourceOptionOptions = optionList.map((option, optionIndex) => {
+              const optionLetter = String.fromCharCode(65 + (optionIndex % 26));
+              return {
+                value: option.id,
+                label: `${optionLetter} ${option.label || "Option"}`,
+                selectedLabel: option.label || "Option",
+              };
+            });
             const destinationOptions = destinationList.map((question) => ({
               value: question.id,
-              label: question.textLabel,
+              label: `${question.numberLabel} ${question.textLabel}`,
+              selectedLabel: question.textLabel,
             }));
             const selectedTargetBadge =
               destinationList.find((question) => question.id === selectedTargetQuestionId)

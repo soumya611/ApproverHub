@@ -71,17 +71,17 @@ export default function Home() {
 
       {pinnedCampaigns.length > 0 || pinnedJobs.length > 0 ? (
         <section className="mt-8">
-          <h2 className="text-lg font-semibold text-[#007B8C]">My Space</h2>
+          <h2 className="text-xl font-semibold text-primary">My Space</h2>
           <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-secondary-50)] text-[var(--color-secondary-500)]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-400">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400">
                   <MyPinIcon className="h-3.5 w-3.5" />
                 </span>
                 My pins
               </div>
             </div>
-            <div className="mt-4 divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100">
               {pinnedCampaigns.map((campaign) => (
                 <PinnedCampaignCard
                   key={campaign.id}

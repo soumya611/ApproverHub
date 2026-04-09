@@ -20,7 +20,7 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export default function DashboardCard({ card }: DashboardCardProps) {
   const content = (
-    <div className="group bg-white rounded-xl shadow-[2px_4px_10px_0px_#0000000F] p-6 h-full min-h-[240px] flex flex-col relative overflow-hidden cursor-pointer transition-all duration-300 ease-in-out hover:bg-[#007B8C]">
+    <div className="group bg-white rounded-sm shadow-[2px_4px_10px_0px_#0000000F] p-6 h-full min-h-[240px] flex flex-col relative overflow-hidden cursor-pointer transition-all duration-300 ease-in-out hover:bg-[#007B8C]">
 
       {/* Title */}
       <h3 className="text-[15px] font-bold text-gray-800 mb-2 transition-colors duration-300 group-hover:text-white">
@@ -41,7 +41,7 @@ export default function DashboardCard({ card }: DashboardCardProps) {
       )}
 
       {/* Bubble */}
-      <div className="absolute -bottom-6 -right-6">
+      <div className="absolute -bottom-5 -right-4">
         <div
           className="w-24 h-24 rounded-full bg-gray-100 
                flex items-center justify-center
@@ -50,7 +50,7 @@ export default function DashboardCard({ card }: DashboardCardProps) {
                group-hover:scale-130 group-hover:bg-white"
         >
           {card.value != null ? (
-            <span className="text-2xl font-normal text-gray-600 transition-colors duration-300 group-hover:text-[#007B8C]">
+            <span className="text-2xl font-semibold transition-colors duration-300 group-hover:text-[#007B8C]">
               {card.value}
             </span>
           ) : (

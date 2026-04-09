@@ -98,7 +98,7 @@ export default function PinnedCampaignCard({
   }, [isMenuOpen]);
 
   return (
-    <div className="py-4">
+    <div className="p-1">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-gray-800">
           {campaign.title} campaign
@@ -132,7 +132,7 @@ export default function PinnedCampaignCard({
         </div>
       </div>
 
-      <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-stretch">
+      <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-stretch">
         <PinnedAssetCard
           title={campaign.assetTitle ?? `${campaign.title} PPT`}
           format={campaign.assetFormat ?? "PPT"}

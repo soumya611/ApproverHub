@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PencilIcon, PlusIcon, CloseIcon, NotesIcon, NotesPlusIcon } from "../../icons";
+import { CloseIcon, NotesIcon, NotesPlusIcon } from "../../icons";
 import AnalyticsNoteItem from "../analytics/AnalyticsNoteItem";
 
 export interface NoteItem {
@@ -18,11 +18,13 @@ const MOCK_NOTES: NoteItem[] = [
 export default function NotesCard() {
   const [notes, setNotes]           = useState<NoteItem[]>(MOCK_NOTES);
   const [isEditing, setIsEditing]   = useState(false);
+  const [editorTitle, setEditorTitle] = useState("");
   const [editorText, setEditorText] = useState("");
   const [editingId, setEditingId]   = useState<string | null>(null);
 
   const handleAdd = () => {
     setEditingId(null);
+    setEditorTitle("");
     setEditorText("");
     setIsEditing(true);
   };
@@ -31,6 +33,7 @@ export default function NotesCard() {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
     setEditingId(id);
+    setEditorTitle(note.title);
     setEditorText(note.description);
     setIsEditing(true);
   };
@@ -40,23 +43,44 @@ export default function NotesCard() {
   };
 
   const handleSave = () => {
-    if (!editorText.trim()) return;
+    const nextTitle = editorTitle.trim() || "New note";
+    const nextDescription = editorText.trim();
+    if (!nextTitle && !nextDescription) return;
+
     if (editingId) {
       setNotes((prev) =>
-        prev.map((n) => (n.id === editingId ? { ...n, description: editorText.trim() } : n))
+        prev.map((n) =>
+          n.id === editingId
+            ? { ...n, title: nextTitle, description: nextDescription }
+            : n
+        )
       );
     } else {
       const date = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
       setNotes((prev) => [
         ...prev,
-        { id: `note-${Date.now()}`, title: "New note", description: editorText.trim(), date },
+        { id: `note-${Date.now()}`, title: nextTitle, description: nextDescription, date },
       ]);
     }
     handleClose();
   };
 
+  const handleInlineTitleSave = (id: string, nextTitle: string) => {
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === id
+          ? {
+              ...note,
+              title: nextTitle.trim() || note.title || "New note",
+            }
+          : note
+      )
+    );
+  };
+
   const handleClose = () => {
     setIsEditing(false);
+    setEditorTitle("");
     setEditorText("");
     setEditingId(null);
   };
@@ -82,7 +106,7 @@ export default function NotesCard() {
           <button
             type="button"
             onClick={handleSave}
-            disabled={!editorText.trim()}
+            disabled={!editorTitle.trim() && !editorText.trim()}
             className="rounded-sm bg-[#E74C3C] px-4 py-1 text-sm font-semibold text-white hover:bg-[#c0392b] disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             Save
@@ -106,13 +130,21 @@ export default function NotesCard() {
     return (
       <div className="flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden h-[480px]">
         {header}
-        <textarea
-          autoFocus
-          value={editorText}
-          onChange={(e) => setEditorText(e.target.value)}
-          placeholder="Start typing...."
-          className="flex-1 resize-none p-4 text-sm text-gray-700 placeholder:text-gray-400 outline-none"
-        />
+        <div className="flex flex-1 flex-col">
+          <input
+            autoFocus
+            value={editorTitle}
+            onChange={(event) => setEditorTitle(event.target.value)}
+            placeholder="Enter title"
+            className="border-b border-gray-200 px-4 py-3 text-base font-semibold text-gray-800 placeholder:text-gray-400 outline-none focus:border-[#007B8C]"
+          />
+          <textarea
+            value={editorText}
+            onChange={(e) => setEditorText(e.target.value)}
+            placeholder="Start typing...."
+            className="flex-1 resize-none p-4 text-sm text-gray-700 placeholder:text-gray-400 outline-none"
+          />
+        </div>
       </div>
     );
   }
@@ -134,6 +166,8 @@ export default function NotesCard() {
               date={note.date}
               onEdit={() => handleEdit(note.id)}
               onDelete={() => handleDelete(note.id)}
+              editableTitle
+              onTitleSave={(nextTitle) => handleInlineTitleSave(note.id, nextTitle)}
             />
           ))
         )}

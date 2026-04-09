@@ -171,7 +171,7 @@ export default function PinnedJobCard({ job, onUnpin }: PinnedJobCardProps) {
   const assetFormat = job.assetFormat ?? "PPT";
 
   return (
-    <div className="py-4">
+    <div className="p-1">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-gray-800">{job.jobName} job</p>
         <div ref={menuRef} className="relative">
@@ -203,7 +203,7 @@ export default function PinnedJobCard({ job, onUnpin }: PinnedJobCardProps) {
         </div>
       </div>
 
-      <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-stretch">
+      <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-stretch">
         <PinnedAssetCard
           title={assetTitle}
           format={assetFormat}
