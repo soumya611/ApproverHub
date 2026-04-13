@@ -93,18 +93,18 @@ export default function PinnedStageCard({
 
   return (
     <div
-      className={`relative rounded-xl border border-gray-200 bg-gray-50/70 p-3 ${className}`}
+      className={`relative rounded-xl border border-gray-200 bg-gray-50/70 p-2 h-[80px] ${className}`}
     >
       <div className="flex items-center justify-between">
         <button
           type="button"
-          className="flex items-center px-2 py-1 text-[11px] font-semibold text-gray-500 transition hover:border-gray-300 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+          className="flex items-center font-semibold text-gray-500 transition hover:border-gray-300 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
           aria-label={`View ${stage.stepLabel} workflow stages`}
           title={`View ${stage.stepLabel} workflow stages`}
           onMouseEnter={handleTriggerEnter}
           onMouseLeave={scheduleClose}
         >
-          <span className="relative px-2 py-0.5 pr-3 text-[11px] text-gray-600 after:absolute after:top-1/2 after:-translate-y-1/2 after:border-y-[6px] after:border-y-transparent">
+          <span className="relative py-0.5 pr-3 text-[13px] text-gray-600 after:absolute after:top-1/2 after:-translate-y-1/2 after:border-y-[6px] after:border-y-transparent">
             {stage.stepLabel}
           </span>
         </button>
@@ -112,8 +112,8 @@ export default function PinnedStageCard({
           <PinnedMembersGroup members={members} onClick={onMembersClick} />
         ) : null}
       </div>
-      <p className="mt-2 text-sm font-medium">{stage.status}</p>
-      <div className="mt-2 h-1 w-full rounded-full bg-gray-200">
+      <p className="mt-2 text-[10px] font-medium">{stage.status}</p>
+      <div className="mt-0.5 h-1 w-full rounded-full bg-gray-200">
         <span
           className={`block h-1 rounded-full ${barClass}`}
           style={{ width: `${progress}%` }}

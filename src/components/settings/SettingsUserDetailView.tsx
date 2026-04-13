@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import type { JobRow as JobRowType } from "../jobs/types";
+import type { JobMember, JobRow as JobRowType } from "../jobs/types";
 import { useJobsStore } from "../../stores/jobsStore";
 import { useUsersStore } from "../../stores/usersStore";
 import {
@@ -27,6 +27,8 @@ import ProfileTableCheckbox from "../ui/profile/ProfileTableCheckbox";
 import UserCell from "../ui/user-cell/UserCell";
 import { TableHeaderRow } from "../ui/table";
 import Popup, { type PopupItem } from "../ui/popup/Popup";
+import PopupModal from "../ui/popup-modal/PopupModal";
+import Button from "../ui/button/Button";
 import PageHeader from "../ui/page-header/PageHeader";
 
 type UserDetailTab = "associated_jobs" | "associated_workflow";
@@ -73,6 +75,7 @@ const USER_DETAIL_BREADCRUMB_ITEMS = [
 ];
 
 const USER_DETAIL_CHECKBOX_CLASS = "!border !border-[#F8C9C9] !bg-white";
+const TRANSFER_OWNER_MEMBER_CLASS = "bg-[#007B8C] text-white";
 
 const getInitials = (name: string) => {
   const parts = name.trim().split(/\s+/);
@@ -161,6 +164,7 @@ export default function SettingsUserDetailView() {
   const { userId } = useParams<{ userId: string }>();
   const users = useUsersStore((state) => state.users);
   const jobs = useJobsStore((state) => state.jobs);
+  const updateJob = useJobsStore((state) => state.updateJob);
 
   const [activeTab, setActiveTab] = useState<UserDetailTab>("associated_jobs");
   const [jobsSearchValue, setJobsSearchValue] = useState("");
@@ -172,6 +176,14 @@ export default function SettingsUserDetailView() {
   const [openJobActionId, setOpenJobActionId] = useState<string | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [selectedWorkflowIds, setSelectedWorkflowIds] = useState<Set<string>>(new Set());
+  const [transferJobId, setTransferJobId] = useState<string | null>(null);
+  const [transferSearchValue, setTransferSearchValue] = useState("");
+  const [transferTargetUserId, setTransferTargetUserId] = useState("");
+  const [workflowDetails, setWorkflowDetails] = useState<ProfileWorkflowRow | null>(null);
+  const [deletedWorkflowIds, setDeletedWorkflowIds] = useState<Set<string>>(new Set());
+  const [workflowActivityById, setWorkflowActivityById] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const user = useMemo(() => users.find((item) => item.id === userId) ?? null, [userId, users]);
   const userInitials = useMemo(() => getInitials(user?.name ?? ""), [user?.name]);
@@ -198,7 +210,20 @@ export default function SettingsUserDetailView() {
   useEffect(() => {
     setIsSortOpen(false);
     setIsWorkflowSortOpen(false);
+    setOpenJobActionId(null);
   }, [activeTab]);
+
+  const closeTransferModal = () => {
+    setTransferJobId(null);
+    setTransferSearchValue("");
+    setTransferTargetUserId("");
+  };
+
+  const openTransferModalForJob = (jobId: string) => {
+    setTransferJobId(jobId);
+    setTransferSearchValue("");
+    setTransferTargetUserId("");
+  };
 
   const autoMatchedJobs = useMemo(() => {
     if (!user) return [];
@@ -235,6 +260,37 @@ export default function SettingsUserDetailView() {
       .map((jobId) => jobs.find((job) => job.id === jobId))
       .filter((job): job is JobRowType => Boolean(job));
   }, [autoMatchedJobs, jobs, user]);
+
+  const selectedTransferJob = useMemo(
+    () => jobs.find((job) => job.id === transferJobId) ?? null,
+    [jobs, transferJobId]
+  );
+
+  const transferOwnerMember = useMemo(
+    () =>
+      selectedTransferJob?.members?.find(
+        (member) => member.initials === selectedTransferJob.owner
+      ),
+    [selectedTransferJob]
+  );
+
+  const transferCandidates = useMemo(() => {
+    if (!selectedTransferJob) return [];
+    const normalizedSearch = transferSearchValue.trim().toLowerCase();
+
+    return users
+      .filter((candidate) => candidate.isActive)
+      .filter((candidate) => getInitials(candidate.name) !== selectedTransferJob.owner)
+      .filter((candidate) =>
+        normalizedSearch
+          ? [candidate.name, candidate.email, candidate.role]
+              .join(" ")
+              .toLowerCase()
+              .includes(normalizedSearch)
+          : true
+      )
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }, [selectedTransferJob, transferSearchValue, users]);
 
   const associatedWorkflowMeta = useMemo<WorkflowMeta[]>(() => {
     const workflowMap = new Map<string, WorkflowMeta>();
@@ -300,6 +356,14 @@ export default function SettingsUserDetailView() {
     [associatedWorkflowMeta]
   );
 
+  useEffect(() => {
+    const validWorkflowIds = new Set(associatedWorkflows.map((workflow) => workflow.id));
+    setDeletedWorkflowIds((previous) => {
+      const next = new Set(Array.from(previous).filter((id) => validWorkflowIds.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [associatedWorkflows]);
+
   const filteredJobs = useMemo(() => {
     const normalizedSearch = jobsSearchValue.trim().toLowerCase();
 
@@ -319,6 +383,7 @@ export default function SettingsUserDetailView() {
     const normalizedSearch = workflowsSearchValue.trim().toLowerCase();
 
     return associatedWorkflowMeta
+      .filter(({ workflow }) => !deletedWorkflowIds.has(workflow.id))
       .filter(({ workflow }) =>
         normalizedSearch
           ? [
@@ -334,7 +399,30 @@ export default function SettingsUserDetailView() {
       )
       .filter((meta) => matchesSortByDates(meta.deadlines, meta.hasLateTag, selectedWorkflowSort))
       .map((meta) => meta.workflow);
-  }, [associatedWorkflowMeta, workflowsSearchValue, selectedWorkflowSort]);
+  }, [associatedWorkflowMeta, deletedWorkflowIds, workflowsSearchValue, selectedWorkflowSort]);
+
+  useEffect(() => {
+    setWorkflowActivityById((previous) => {
+      let didChange = false;
+      const next: Record<string, boolean> = {};
+
+      filteredWorkflows.forEach((workflow) => {
+        if (previous[workflow.id] === undefined) {
+          next[workflow.id] = true;
+          didChange = true;
+          return;
+        }
+        next[workflow.id] = previous[workflow.id];
+      });
+
+      if (Object.keys(previous).length !== Object.keys(next).length) {
+        didChange = true;
+      }
+
+      if (!didChange) return previous;
+      return next;
+    });
+  }, [filteredWorkflows]);
 
   const allJobsSelected = filteredJobs.length > 0 && selectedJobIds.size === filteredJobs.length;
 
@@ -375,6 +463,86 @@ export default function SettingsUserDetailView() {
       return next;
     });
   };
+
+  const handleTransferOwnership = () => {
+    if (!selectedTransferJob || !transferTargetUserId) return;
+
+    const selectedTargetUser = users.find((candidate) => candidate.id === transferTargetUserId);
+    if (!selectedTargetUser) return;
+
+    const targetInitials = getInitials(selectedTargetUser.name);
+    const normalizedTargetEmail = selectedTargetUser.email.trim().toLowerCase();
+    const existingMembers = selectedTransferJob.members ?? [];
+    const existingTargetMember = existingMembers.find((member) => {
+      const normalizedMemberEmail = member.email?.trim().toLowerCase() ?? "";
+      return (
+        member.initials === targetInitials ||
+        member.name.trim().toLowerCase() === selectedTargetUser.name.trim().toLowerCase() ||
+        (normalizedTargetEmail && normalizedMemberEmail === normalizedTargetEmail)
+      );
+    });
+
+    const nextMembers: JobMember[] = existingTargetMember
+      ? existingMembers
+      : [
+          ...existingMembers,
+          {
+            id: `user-${selectedTargetUser.id}`,
+            name: selectedTargetUser.name,
+            initials: targetInitials,
+            className: TRANSFER_OWNER_MEMBER_CLASS,
+            avatarUrl: selectedTargetUser.avatarUrl,
+            email: selectedTargetUser.email || undefined,
+            role: "Approver",
+          },
+        ];
+
+    updateJob(selectedTransferJob.id, {
+      owner: targetInitials,
+      members: nextMembers,
+    });
+
+    closeTransferModal();
+    setOpenJobActionId(null);
+  };
+
+  const getWorkflowIsActive = (workflow: ProfileWorkflowRow) =>
+    workflowActivityById[workflow.id] ?? true;
+
+  const handleToggleWorkflowActive = (workflowId: string, isActive: boolean) => {
+    setWorkflowActivityById((previous) => ({
+      ...previous,
+      [workflowId]: isActive,
+    }));
+  };
+
+  const handleDeleteWorkflow = (workflowId: string) => {
+    setDeletedWorkflowIds((previous) => {
+      const next = new Set(previous);
+      next.add(workflowId);
+      return next;
+    });
+    setSelectedWorkflowIds((previous) => {
+      if (!previous.has(workflowId)) return previous;
+      const next = new Set(previous);
+      next.delete(workflowId);
+      return next;
+    });
+    setWorkflowDetails((previous) => (previous?.id === workflowId ? null : previous));
+  };
+
+  const getWorkflowRowActionItems = (workflow: ProfileWorkflowRow): PopupItem[] => [
+    {
+      id: `workflow-details-${workflow.id}`,
+      label: "Details",
+      onClick: () => setWorkflowDetails(workflow),
+    },
+    {
+      id: `workflow-delete-${workflow.id}`,
+      label: "Delete",
+      onClick: () => handleDeleteWorkflow(workflow.id),
+    },
+  ];
 
   useEffect(() => {
     setSelectedJobIds((previous) => {
@@ -615,7 +783,10 @@ export default function SettingsUserDetailView() {
                                 {
                                   id: `transfer-${job.id}`,
                                   label: "Transfer this job ownership",
-                                  onClick: () => setOpenJobActionId(null),
+                                  onClick: () => {
+                                    openTransferModalForJob(job.id);
+                                    setOpenJobActionId(null);
+                                  },
                                 },
                               ];
 
@@ -714,6 +885,9 @@ export default function SettingsUserDetailView() {
                         onToggleSelectAll={toggleSelectAllWorkflows}
                         onToggleSelect={toggleSelectWorkflow}
                         checkboxClassName={USER_DETAIL_CHECKBOX_CLASS}
+                        getIsActive={getWorkflowIsActive}
+                        onToggleActive={handleToggleWorkflowActive}
+                        getRowActionItems={getWorkflowRowActionItems}
                       />
                     ) : (
                       <div className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-5 text-center text-sm text-gray-500">
@@ -731,6 +905,152 @@ export default function SettingsUserDetailView() {
           </div>
         </div>
       </PageContentContainer>
+
+      <PopupModal
+        isOpen={Boolean(selectedTransferJob)}
+        onClose={closeTransferModal}
+        title="Selected Job"
+        className="max-w-[860px] rounded-md"
+        contentClassName="!px-5 !py-4"
+        titleClassName="!text-[20px] !font-semibold !text-[#171717]"
+      >
+        {selectedTransferJob ? (
+          <div className="space-y-5">
+            <div className="overflow-x-auto rounded-md border border-gray-200">
+              <table className="w-full min-w-[680px] text-left text-sm text-gray-700">
+                <thead className="border-b border-gray-200 bg-[#FAFAFA] text-xs font-semibold text-gray-500">
+                  <tr>
+                    <th className="px-4 py-2.5">Job ID</th>
+                    <th className="px-4 py-2.5">Job Name</th>
+                    <th className="px-4 py-2.5">Status</th>
+                    <th className="px-4 py-2.5">Owner</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="px-4 py-3">{selectedTransferJob.jobNumber}</td>
+                    <td className="px-4 py-3">{selectedTransferJob.jobName}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-4 py-1 text-xs font-normal ${getStatusClassName(
+                          selectedTransferJob.status
+                        )}`}
+                      >
+                        {selectedTransferJob.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <UserCell
+                        avatarAlt={selectedTransferJob.owner}
+                        avatarUrl={transferOwnerMember?.avatarUrl}
+                        avatarSize="xsmall"
+                        avatarFallback="initials"
+                        className="min-w-[120px] items-center"
+                        titleClassName="text-xs font-medium text-gray-700"
+                        contentClassName="max-w-[130px]"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <h4 className="text-[18px] font-semibold text-gray-900">
+                Transfer job ownership to
+              </h4>
+              <div className="mt-3 border-b border-gray-300 pb-2">
+                <SearchInput
+                  value={transferSearchValue}
+                  onChange={(event) => setTransferSearchValue(event.target.value)}
+                  placeholder="Search"
+                  containerClassName="gap-2"
+                  icon={<Search className="h-5 w-5 text-gray-400" />}
+                  className="text-sm text-gray-700"
+                  inputClassName="text-sm text-gray-700"
+                />
+              </div>
+            </div>
+
+            <div className="max-h-[200px] space-y-1 overflow-y-auto">
+              {transferCandidates.length > 0 ? (
+                transferCandidates.map((candidate) => {
+                  const candidateInitials = getInitials(candidate.name);
+                  const isSelected = transferTargetUserId === candidate.id;
+                  return (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() => setTransferTargetUserId(candidate.id)}
+                      className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left ${
+                        isSelected
+                          ? "border-[#007B8C] bg-[#007B8C]/10"
+                          : "border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#007B8C] text-xs font-semibold text-white">
+                          {candidateInitials}
+                        </span>
+                        <span className="text-sm font-medium text-gray-800">{candidate.name}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">{candidate.role}</span>
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-gray-500">No users found.</p>
+              )}
+            </div>
+
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                size="sm"
+                variant="primary"
+                className="!w-[150px] !rounded-md !py-2 text-white"
+                onClick={handleTransferOwnership}
+                disabled={!transferTargetUserId}
+              >
+                Transfer
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </PopupModal>
+
+      <PopupModal
+        isOpen={Boolean(workflowDetails)}
+        onClose={() => setWorkflowDetails(null)}
+        title="Workflow Details"
+        className="max-w-[560px] rounded-md"
+        contentClassName="!px-5 !py-4"
+      >
+        {workflowDetails ? (
+          <div className="space-y-2 text-sm text-gray-700">
+            <p>
+              <span className="font-semibold">Workflow ID:</span> {workflowDetails.workflowId}
+            </p>
+            <p>
+              <span className="font-semibold">Workflow Name:</span>{" "}
+              {workflowDetails.workflowName}
+            </p>
+            <p>
+              <span className="font-semibold">Stages:</span> {workflowDetails.stages}
+            </p>
+            <p>
+              <span className="font-semibold">Linked Jobs:</span> {workflowDetails.linkedJobs}
+            </p>
+            <p>
+              <span className="font-semibold">Owner:</span> {workflowDetails.ownerInitials}
+            </p>
+            <p>
+              <span className="font-semibold">Status:</span>{" "}
+              {getWorkflowIsActive(workflowDetails) ? "Active" : "Inactive"}
+            </p>
+          </div>
+        ) : null}
+      </PopupModal>
     </div>
   );
 }

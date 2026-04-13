@@ -22,7 +22,21 @@ import type {
 import { DEFAULT_JOB_MEMBERS } from "../components/jobs/types";
 import { useJobInformationSteps } from "../components/ui/job-information/useJobInformationSteps";
 import { useJobInformationStore } from "../stores/jobInformationStore";
+import type { JobInfoQuestion } from "../types/jobInformation";
 import type { WorkflowMember, WorkflowStage } from "../types/workflow.types";
+
+const getFirstMissingRequiredQuestionIndex = (
+  questions: JobInfoQuestion[],
+  answers: Record<string, string | string[]>
+) =>
+  questions.findIndex((question) => {
+    if (!question.required) return false;
+    const answer = answers[question.id];
+    if (question.type === "checkbox") {
+      return !Array.isArray(answer) || answer.length === 0;
+    }
+    return typeof answer !== "string" || answer.trim().length === 0;
+  });
 
 export default function CreateJob() {
   const navigate = useNavigate();
@@ -51,6 +65,10 @@ export default function CreateJob() {
   const [customWorkflow, setCustomWorkflow] =
     useState<WorkflowBuilderValue | null>(null);
   const [isWorkflowBuilderOpen, setIsWorkflowBuilderOpen] = useState(false);
+  const [isJobInfoOpen, setIsJobInfoOpen] = useState(false);
+  const [jobInfoValidationError, setJobInfoValidationError] = useState<string | null>(
+    null
+  );
   const {
     steps: jobInfoSteps,
     stepIndex: jobInfoStepIndex,
@@ -137,6 +155,25 @@ export default function CreateJob() {
     }));
 
   const handleSubmit = () => {
+    const jobInfoQuestions = activeJobInfoTemplate?.questions ?? [];
+    if (jobInfoEnabled && jobInfoQuestions.length > 0) {
+      const missingRequiredQuestionIndex = getFirstMissingRequiredQuestionIndex(
+        jobInfoQuestions,
+        jobInfoAnswers
+      );
+      if (missingRequiredQuestionIndex >= 0) {
+        const missingQuestion = jobInfoQuestions[missingRequiredQuestionIndex];
+        const fallbackLabel = `Q.${missingRequiredQuestionIndex + 1}`;
+        setJobInfoValidationError(
+          `Please answer required question: ${missingQuestion?.text || fallbackLabel}`
+        );
+        setJobInfoStepIndex(missingRequiredQuestionIndex);
+        setIsJobInfoOpen(true);
+        return;
+      }
+    }
+
+    setJobInfoValidationError(null);
     const now = new Date();
     const randomId = createShortId();
     const workflowId = customWorkflow?.id ?? selectedWorkflow?.id;
@@ -238,6 +275,22 @@ export default function CreateJob() {
     );
     setCustomWorkflow(jobToEdit.workflowConfig ?? null);
   }, [isEditMode, jobToEdit]);
+
+  useEffect(() => {
+    if (!jobInfoValidationError) return;
+    const jobInfoQuestions = activeJobInfoTemplate?.questions ?? [];
+    const missingRequiredQuestionIndex = getFirstMissingRequiredQuestionIndex(
+      jobInfoQuestions,
+      jobInfoAnswers
+    );
+    if (missingRequiredQuestionIndex < 0) {
+      setJobInfoValidationError(null);
+    }
+  }, [
+    activeJobInfoTemplate,
+    jobInfoAnswers,
+    jobInfoValidationError,
+  ]);
 
   return (
     <>
@@ -346,11 +399,18 @@ export default function CreateJob() {
               <StepDropdown
                 title="Job Information"
                 steps={jobInfoSteps}
+                open={isJobInfoOpen}
+                onOpenChange={setIsJobInfoOpen}
                 stepIndex={jobInfoStepIndex}
                 onStepChange={setJobInfoStepIndex}
                 resetStepOnClose
                 className="w-full"
               />
+              {jobInfoValidationError ? (
+                <p className="mt-2 text-xs font-medium text-[#F25C54]">
+                  {jobInfoValidationError}
+                </p>
+              ) : null}
             </div>
           ) : null}
 

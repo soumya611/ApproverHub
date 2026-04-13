@@ -1,6 +1,7 @@
+import { useEffect, useState, type KeyboardEvent } from "react";
 import PopupTitle from "../ui/popup-title/PopupTitle";
 import DescriptionText from "../ui/description-text/DescriptionText";
-import { NotesDelIcon, NotesEditIcon, PencilIcon, TrashBinIcon } from "../../icons";
+import { NotesDelIcon, NotesEditIcon } from "../../icons";
 
 interface AnalyticsNoteItemProps {
   variant: "note" | "mention";
@@ -14,6 +15,8 @@ interface AnalyticsNoteItemProps {
   className?: string;
   onEdit?: () => void;
   onDelete?: () => void;
+  editableTitle?: boolean;
+  onTitleSave?: (nextTitle: string) => void;
 }
 
 export default function AnalyticsNoteItem({
@@ -28,12 +31,47 @@ export default function AnalyticsNoteItem({
   className = "",
   onEdit,
   onDelete,
+  editableTitle = false,
+  onTitleSave,
 }: AnalyticsNoteItemProps) {
   const showActions = Boolean(onDelete || onEdit);
   const showAvatar = variant === "mention" && avatarUrl;
   const showTextPrefix = variant === "note";
   const showEditAction = variant === "note" && onEdit;
   const showDeleteAction = onDelete;
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(title ?? "");
+
+  useEffect(() => {
+    setTitleDraft(title ?? "");
+  }, [title]);
+
+  const commitTitle = () => {
+    const nextTitle = titleDraft.trim() || title?.trim() || "New note";
+    if (onTitleSave && nextTitle !== title) {
+      onTitleSave(nextTitle);
+    }
+    setTitleDraft(nextTitle);
+    setIsTitleEditing(false);
+  };
+
+  const cancelTitleEdit = () => {
+    setTitleDraft(title ?? "");
+    setIsTitleEditing(false);
+  };
+
+  const handleTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      commitTitle();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancelTitleEdit();
+    }
+  };
 
   return (
     <div
@@ -65,7 +103,27 @@ export default function AnalyticsNoteItem({
               colorClassName="text-gray-900"
               className="mb-1"
             >
-              <strong className="font-semibold">{title}</strong>
+              {isTitleEditing && editableTitle ? (
+                <input
+                  autoFocus
+                  value={titleDraft}
+                  onChange={(event) => setTitleDraft(event.target.value)}
+                  onBlur={commitTitle}
+                  onKeyDown={handleTitleKeyDown}
+                  className="w-full rounded border border-gray-300 px-2 py-1 text-sm font-semibold text-gray-900 outline-none focus:border-[#007B8C]"
+                />
+              ) : (
+                <strong
+                  className={editableTitle ? "cursor-text font-semibold" : "font-semibold"}
+                  onDoubleClick={() => {
+                    if (!editableTitle) return;
+                    setIsTitleEditing(true);
+                  }}
+                  title={editableTitle ? "Double click to edit title" : undefined}
+                >
+                  {title}
+                </strong>
+              )}
             </PopupTitle>
           )}
           <DescriptionText

@@ -5,7 +5,9 @@ import PageContentContainer from "../components/layout/PageContentContainer";
 import AssociatedJobsTable from "../components/ui/associated-jobs-table/AssociatedJobsTable";
 import AddJobTable from "../components/ui/add-job-table/AddJobTable";
 import { Modal } from "../components/ui/modal";
-import RichTextEditor from "../components/ui/rich-text-editor/RichTextEditor";
+import RichTextEditor, {
+  DEFAULT_RICH_TEXT_TOOLBAR_ITEMS,
+} from "../components/ui/rich-text-editor/RichTextEditor";
 import SearchInput from "../components/ui/search-input/SearchInput";
 import UserCell from "../components/ui/user-cell/UserCell";
 import Button from "../components/ui/button/Button";
@@ -15,6 +17,8 @@ import { EditPenIcon } from "../icons";
 import { useCampaignsStore } from "../stores/campaignsStore";
 import type { CampaignStatus } from "../components/ui/campaign-table-row/CampaignTableRow";
 import { useJobsStore } from "../stores/jobsStore";
+
+const CAMPAIGN_BRIEF_TOOLBAR_ITEMS = [...DEFAULT_RICH_TEXT_TOOLBAR_ITEMS];
 
 export default function CreateCampaign() {
   const navigate = useNavigate();
@@ -311,6 +315,7 @@ export default function CreateCampaign() {
           <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] border border-gray-200 rounded-sm bg-white p-6">
             <div className="space-y-4">
               <UserCell
+                titleWrap={true}
                 title="Krutika Gawankar"
                 subtitle="Owner"
                 avatarUrl="/images/user/user-01.jpg"
@@ -366,6 +371,8 @@ export default function CreateCampaign() {
               value={campaignBrief}
               onChange={setCampaignBrief}
               placeholder="Enter campaign brief here..."
+              toolbarItems={CAMPAIGN_BRIEF_TOOLBAR_ITEMS}
+              showAttachment
             />
           </div>
 

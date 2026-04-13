@@ -29,15 +29,15 @@ export default function SettingsOptionRow({
     >
       <div className="flex min-w-0 items-center gap-4">
         <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[#64748B]">
-          <AppIcon icon={icon} size={18} />
+          <AppIcon icon={icon} size={19} />
         </span>
         <div className="min-w-0">
-          <p className="text-xl font-semibold text-gray-800">{title}</p>
+          <p className="text-xl font-semibold text-gray-500">{title}</p>
           <p className="mt-1 truncate text-lg text-gray-500">{description}</p>
         </div>
       </div>
 
-      <span className="ml-4 inline-flex h-7 w-7 shrink-0 items-center justify-center text-gray-400">
+      <span className="ml-4 inline-flex h-7 w-7 shrink-0 items-center justify-center font-bold ">
         <AngleRightIcon className="h-4 w-4" />
       </span>
     </ComponentTag>

@@ -44,6 +44,7 @@ type AddUserDraft = {
   lastName: string;
   email: string;
   role: string;
+  company: string;
 };
 
 const USERS_COLUMNS = [
@@ -64,16 +65,18 @@ const DEFAULT_FILTER_ROWS: FilterRow[] = [
   },
 ];
 
-const ROLE_OPTIONS: Array<{ value: AppUserRole; label: string }> = [
+const ROLE_OPTIONS: Array<{ value: Exclude<AppUserRole, "org_admin">; label: string }> = [
   { value: "team_manager", label: "Team Manager" },
   { value: "manager", label: "Manager" },
   { value: "user", label: "User" },
   { value: "admin", label: "Admin" },
-  { value: "org_admin", label: "Org Admin" },
 ];
+
+const GUEST_ROLE_OPTIONS = ROLE_OPTIONS.filter((option) => option.value !== "admin");
 
 const MAX_ADD_USERS = 10;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const INVITE_COOLDOWN_MS = 30_000;
 
 const createAddUserRow = (): AddUserDraft => ({
   id: `add-user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -82,6 +85,7 @@ const createAddUserRow = (): AddUserDraft => ({
   lastName: "",
   email: "",
   role: "user",
+  company: "",
 });
 
 const getUniqueValues = (items: Array<string | null | undefined>) =>
@@ -328,6 +332,7 @@ export default function SettingsUsersView() {
   const updateUserStatusInStore = useUsersStore((state) => state.updateUserStatus);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchInputValue, setSearchInputValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -338,6 +343,7 @@ export default function SettingsUsersView() {
   const [detailsUser, setDetailsUser] = useState<SettingsUserRow | null>(null);
 
   const [transferSourceIds, setTransferSourceIds] = useState<string[]>([]);
+  const [transferSearchInputValue, setTransferSearchInputValue] = useState("");
   const [transferSearch, setTransferSearch] = useState("");
   const [transferTargetUserId, setTransferTargetUserId] = useState("");
 
@@ -345,12 +351,24 @@ export default function SettingsUsersView() {
   const [isAddModalImportMenuOpen, setIsAddModalImportMenuOpen] = useState(false);
   const [addUserRows, setAddUserRows] = useState<AddUserDraft[]>([createAddUserRow()]);
   const [sendInviteOnSave, setSendInviteOnSave] = useState(false);
+  const [inviteCooldownIds, setInviteCooldownIds] = useState<Set<string>>(new Set());
 
   const csvFileInputRef = useRef<HTMLInputElement>(null);
+  const inviteCooldownTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     refreshUsers();
   }, [refreshUsers]);
+
+  useEffect(
+    () => () => {
+      Object.values(inviteCooldownTimersRef.current).forEach((timerId) => {
+        clearTimeout(timerId);
+      });
+      inviteCooldownTimersRef.current = {};
+    },
+    []
+  );
 
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
@@ -535,7 +553,7 @@ export default function SettingsUsersView() {
           row.firstName.trim() ||
           row.lastName.trim() ||
           row.email.trim() ||
-          row.role.trim()
+          row.role.trim() !== "user"
       ),
     [addUserRows]
   );
@@ -543,12 +561,17 @@ export default function SettingsUsersView() {
   const hasInvalidAddUserRows = useMemo(
     () =>
       addUserRowsWithData.some(
-        (row) =>
-          !row.firstName.trim() ||
-          !row.lastName.trim() ||
-          !row.email.trim() ||
-          !EMAIL_PATTERN.test(row.email.trim()) ||
-          !row.role.trim()
+        (row) => {
+          const hasRoleError = !row.role.trim();
+
+          return (
+            !row.firstName.trim() ||
+            !row.lastName.trim() ||
+            !row.email.trim() ||
+            !EMAIL_PATTERN.test(row.email.trim()) ||
+            hasRoleError
+          );
+        }
       ),
     [addUserRowsWithData]
   );
@@ -590,12 +613,14 @@ export default function SettingsUsersView() {
 
   const closeTransferModal = () => {
     setTransferSourceIds([]);
+    setTransferSearchInputValue("");
     setTransferSearch("");
     setTransferTargetUserId("");
   };
 
   const openTransferModalForIds = (userIds: string[]) => {
     setTransferSourceIds(userIds);
+    setTransferSearchInputValue("");
     setTransferSearch("");
     setTransferTargetUserId("");
   };
@@ -632,9 +657,42 @@ export default function SettingsUsersView() {
     },
   ];
 
+  const startInviteCooldown = (userIds: string[]) => {
+    if (userIds.length === 0) return;
+
+    setInviteCooldownIds((previous) => {
+      const next = new Set(previous);
+      userIds.forEach((id) => next.add(id));
+      return next;
+    });
+
+    userIds.forEach((id) => {
+      const existingTimer = inviteCooldownTimersRef.current[id];
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
+      inviteCooldownTimersRef.current[id] = setTimeout(() => {
+        setInviteCooldownIds((previous) => {
+          if (!previous.has(id)) return previous;
+          const next = new Set(previous);
+          next.delete(id);
+          return next;
+        });
+        delete inviteCooldownTimersRef.current[id];
+      }, INVITE_COOLDOWN_MS);
+    });
+  };
+
+  const isInviteInCooldown = (userId: string) => inviteCooldownIds.has(userId);
+
   const markUsersAsInvited = (userIds: string[]) => {
     if (userIds.length === 0) return;
-    const idSet = new Set(userIds);
+
+    const eligibleIds = userIds.filter((userId) => !isInviteInCooldown(userId));
+    if (eligibleIds.length === 0) return;
+
+    const idSet = new Set(eligibleIds);
 
     setUsers(
       users.map((user) =>
@@ -649,7 +707,11 @@ export default function SettingsUsersView() {
           : user
       )
     );
+
+    startInviteCooldown(eligibleIds);
   };
+
+  const canSendInviteForSelection = selectedUsers.some((user) => !isInviteInCooldown(user.id));
 
   const selectionActions: SelectedItemAction[] = [
     {
@@ -659,7 +721,7 @@ export default function SettingsUsersView() {
         markUsersAsInvited(Array.from(selectedIds));
         clearSelection();
       },
-      disabled: selectedUsers.length === 0,
+      disabled: !canSendInviteForSelection,
     },
     {
       id: "delete",
@@ -699,6 +761,7 @@ export default function SettingsUsersView() {
     }
 
     const label = user.inviteState === "resend" ? "Resend Invite" : "Send Invite";
+    const isCooldownActive = isInviteInCooldown(user.id);
 
     return (
       <Button
@@ -706,6 +769,8 @@ export default function SettingsUsersView() {
         variant="orangebutton"
         size="sm"
         onClick={() => markUsersAsInvited([user.id])}
+        disabled={isCooldownActive}
+        title={isCooldownActive ? "Please wait 30 seconds before sending again." : undefined}
         className="group relative font-semibold !p-1 rounded-sm !text-[10px]"
       >
         {label}
@@ -872,7 +937,22 @@ export default function SettingsUsersView() {
 
   const updateAddUserRow = (rowId: string, field: keyof Omit<AddUserDraft, "id">, value: string) => {
     setAddUserRows((previous) =>
-      previous.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+      previous.map((row) => {
+        if (row.id !== rowId) return row;
+
+        if (field === "userType") {
+          const nextUserType = value as UserType;
+          const currentRoleIsRestrictedForGuest =
+            nextUserType === "guest" && row.role === "admin";
+          return {
+            ...row,
+            userType: nextUserType,
+            role: currentRoleIsRestrictedForGuest ? "user" : row.role,
+          };
+        }
+
+        return { ...row, [field]: value };
+      })
     );
   };
 
@@ -894,11 +974,13 @@ export default function SettingsUsersView() {
     if (!canSaveAddedUsers) return;
 
     addUserRowsWithData.forEach((row, index) => {
+      const isGuestUser = row.userType === "guest";
       const normalizedRole = normalizeAppRole(row.role);
       const roleLabel = (normalizedRole ? getRoleLabel(normalizedRole) : "") || row.role || "User";
       const email = row.email.trim().toLowerCase();
       const inviteState: InviteState = sendInviteOnSave ? "resend" : "send";
       const fullName = [row.firstName.trim(), row.lastName.trim()].filter(Boolean).join(" ");
+      const company = inferCompanyFromEmail(email);
 
       const nextUser: UnifiedUser = {
         id: `session-user-${Date.now()}-${index + 1}`,
@@ -906,13 +988,13 @@ export default function SettingsUsersView() {
         email,
         role: roleLabel,
         appRole: normalizedRole,
-        company: inferCompanyFromEmail(email),
+        company,
         isActive: false,
         accountStatus: "inactive",
         inviteState,
         lastSent: sendInviteOnSave ? "Last sent just now" : undefined,
         source: "session",
-        title: row.userType === "guest" ? "Guest" : "User",
+        title: isGuestUser ? "Guest" : "User",
       };
 
       upsertUser(nextUser);
@@ -971,8 +1053,12 @@ export default function SettingsUsersView() {
             <div className="relative flex items-center gap-2">
               <div className="w-[250px] rounded-full border border-gray-200 bg-white px-3 py-2 sm:w-[300px]">
                 <SearchInput
-                  value={searchValue}
-                  onChange={(event) => setSearchValue(event.target.value)}
+                  value={searchInputValue}
+                  onChange={(event) => setSearchInputValue(event.target.value)}
+                  onSearchTrigger={setSearchValue}
+                  minSearchLength={3}
+                  debounceMs={350}
+                  triggerSearchOnBlur
                   placeholder="Search users"
                   containerClassName="gap-2"
                   icon={<Search className="h-5 w-5 text-gray-400" />}
@@ -1214,8 +1300,12 @@ export default function SettingsUsersView() {
 
           <div className="border-b border-gray-300 pb-2">
             <SearchInput
-              value={transferSearch}
-              onChange={(event) => setTransferSearch(event.target.value)}
+              value={transferSearchInputValue}
+              onChange={(event) => setTransferSearchInputValue(event.target.value)}
+              onSearchTrigger={setTransferSearch}
+              minSearchLength={3}
+              debounceMs={350}
+              triggerSearchOnBlur
               placeholder="Search"
               containerClassName="gap-2"
               className="text-sm text-gray-700"
@@ -1306,6 +1396,12 @@ export default function SettingsUsersView() {
           <div className="space-y-3">
             {addUserRows.map((row) => {
               const isInvalidEmail = row.email.trim() !== "" && !EMAIL_PATTERN.test(row.email.trim());
+              const rowRoleOptions =
+                row.userType === "guest" ? GUEST_ROLE_OPTIONS : ROLE_OPTIONS;
+              const selectedRoleExists = rowRoleOptions.some(
+                (roleOption) => roleOption.value === row.role
+              );
+              const resolvedRoleValue = selectedRoleExists ? row.role : "user";
 
               return (
                 <div key={row.id} className="space-y-3">
@@ -1366,11 +1462,11 @@ export default function SettingsUsersView() {
                       <span className="text-sm font-medium text-gray-700">Role</span>
                       <div className="relative">
                         <select
-                          value={row.role}
+                          value={resolvedRoleValue}
                           onChange={(event) => updateAddUserRow(row.id, "role", event.target.value)}
                           className="h-11 w-full appearance-none rounded-sm border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 focus:border-[#007B8C] focus:outline-none"
                         >
-                          {ROLE_OPTIONS.map((roleOption) => (
+                          {rowRoleOptions.map((roleOption) => (
                             <option key={roleOption.value} value={roleOption.value}>
                               {roleOption.label}
                             </option>
