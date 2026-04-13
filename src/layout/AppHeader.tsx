@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { Link } from "react-router";
 import NotificationDropdown from "../components/header/NotificationDropdown";

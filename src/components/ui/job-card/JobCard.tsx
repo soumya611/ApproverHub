@@ -89,7 +89,6 @@ export default function JobCard({ card, className = "", onClick }: JobCardProps)
   const normalizedStatus = status.toLowerCase();
   const isComplete =
     normalizedStatus === "complete" || normalizedStatus === "completed";
-  const isInProgress = normalizedStatus === "in progress";
   const statusKey = isComplete ? "complete" : normalizedStatus;
   const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.default;
 

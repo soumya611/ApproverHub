@@ -40,6 +40,7 @@ const SIZE_CLASS_MAP: Record<TagSize, string> = {
 };
 
 const ROUNDED_CLASS_MAP: Record<TagRounded, string> = {
+  none: "rounded-none",
   sm: "rounded-sm",
   full: "rounded-full",
 };

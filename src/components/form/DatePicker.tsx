@@ -1,7 +1,6 @@
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useState } from "react";
-import { CalenderIcon, ChevronDownIcon, ChevronLeftIcon } from "../../icons";
+import { CalenderIcon, ChevronLeftIcon } from "../../icons";
 
 interface DeadlinePickerProps {
   value: string;
@@ -143,13 +142,6 @@ export default function DeadlinePicker({
   disabled = false,
 }: DeadlinePickerProps) {
   const selected = value ? new Date(value) : null;
-
-  const formatTopBar = (date: Date) => {
-    const yyyy = date.getFullYear();
-    const mon = date.toLocaleDateString("en-US", { month: "short" });
-    const dd = String(date.getDate()).padStart(2, "0");
-    return `${yyyy}/${mon}/${dd}`;
-  };
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
