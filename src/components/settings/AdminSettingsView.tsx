@@ -52,8 +52,8 @@ const SETTINGS_TABS: Array<{ id: AdminSettingsTab; label: string; onClickPath?: 
   { id: "people", label: "People" },
   { id: "campaigns", label: "Campaigns", onClickPath: "/campaign-setting" },
   { id: "jobs", label: "Jobs" },
-  { id: "workflow", label: "Workflow" },
-  { id: "checklist", label: "Checklist" },
+  { id: "workflow", label: "Workflow", onClickPath: "/workflow-setting" },
+  { id: "checklist", label: "Checklist", onClickPath: "/checklist-setting" },
   { id: "analytics", label: "Analytics" },
 ];
 
@@ -167,6 +167,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     title: "Workflow Permissions",
     description: "Control stage-level actions and reviewer permissions.",
     tab: "workflow",
+    onClickPath: "/workflow-setting",
   },
   {
     id: "checklist_templates",
@@ -174,6 +175,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     title: "Checklist Templates",
     description: "Create reusable checklist templates for quality checks.",
     tab: "checklist",
+    onClickPath: "/checklist-setting",
   },
   {
     id: "analytics_alerts",

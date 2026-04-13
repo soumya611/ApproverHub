@@ -30,6 +30,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   notifications: "Notifications",
   "work-schedule": "Work Schedule",
   "campaign-setting": "Campaign Settings",
+  "workflow-setting": "Workflow Settings",
+  "checklist-setting": "Checklist Settings",
 };
 
 const ROUTE_RESOLVERS: BreadcrumbResolver[] = [
@@ -129,6 +131,20 @@ const ROUTE_RESOLVERS: BreadcrumbResolver[] = [
     resolve: () => [
       { label: "Settings", to: "/settings" },
       { label: "Campaign Settings" },
+    ],
+  },
+  {
+    pattern: "/workflow-setting",
+    resolve: () => [
+      { label: "Settings", to: "/settings" },
+      { label: "Workflow Settings" },
+    ],
+  },
+  {
+    pattern: "/checklist-setting",
+    resolve: () => [
+      { label: "Settings", to: "/settings" },
+      { label: "Checklist Settings" },
     ],
   },
   {

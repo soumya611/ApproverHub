@@ -3,6 +3,7 @@ interface ItemsCountSummaryProps {
   from?: number;
   to?: number;
   label?: string;
+  showShowingText?: boolean;
   className?: string;
 }
 
@@ -11,6 +12,7 @@ export default function ItemsCountSummary({
   from,
   to,
   label = "items",
+  showShowingText = true,
   className = "",
 }: ItemsCountSummaryProps) {
   const safeTotal = Math.max(0, total);
@@ -21,7 +23,8 @@ export default function ItemsCountSummary({
 
   return (
     <span className={`text-xs text-gray-500 ${className}`}>
-      {boundedFrom} to {boundedTo} of {safeTotal} {label} showing
+      {boundedFrom} to {boundedTo} of {safeTotal} {label}
+      {showShowingText ? " showing" : ""}
     </span>
   );
 }

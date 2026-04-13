@@ -8,6 +8,7 @@ interface PaginationControlsProps {
   from: number;
   to: number;
   label: string;
+  showShowingText?: boolean;
   canGoPrevious: boolean;
   canGoNext: boolean;
   onPrevious: () => void;
@@ -23,6 +24,7 @@ export default function PaginationControls({
   from,
   to,
   label,
+  showShowingText = true,
   canGoPrevious,
   canGoNext,
   onPrevious,
@@ -76,10 +78,22 @@ export default function PaginationControls({
             aria-label="Select rows per page"
             aria-expanded={isRowsMenuOpen}
           >
-            <ItemsCountSummary total={total} from={from} to={to} label={label} />
+            <ItemsCountSummary
+              total={total}
+              from={from}
+              to={to}
+              label={label}
+              showShowingText={showShowingText}
+            />
           </button>
         ) : (
-          <ItemsCountSummary total={total} from={from} to={to} label={label} />
+          <ItemsCountSummary
+            total={total}
+            from={from}
+            to={to}
+            label={label}
+            showShowingText={showShowingText}
+          />
         )}
 
         {canManageRows && isRowsMenuOpen ? (
