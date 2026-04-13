@@ -61,14 +61,14 @@ export default function UserCell({
               <span
                 className={`min-w-0 ${
                   titleWrap ? "break-words whitespace-normal" : "truncate"
-                } text-sm font-medium text-gray-800 ${titleClassName}`}
+                } text-base font-semibold text-gray-800 ${titleClassName}`}
               >
                 {title}
               </span>
             ) : null}
             {meta ? (
               <span
-                className={`shrink-0 text-xs text-gray-400 ${metaClassName}`}
+                className={`shrink-0 text-base text-gray-400 ${metaClassName}`}
               >
                 {meta}
               </span>
@@ -76,7 +76,7 @@ export default function UserCell({
           </div>
         ) : null}
         {subtitle ? (
-          <div className={`text-xs text-gray-500 ${subtitleClassName}`}>
+          <div className={`text-sm text-gray-500 ${subtitleClassName}`}>
             {subtitle}
           </div>
         ) : null}

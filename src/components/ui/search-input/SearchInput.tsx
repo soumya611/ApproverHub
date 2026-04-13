@@ -7,6 +7,7 @@ interface SearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
   iconClassName?: string;
   icon?: ReactNode;
   iconSize?: string;
+  iconPosition?: "left" | "right";
 }
 
 export default function SearchInput({
@@ -15,21 +16,31 @@ export default function SearchInput({
   iconClassName = "-disabled-text",
   icon,
   iconSize,
+  iconPosition = "left",
   className = "",
   ...props
 }: SearchInputProps) {
   return (
-    <div className={`flex items-center gap-2   ${containerClassName}`}>
-      <span className={iconClassName}>
-        {icon ?? (
-        < Search className={`h-6 w-6 text-disabled-text ${iconSize}`} />
-        )}
-      </span>
+    <div className={`flex items-center gap-2 ${containerClassName}`}>
+      {iconPosition === "left" && (  
+        <span className={iconClassName}>
+          {icon ?? (
+            <Search className={`h-6 w-6 text-disabled-text ${iconSize}`} />
+          )}
+        </span>
+      )}
       <input
         type="text"
         className={`w-full bg-transparent text-lg text-disabled-text placeholder:text-gray-400 focus:outline-none ${className} ${inputClassName}`}
         {...props}
       />
+      {iconPosition === "right" && ( 
+        <span className={iconClassName}>
+          {icon ?? (
+            <Search className={`h-6 w-6 text-disabled-text ${iconSize}`} />
+          )}
+        </span>
+      )}
     </div>
   );
 }

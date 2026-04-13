@@ -1,6 +1,6 @@
 import { useState } from "react";
 import PopupModal from "../popup-modal/PopupModal";
-
+import AdvancedColorPicker from "../../common/AdvancedColorPicker";
 const COLOR_OPTIONS = [
   "#22C55E", "#3B82F6", "#EC4899", "#EAB308",
   "#F97316", "#8B5CF6", "#14B8A6", "#EF4444",
@@ -13,9 +13,10 @@ interface AddLabelModalProps {
 }
 
 export default function AddLabelModal({ isOpen, onClose, onAdd }: AddLabelModalProps) {
-  const [labelName, setLabelName]             = useState("");
-  const [selectedColor, setSelectedColor]     = useState(COLOR_OPTIONS[0]);
+  const [labelName, setLabelName] = useState("");
+  const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showPickerOpen, setShowPickerOpen] = useState(false);
 
   const handleAdd = () => {
     if (!labelName.trim()) return;
@@ -27,6 +28,7 @@ export default function AddLabelModal({ isOpen, onClose, onAdd }: AddLabelModalP
     setLabelName("");
     setSelectedColor(COLOR_OPTIONS[0]);
     setShowColorPicker(false);
+    setShowPickerOpen(false);
     onClose();
   };
 
@@ -61,19 +63,45 @@ export default function AddLabelModal({ isOpen, onClose, onAdd }: AddLabelModalP
             </button>
 
             {showColorPicker && (
-              <div className="absolute left-0 top-12 z-10 flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-lg w-44">
-                {COLOR_OPTIONS.map((c) => (
+              <div className="absolute left-0 top-12 z-10 rounded-xl border border-gray-200 bg-white p-3 shadow-lg w-[260px]">
+
+                {/* Preset colors */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {COLOR_OPTIONS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        setSelectedColor(c);
+                        setShowColorPicker(false);
+                      }}
+                      className="h-7 w-7 rounded-full border-2 transition hover:scale-110"
+                      style={{
+                        backgroundColor: c,
+                        borderColor: selectedColor === c ? "#007B8C" : "transparent",
+                      }}
+                    />
+                  ))}
+
+                  {/* 🎨 Gradient custom button */}
                   <button
-                    key={c}
                     type="button"
-                    onClick={() => { setSelectedColor(c); setShowColorPicker(false); }}
-                    className="h-7 w-7 rounded-full border-2 transition hover:scale-110"
+                    onClick={() => setShowPickerOpen(true)}
+                    className="h-7 w-7 rounded-full border"
                     style={{
-                      backgroundColor: c,
-                      borderColor: selectedColor === c ? "#007B8C" : "transparent",
+                      background:
+                        "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)",
                     }}
                   />
-                ))}
+                </div>
+
+                {/* Advanced picker */}
+                {showPickerOpen && (
+                  <AdvancedColorPicker
+                    value={selectedColor}
+                    onChange={(c) => setSelectedColor(c)}
+                  />
+                )}
               </div>
             )}
           </div>
