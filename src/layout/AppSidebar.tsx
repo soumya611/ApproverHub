@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
-import { HomeIcon, JobIcon, GroupIcon, AnalyticsIcon, ChevronDownIcon ,JobTrackerIcon, CampaignIcon } from "../icons";
+import { HomeIcon, JobIcon, AnalyticsIcon, ChevronDownIcon, JobTrackerIcon, CampaignIcon } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { resolveLabel, type LocalizationKey } from "../data/localization";
 import { useLocalizationStore } from "../stores/localizationStore";

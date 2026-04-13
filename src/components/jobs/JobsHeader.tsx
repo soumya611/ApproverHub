@@ -74,14 +74,14 @@ export default function JobsHeader({
             onClick={() => onTabChange("my")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "my" ? "bg-[#007B8C] text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
           >
-            My Jobs (!)
+            My Jobs ({myCount})
           </button>
           <button
             type="button"
             onClick={() => onTabChange("completed")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "completed" ? "bg-[#007B8C] text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
           >
-            Completed jobs (0)
+            Completed jobs ({completedCount})
           </button>
         </div>
       </div>

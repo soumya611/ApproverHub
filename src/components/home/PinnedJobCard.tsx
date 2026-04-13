@@ -4,7 +4,6 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
-  type MouseEvent,
   type WheelEvent,
 } from "react";
 import Popup from "../ui/popup/Popup";
@@ -13,7 +12,6 @@ import ReviewerList, {
 } from "../ui/reviewerlist/ReviewerList";
 import WorkflowStageCard from "../workflow/WorkflowStageCard";
 import type { JobMember, JobRow, JobStatus } from "../jobs/types";
-import { getStatusClass } from "../jobs/types";
 import type { WorkflowMember, WorkflowStage, WorkflowStatus } from "../../types/workflow.types";
 import { VerticalDots } from "../../icons";
 import PinnedAssetCard from "./pinned/PinnedAssetCard";
@@ -136,7 +134,7 @@ export default function PinnedJobCard({ job, onUnpin }: PinnedJobCardProps) {
     event.preventDefault();
   };
 
-  const handleMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     const lane = stageLaneRef.current;
     if (!lane || event.button !== 0) return;
     isDraggingRef.current = true;
@@ -144,7 +142,7 @@ export default function PinnedJobCard({ job, onUnpin }: PinnedJobCardProps) {
     startScrollLeftRef.current = lane.scrollLeft;
   };
 
-  const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const lane = stageLaneRef.current;
     if (!lane || !isDraggingRef.current) return;
     const delta = event.clientX - startXRef.current;
@@ -158,7 +156,7 @@ export default function PinnedJobCard({ job, onUnpin }: PinnedJobCardProps) {
 
   useEffect(() => {
     if (!isMenuOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }

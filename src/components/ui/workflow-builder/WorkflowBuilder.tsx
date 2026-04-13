@@ -7,8 +7,6 @@ import { Dropdown } from "../dropdown/Dropdown";
 import { DropdownItem } from "../dropdown/DropdownItem";
 import {
   AlertIcon,
-  CalenderIcon,
-  CheckListArrow,
   CheckListIcon,
   ChevronDownIcon,
   EditPenIcon,
@@ -22,8 +20,6 @@ import {
   CalculationIcon,
   DeadlineIcon,
   DropDownArrowIcon,
-  ArrowDownIcon,
-  DropdownArrowIcon,
 } from "../../../icons";
 import {
   StageStepList,
@@ -466,7 +462,6 @@ export default function WorkflowBuilder({
   const [permissionsOpen, setPermissionsOpen] = useState(true);
   const [checklistOpen, setChecklistOpen] = useState(true);
   const [decisionPopupOpen, setDecisionPopupOpen] = useState(false);
-  const deadlineInputRef = useRef<HTMLInputElement | null>(null);
   const [builderOpen, setBuilderOpen] = useState(true);
   const [showFlow, setShowFlow] = useState(false);
   const lastSavedRef = useRef<string>("");

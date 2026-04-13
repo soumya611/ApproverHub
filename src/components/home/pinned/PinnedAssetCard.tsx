@@ -10,7 +10,6 @@ interface PinnedAssetCardProps {
 export default function PinnedAssetCard({
   title,
   subtitle,
-  format = "PPT",
   className = "",
 }: PinnedAssetCardProps) {
   return (

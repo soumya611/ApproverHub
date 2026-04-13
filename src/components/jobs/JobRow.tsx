@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
 import type { JobColumnId, JobRow as JobRowType, JobStatus, JobTag } from "./types";
 import { getStatusClass } from "./types";
 import Popup, { type PopupItem } from "../ui/popup/Popup";
@@ -93,7 +93,7 @@ export default function JobRow({
     () =>
       resolvedItems.map((item) => ({
         ...item,
-        onClick: (event) => {
+        onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
           item.onClick?.(event);
           onAction?.(job.id, item.id);
           setIsActionOpen(false);

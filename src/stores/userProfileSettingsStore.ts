@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { AppUserRole } from "../data/appUsers";
-import { getNotificationPreferencesByRole } from "../components/UserProfile/profileSettingsData";
+import { getNotificationPreferencesByRole } from "@/components/profile";
 
 export interface UserNotificationChannelState {
   inApp: boolean;

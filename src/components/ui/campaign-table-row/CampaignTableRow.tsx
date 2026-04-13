@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
 import Avatar from "../avatar/Avatar";
 import Popup, { type PopupItem } from "../popup/Popup";
 import { ChevronDownIcon, ChevronUpIcon, EditDetailsIcon } from "../../../icons";
@@ -140,7 +140,7 @@ export default function CampaignTableRow({
   const menuItems = useMemo(() => {
     return resolvedItems.map((item) => ({
       ...item,
-      onClick: (event) => {
+      onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
         item.onClick?.(event);
         onAction?.(item.id);
         setOpenActionId(null);
@@ -455,7 +455,7 @@ export default function CampaignTableRow({
             const subActionItems = subRow.actionItems ?? subActionConfig.items;
             const subMenuItems = subActionItems.map((item) => ({
               ...item,
-              onClick: (event) => {
+              onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
                 item.onClick?.(event);
                 setOpenActionId(null);
               },

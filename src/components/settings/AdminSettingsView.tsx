@@ -2,16 +2,10 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { AppSvgIcon } from "../../icons";
 import {
-  AddpeopleIcon,
-  DashboardIcon,
   JobIcon,
   ListIcon,
   NotificationIcon,
-  TableRulerIcon,
   TickIcon,
-  UserIcon,
-  WebIcon,
-  ColorIcon,
   BrandingIcon,
   AssigneeIcon,
   SiteInfoIcon,
