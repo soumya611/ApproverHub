@@ -22,11 +22,12 @@ import {
   CalculationIcon,
   DeadlineIcon,
   DropDownArrowIcon,
+  ArrowDownIcon,
+  DropdownArrowIcon,
 } from "../../../icons";
 import {
   StageStepList,
   WorkflowStageCard,
-  type StageStepItem,
   type WorkflowStage,
 } from "../../workflow";
 import type {
@@ -35,6 +36,7 @@ import type {
   JobWorkflowPermissions,
   JobWorkflowStageConfig,
 } from "../../jobs/types";
+import DeadlinePicker from "../../form/DatePicker";
 
 export interface WorkflowBuilderValue extends JobWorkflowConfig { }
 
@@ -360,36 +362,36 @@ function ChecklistDropdown({
         >
           {displayLabel}
         </span>
-        <CheckListArrow
-          className={`h-3.5 w-3.5 text-gray-400 transition ${open ? "rotate-180" : ""
+        <DropDownArrowIcon
+          className={`h-3 w-3 text-[#818181] transition ${open ? "rotate-180" : ""
             }`}
         />
       </button>
       {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-60 rounded-md border border-gray-200 bg-white p-2 shadow-lg">
+        <div className="absolute left-0 z-20 mt-2 w-full rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden">
           <SearchInput
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search checklist"
-            containerClassName="gap-2 rounded-md border border-gray-100 px-2 py-1"
-            className="text-[11px] text-gray-600 placeholder:text-gray-400"
-            inputClassName="text-[11px] text-gray-600"
-            iconClassName="text-gray-300"
+            containerClassName="gap-1! px-3 py-2 border-b border-gray-200"
+            className="text-sm text-[var(--color-disabled-text)] placeholder:text-gray-400"
+            inputClassName="text-sm text-gray-600"
+            iconClassName="text-[#64748B]"
             iconSize="!h-3.5"
           />
-          <div className="mt-2 max-h-44 space-y-1 overflow-auto">
+          <div className="max-h-44 space-y-1 overflow-auto p-2">
             {filteredItems.length ? (
               filteredItems.map((item) => (
                 <label
                   key={item.id}
-                  className="flex items-center justify-between rounded-md px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50"
+                  className="flex items-center justify-between rounded-md px-2 py-2 text-sm text-[#212121] hover:bg-gray-50"
                 >
                   <span>{item.label}</span>
                   <input
                     type="checkbox"
                     checked={value.includes(item.id)}
                     onChange={() => toggleItem(item.id)}
-                    className="h-3.5 w-3.5"
+                    className="h-4 w-4 accent-secondary rounded-none border-gray-300 text-[var(--color-secondary-500)] focus:ring-[var(--color-secondary-500)] columns-checkbox"
                   />
                 </label>
               ))
@@ -477,7 +479,7 @@ export default function WorkflowBuilder({
     return CHECKLIST_ITEMS.filter((item) => ids.has(item.id));
   }, [activeStage?.checklistIds]);
 
-  const stageSteps = useMemo<StageStepItem[]>(
+  const stageSteps = useMemo<{ label: string; title: string; isActive: boolean }[]>(
     () =>
       stages.map((stage) => ({
         label: stage.stepLabel,
@@ -916,32 +918,10 @@ export default function WorkflowBuilder({
                         <DeadlineIcon className="h-4 w-4 shrink-0 text-[#818181]" />
                         <p className="text-sm font-gilroy-regular text-[#000000]">Deadline</p>
                       </div>
-                      <div className="relative w-50 min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (deadlineInputRef.current?.showPicker) {
-                              deadlineInputRef.current.showPicker();
-                            } else {
-                              deadlineInputRef.current?.click();
-                            }
-                            deadlineInputRef.current?.focus();
-                          }}
-                          className="flex h-8 w-full items-center gap-2 rounded-md  text-[15px] text-[#666666] font-medium hover:border-[#007B8C]"
-                        >
-                          <CalenderIcon className="h-4 w-4 shrink-0 text-[#666666]" />
-                          <span className={activeStage?.deadline ? "text-[15px] text-[#666666] font-medium" : "text-gray-400"}>
-                            {formatDeadlineLabel(activeStage?.deadline ?? "")}
-                          </span>
-                        </button>
-                        <input
-                          type="datetime-local"
-                          ref={deadlineInputRef}
-                          value={activeStage?.deadline ?? ""}
-                          onChange={(event) => updateStage({ deadline: event.target.value })}
-                          className="absolute inset-0 h-8 w-full cursor-pointer opacity-0 pointer-events-none"
-                        />
-                      </div>
+                      <DeadlinePicker
+                        value={activeStage?.deadline ?? ""}
+                        onChange={(value) => updateStage({ deadline: value })}
+                      />
                     </div>
 
                     {/* Skip */}
@@ -978,7 +958,7 @@ export default function WorkflowBuilder({
                         />
                         {activeStage?.finalStatus === "decision_by" ? (
                           <Button
-                            size="xs"
+                            size="sm"
                             variant="secondary"
                             onClick={() => setDecisionPopupOpen(true)}
                             className="!rounded-md !px-3 !py-1 text-[11px]"
@@ -1012,6 +992,7 @@ export default function WorkflowBuilder({
                       <div className="w-full sm:w-[40%]">
                         <SearchInput
                           value={reviewerQuery}
+                          iconPosition="right"
                           onChange={(event) => setReviewerQuery(event.target.value)}
                           onKeyDown={(event) => {
                             if (event.key === "Enter") {
@@ -1020,10 +1001,10 @@ export default function WorkflowBuilder({
                             }
                           }}
                           placeholder="Search or 'add' reviewer by email address"
-                          containerClassName="gap-2 rounded-full border border-gray-200 px-3 py-2"
+                          containerClassName="gap-2 rounded-full border border-gray-200 px-4 py-3"
                           inputClassName="text-xs text-gray-600"
-                          className="text-xs text-gray-600"
-                          iconClassName="text-gray-300"
+                          className="text-sm! text-[#B1B1B1]"
+                          iconClassName="text-[#64748B]"
                           iconSize="!h-4"
                         />
                       </div>
@@ -1043,48 +1024,49 @@ export default function WorkflowBuilder({
 
                 {showReviewerResults ? (
                   <div className="mt-3 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 text-[11px] text-gray-500">
-                      <label className="flex items-center gap-2">
+                    <div className="grid grid-cols-[5fr_1fr_1fr] items-center border-b border-gray-100 p-3">
+                      <label className="flex items-center gap-2 font-medium text-[15px] text-[#000000]">
                         <input
                           type="checkbox"
                           checked={allReviewersSelected}
                           onChange={(event) => toggleAllReviewers(event.target.checked)}
-                          className="h-3.5 w-3.5"
+                          className="h-3.5 w-3.5 accent-secondary rounded-none cursor-pointer border-gray-300 text-[var(--color-secondary-500)] focus:ring-[var(--color-secondary-500)] columns-checkbox"
                         />
                         Select all
                       </label>
-                      <div className="flex items-center gap-10 pr-2">
-                        <span className="text-[11px] font-semibold text-gray-500">Role</span>
-                        <span className="text-[11px] font-semibold text-gray-500">Share</span>
-                      </div>
+                      <span className="text-center font-medium text-[15px] text-[#000000]">Role</span>
+                      <span className="text-center font-medium text-[15px] text-[#000000]">Share</span>
                     </div>
+
                     <div className="divide-y divide-gray-100">
                       {filteredReviewers.map((reviewer) => {
                         const isSelected = selectedReviewerIds.has(reviewer.id);
                         return (
                           <div
                             key={reviewer.id}
-                            className="flex items-center gap-2 px-3 py-2 text-xs text-gray-600"
+                            className="grid grid-cols-[5fr_1fr_1fr] items-center px-3 py-2 text-xs text-gray-600"
                           >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleReviewer(reviewer.id)}
-                              className="h-3.5 w-3.5"
-                            />
-                            <UserCell
-                              title={reviewer.name}
-                              subtitle={reviewer.email ?? reviewer.id}
-                              avatarUrl={reviewer.avatarUrl}
-                              avatarAlt={reviewer.name}
-                              avatarSize="xsmall"
-                              avatarFallback="initials"
-                              className="min-w-0 flex-1 gap-2"
-                              titleWrap={true}
-                              titleClassName="text-[11px] font-medium text-gray-700"
-                              subtitleClassName="text-[10px] text-gray-400"
-                            />
-                            <div className="w-28">
+                            <div className="flex min-w-0 items-center gap-4">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleReviewer(reviewer.id)}
+                                className="h-3.5 w-3.5 accent-secondary rounded-none cursor-pointer border-gray-300 text-[var(--color-secondary-500)] focus:ring-[var(--color-secondary-500)] columns-checkbox"
+                              />
+                              <UserCell
+                                title={reviewer.name}
+                                subtitle={reviewer.email ?? reviewer.id}
+                                avatarUrl={reviewer.avatarUrl}
+                                avatarAlt={reviewer.name}
+                                avatarSize="small"
+                                avatarFallback="initials"
+                                className="min-w-0 flex-1 gap-4"
+                                titleWrap={true}
+                                titleClassName="font-medium text-gray-700"
+                                subtitleClassName="text-gray-400"
+                              />
+                            </div>
+                            <div className="px-2">
                               <BuilderSelect
                                 value={reviewer.role ?? "Approver"}
                                 onChange={(value) =>
@@ -1097,7 +1079,7 @@ export default function WorkflowBuilder({
                                 selectClassName="h-8 text-[11px]"
                               />
                             </div>
-                            <div className="flex w-12 justify-center">
+                            <div className="flex justify-center">
                               <input
                                 type="checkbox"
                                 checked={Boolean(reviewer.share)}
@@ -1106,10 +1088,11 @@ export default function WorkflowBuilder({
                                     share: event.target.checked,
                                   })
                                 }
-                                className="h-3.5 w-3.5"
+                                className="h-3.5 w-3.5 accent-secondary rounded-none cursor-pointer border-gray-300 text-[var(--color-secondary-500)] focus:ring-[var(--color-secondary-500)] columns-checkbox"
                               />
                             </div>
                           </div>
+
                         );
                       })}
                     </div>
@@ -1127,7 +1110,7 @@ export default function WorkflowBuilder({
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
                           <CheckListIcon className="h-4 w-4" />
                         </span>
-                        <span className="text-sm font-semibold text-gray-700">
+                        <span className="text-base font-medium text-[#000000]">
                           Checklist
                         </span>
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F25C54]/10 text-[11px] font-semibold text-[#F25C54]">
@@ -1160,7 +1143,7 @@ export default function WorkflowBuilder({
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-400">
+                          <p className="text-sm text-gray-400">
                             No checklist items added.
                           </p>
                         )}
@@ -1179,7 +1162,7 @@ export default function WorkflowBuilder({
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
                         <SettingIcon className="h-4 w-4" />
                       </span>
-                      <span className="text-sm font-semibold text-gray-700">
+                      <span className="text-base font-medium text-[#000000]">
                         Manage Permissions
                       </span>
                     </div>
@@ -1190,7 +1173,7 @@ export default function WorkflowBuilder({
                   </button>
                   {permissionsOpen ? (
                     <div className="border-t border-gray-200 px-4 pb-4 pt-3">
-                      <div className="flex items-center gap-6 border-b border-gray-200 text-xs font-semibold text-gray-500">
+                      <div className="flex items-center gap-6 border-b border-gray-200 text-sm font-semibold text-gray-500">
                         {[
                           { id: "stages", label: "Stages" },
                           { id: "reviewers", label: "Reviewers" },
@@ -1217,7 +1200,7 @@ export default function WorkflowBuilder({
                         ).map((item) => (
                           <label
                             key={item.id}
-                            className="flex items-center gap-2 text-xs text-gray-600"
+                            className="flex items-center gap-2 text-sm text-gray-600"
                           >
                             <input
                               type="checkbox"
@@ -1225,7 +1208,7 @@ export default function WorkflowBuilder({
                               onChange={() =>
                                 handleTogglePermission(permissionsTab, item.id)
                               }
-                              className="h-4 w-4"
+                              className="h-4 w-4 accent-secondary rounded-none border-gray-300 text-[var(--color-secondary-500)] focus:ring-[var(--color-secondary-500)] columns-checkbox"
                             />
                             {item.label}
                           </label>

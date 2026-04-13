@@ -15,6 +15,7 @@ interface SearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
   iconClassName?: string;
   icon?: ReactNode;
   iconSize?: string;
+  iconPosition?: "left" | "right";
   onSearchTrigger?: (value: string) => void;
   debounceMs?: number;
   minSearchLength?: number;
@@ -27,6 +28,7 @@ export default function SearchInput({
   iconClassName = "-disabled-text",
   icon,
   iconSize,
+  iconPosition = "left",
   onSearchTrigger,
   debounceMs = 350,
   minSearchLength = 3,
@@ -102,12 +104,14 @@ export default function SearchInput({
   };
 
   return (
-    <div className={`flex items-center gap-2   ${containerClassName}`}>
-      <span className={iconClassName}>
-        {icon ?? (
-          <Search className={`h-6 w-6 text-disabled-text ${iconSize}`} />
-        )}
-      </span>
+    <div className={`flex items-center gap-2 ${containerClassName}`}>
+      {iconPosition === "left" && (  
+        <span className={iconClassName}>
+          {icon ?? (
+            <Search className={`h-6 w-6 text-disabled-text ${iconSize}`} />
+          )}
+        </span>
+      )}
       <input
         type="text"
         value={inputValue}
@@ -121,6 +125,13 @@ export default function SearchInput({
         className={`w-full bg-transparent text-lg text-disabled-text placeholder:text-gray-400 focus:outline-none ${className} ${inputClassName}`}
         {...props}
       />
+      {iconPosition === "right" && ( 
+        <span className={iconClassName}>
+          {icon ?? (
+            <Search className={`h-6 w-6 text-disabled-text ${iconSize}`} />
+          )}
+        </span>
+      )}
     </div>
   );
 }
