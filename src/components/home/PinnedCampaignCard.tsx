@@ -4,7 +4,6 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
-  type MouseEvent,
   type WheelEvent,
 } from "react";
 import Popup from "../ui/popup/Popup";
@@ -12,7 +11,7 @@ import ReviewerList, {
   type ReviewerListItem,
 } from "../ui/reviewerlist/ReviewerList";
 import WorkflowStageCard from "../workflow/WorkflowStageCard";
-import { Ver, VerticalDots } from "../../icons";
+import { VerticalDots } from "../../icons";
 import type { PinnedCampaign } from "../../stores/campaignsStore";
 import PinnedAssetCard from "./pinned/PinnedAssetCard";
 import PinnedStageCard from "./pinned/PinnedStageCard";
@@ -63,7 +62,7 @@ export default function PinnedCampaignCard({
     event.preventDefault();
   };
 
-  const handleMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     const lane = stageLaneRef.current;
     if (!lane || event.button !== 0) return;
     isDraggingRef.current = true;
@@ -71,7 +70,7 @@ export default function PinnedCampaignCard({
     startScrollLeftRef.current = lane.scrollLeft;
   };
 
-  const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const lane = stageLaneRef.current;
     if (!lane || !isDraggingRef.current) return;
     const delta = event.clientX - startXRef.current;
@@ -85,7 +84,7 @@ export default function PinnedCampaignCard({
 
   useEffect(() => {
     if (!isMenuOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
         menuRef.current &&
         !menuRef.current.contains(event.target as Node)

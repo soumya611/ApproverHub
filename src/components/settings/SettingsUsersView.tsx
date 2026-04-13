@@ -43,6 +43,7 @@ type AddUserDraft = {
   firstName: string;
   lastName: string;
   email: string;
+  contactInfo: string;
   role: string;
   company: string;
 };
@@ -84,6 +85,7 @@ const createAddUserRow = (): AddUserDraft => ({
   firstName: "",
   lastName: "",
   email: "",
+  contactInfo: "",
   role: "user",
   company: "",
 });
@@ -797,13 +799,24 @@ export default function SettingsUsersView() {
   const exportUsersAsCsv = (rows: SettingsUserRow[]) => {
     if (!rows.length) return;
 
-    const headers = ["ID", "Name", "Email", "Role", "Company", "Status", "Invite State", "Source"];
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Contact Info",
+      "Role",
+      "Company",
+      "Status",
+      "Invite State",
+      "Source",
+    ];
     const lines = rows.map((user) => {
       const status = user.isActive ? "active" : "inactive";
       return [
         user.id,
         user.name,
         user.email,
+        user.phone || "",
         user.role,
         user.company,
         status,
@@ -831,6 +844,13 @@ export default function SettingsUsersView() {
     const lastName = getCsvCell(row, headerMap, ["last_name", "lastname"]);
     const email = getCsvCell(row, headerMap, ["email", "email_address"]).toLowerCase();
     const roleRaw = getCsvCell(row, headerMap, ["role", "roles"]);
+    const contactInfo = getCsvCell(row, headerMap, [
+      "contact_info",
+      "contact",
+      "phone",
+      "phone_number",
+      "mobile",
+    ]);
     const companyRaw = getCsvCell(row, headerMap, ["company", "organization", "organisation"]);
     const statusRaw = getCsvCell(row, headerMap, ["status", "account_status"]);
     const inviteRaw = getCsvCell(row, headerMap, ["invite_state", "invite"]);
@@ -876,6 +896,7 @@ export default function SettingsUsersView() {
       email,
       role: roleLabel,
       appRole: normalizedRole,
+      phone: contactInfo || undefined,
       company: companyRaw || inferCompanyFromEmail(email),
       isActive,
       accountStatus: isActive ? "active" : "inactive",
@@ -989,6 +1010,7 @@ export default function SettingsUsersView() {
         role: roleLabel,
         appRole: normalizedRole,
         company,
+        phone: row.contactInfo.trim() || undefined,
         isActive: false,
         accountStatus: "inactive",
         inviteState,
@@ -1278,6 +1300,9 @@ export default function SettingsUsersView() {
               <span className="font-semibold">Email:</span> {detailsUser.email || "-"}
             </p>
             <p>
+              <span className="font-semibold">Contact info:</span> {detailsUser.phone || "-"}
+            </p>
+            <p>
               <span className="font-semibold">Company:</span> {detailsUser.company || "-"}
             </p>
           </div>
@@ -1435,7 +1460,7 @@ export default function SettingsUsersView() {
                     ) : null}
                   </div>
 
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                     <TextInput
                       label="First Name"
                       placeholder="Enter"
@@ -1456,6 +1481,14 @@ export default function SettingsUsersView() {
                       onChange={(event) => updateAddUserRow(row.id, "email", event.target.value)}
                       hint={isInvalidEmail ? "Please enter a valid email address." : undefined}
                       className={isInvalidEmail ? "!border-red-400 focus:!border-red-400" : ""}
+                    />
+                    <TextInput
+                      label="Contact info"
+                      placeholder="Enter"
+                      value={row.contactInfo}
+                      onChange={(event) =>
+                        updateAddUserRow(row.id, "contactInfo", event.target.value)
+                      }
                     />
 
                     <label className="flex w-full flex-col gap-2">

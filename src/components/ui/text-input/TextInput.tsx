@@ -6,6 +6,8 @@ interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   containerClassName?: string;
   labelClassName?: string;
   inputClassName?: string;
+  inputWrapperClassName?: string;
+  rightAdornment?: ReactNode;
 }
 
 export default function TextInput({
@@ -14,6 +16,8 @@ export default function TextInput({
   containerClassName = "",
   labelClassName = "",
   inputClassName = "",
+  inputWrapperClassName = "",
+  rightAdornment,
   className = "",
   ...props
 }: TextInputProps) {
@@ -24,10 +28,17 @@ export default function TextInput({
           {label}
         </span>
       ) : null}
-      <input
-        className={`h-11 w-full rounded-sm border border-gray-300 bg-transparent px-4 py-2.5 text-sm font-normal text-gray-800 shadow-theme-xs placeholder:text-gray-400 placeholder:font-semibold focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className} ${inputClassName}`}
-        {...props}
-      />
+      <span className={`relative block ${inputWrapperClassName}`}>
+        <input
+          className={`h-11 w-full rounded-sm border border-gray-300 bg-transparent px-4 py-2.5 text-sm font-normal text-gray-800 shadow-theme-xs placeholder:text-gray-400 placeholder:font-semibold focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className} ${inputClassName}`}
+          {...props}
+        />
+        {rightAdornment ? (
+          <span className="pointer-events-none absolute inset-y-0 right-3 inline-flex items-center">
+            {rightAdornment}
+          </span>
+        ) : null}
+      </span>
       {hint ? <span className="text-xs text-gray-500">{hint}</span> : null}
     </label>
   );

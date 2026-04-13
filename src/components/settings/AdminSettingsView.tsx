@@ -2,16 +2,10 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { AppSvgIcon } from "../../icons";
 import {
-  AddpeopleIcon,
-  DashboardIcon,
   JobIcon,
   ListIcon,
   NotificationIcon,
-  TableRulerIcon,
   TickIcon,
-  UserIcon,
-  WebIcon,
-  ColorIcon,
   BrandingIcon,
   AssigneeIcon,
   SiteInfoIcon,
@@ -88,7 +82,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     title: "Localisation",
     description: "Change the name of columns and titles",
     tab: "general",
-    onClickPath: "/analytics",
+    onClickPath: "/settings/localisation",
   },
   {
     id: "dashboard",

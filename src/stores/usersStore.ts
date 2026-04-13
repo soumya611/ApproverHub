@@ -37,6 +37,7 @@ interface UsersState {
   refreshUsers: () => void;
   setUsers: (users: UnifiedUser[]) => void;
   upsertUser: (user: UnifiedUser) => void;
+  updateUser: (id: string, updates: Partial<UnifiedUser>) => void;
   updateUserStatus: (id: string, isActive: boolean) => void;
   findUserByEmail: (email?: string | null) => UnifiedUser | undefined;
   getDefaultUser: () => UnifiedUser;
@@ -342,6 +343,22 @@ export const useUsersStore = create<UsersState>((set, get) => {
     upsertUser: (user) => {
       const merged = mergeUsers([...get().users, user]);
       set({ users: merged });
+      persist();
+    },
+    updateUser: (id, updates) => {
+      set((state) => ({
+        users: state.users.map((user) => {
+          if (user.id !== id) return user;
+
+          const next = { ...user, ...updates };
+          if (updates.isActive !== undefined) {
+            next.accountStatus = updates.isActive ? "active" : "inactive";
+          } else if (updates.accountStatus) {
+            next.isActive = updates.accountStatus !== "inactive";
+          }
+          return next;
+        }),
+      }));
       persist();
     },
     updateUserStatus: (id, isActive) => {
