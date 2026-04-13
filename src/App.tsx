@@ -23,8 +23,12 @@ import ProfileNotifications from "./pages/ProfileNotifications";
 import Settings from "./pages/Settings";
 import SettingsUsers from "./pages/SettingsUsers";
 import SettingsUserDetail from "./pages/SettingsUserDetail";
+import Localisation from "./pages/Localisation";
 import CampaignsRouteGuard from "./components/common/CampaignsRouteGuard";
 import CommentSetting from "./pages/CommentSetting";
+import SettingsUserEditProfile from "./pages/SettingsUserEditProfile";
+import SettingsUserNotifications from "./pages/SettingsUserNotifications";
+import SettingsUserWorkSchedule from "./pages/SettingsUserWorkSchedule";
 
 export default function App() {
   return (
@@ -71,8 +75,21 @@ export default function App() {
               <Route path="/comment-setting" element={<CommentSetting />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/localisation" element={<Localisation />} />
               <Route path="/settings/people/users" element={<SettingsUsers />} />
               <Route path="/settings/people/users/:userId" element={<SettingsUserDetail />} />
+              <Route
+                path="/settings/people/users/:userId/edit"
+                element={<SettingsUserEditProfile />}
+              />
+              <Route
+                path="/settings/people/users/:userId/notifications"
+                element={<SettingsUserNotifications />}
+              />
+              <Route
+                path="/settings/people/users/:userId/work-schedule"
+                element={<SettingsUserWorkSchedule />}
+              />
               <Route path="/profile/work-schedule" element={<ProfileWorkSchedule />} />
               <Route path="/profile/notifications" element={<ProfileNotifications />} />
               <Route

@@ -88,7 +88,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     title: "Localisation",
     description: "Change the name of columns and titles",
     tab: "general",
-    onClickPath: "/analytics",
+    onClickPath: "/settings/localisation",
   },
   {
     id: "dashboard",

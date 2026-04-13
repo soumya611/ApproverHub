@@ -1,14 +1,21 @@
-import { useMemo, useState } from "react";
-import ToggleSwitch from "../toggle/ToggleSwitch";
-import { normalizeColumns, type ColumnConfigItem } from "../../../data/columnsConfig";
+import { useEffect, useMemo, useState } from "react";
+import {
+  CAMPAIGN_FIELD_DATA_TYPES,
+  DEFAULT_CAMPAIGN_FIELD_DATA_TYPE,
+  normalizeColumns,
+  type CampaignFieldDataType,
+  type ColumnConfigItem,
+} from "../../../data/columnsConfig";
 import { useColumnsConfig } from "../../../context/ColumnsConfigContext";
 import Checkbox from "../../form/input/Checkbox";
+import ToggleSwitch from "../toggle/ToggleSwitch";
 
 interface ColumnsManagerProps {
   disabled?: boolean;
   defaultNewFieldChecked?: boolean;
   addFieldInputVisible?: boolean;
   onAddFieldInputVisibleChange?: (visible: boolean) => void;
+  allowFieldValueEditing?: boolean;
 }
 
 export default function ColumnsManager({
@@ -16,20 +23,41 @@ export default function ColumnsManager({
   defaultNewFieldChecked = true,
   addFieldInputVisible,
   onAddFieldInputVisibleChange,
+  allowFieldValueEditing = true,
 }: ColumnsManagerProps) {
   const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldDataType, setNewFieldDataType] = useState<CampaignFieldDataType>(
+    DEFAULT_CAMPAIGN_FIELD_DATA_TYPE
+  );
+  const [newFieldShowInTable, setNewFieldShowInTable] = useState(defaultNewFieldChecked);
+  const [newFieldRequired, setNewFieldRequired] = useState(false);
   const [internalShowAddInput, setInternalShowAddInput] = useState(false);
   const { columns, setColumns } = useColumnsConfig();
   const showAddInput = addFieldInputVisible ?? internalShowAddInput;
+
+  const resetNewFieldDraft = () => {
+    setNewFieldName("");
+    setNewFieldDataType(DEFAULT_CAMPAIGN_FIELD_DATA_TYPE);
+    setNewFieldRequired(false);
+    setNewFieldShowInTable(defaultNewFieldChecked);
+  };
 
   const setShowAddInput = (visible: boolean) => {
     if (addFieldInputVisible === undefined) {
       setInternalShowAddInput(visible);
     }
+    if (visible) {
+      resetNewFieldDraft();
+    }
     onAddFieldInputVisibleChange?.(visible);
   };
 
   const fields = useMemo(() => normalizeColumns(columns), [columns]);
+
+  useEffect(() => {
+    if (!showAddInput) return;
+    setNewFieldShowInTable(defaultNewFieldChecked);
+  }, [defaultNewFieldChecked, showAddInput]);
 
   const handleToggleEnabled = (id: string, enabled: boolean) => {
     setColumns((prev) =>
@@ -54,6 +82,12 @@ export default function ColumnsManager({
     );
   };
 
+  const handleDataTypeChange = (id: string, dataType: CampaignFieldDataType) => {
+    setColumns((prev) =>
+      prev.map((field) => (field.id === id ? { ...field, dataType } : field))
+    );
+  };
+
   const handleLabelChange = (id: string, value: string) => {
     setColumns((prev) =>
       prev.map((field) => (field.id === id ? { ...field, label: value } : field))
@@ -64,23 +98,31 @@ export default function ColumnsManager({
     const trimmedName = newFieldName.trim();
     if (!trimmedName) return;
 
-    const nextIndex = fields.length + 1;
     const newField: ColumnConfigItem = {
       id: `field-${Date.now()}`,
-      label: trimmedName || `New field ${nextIndex}`,
-      checked: defaultNewFieldChecked,
-      required: false,
+      defaultLabel: trimmedName,
+      label: trimmedName,
+      dataType: newFieldDataType,
+      checked: newFieldRequired ? true : newFieldShowInTable,
+      required: newFieldRequired,
     };
 
     setColumns((prev) => normalizeColumns([...prev, newField]));
-    setNewFieldName("");
+    resetNewFieldDraft();
     setShowAddInput(false);
   };
+
+  const rowClassName =
+    "grid grid-cols-[84px_minmax(0,1fr)_130px_150px_auto] items-center gap-3 rounded-sm bg-white py-2";
+  const inputBaseClassName =
+    "w-full rounded-sm border border-gray-200 px-2 py-2 text-xs font-semibold focus:outline-none";
+  const selectBaseClassName =
+    "h-[34px] w-full rounded-sm border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]";
 
   return (
     <section className="bg-white p-5 shadow-sm">
       <div
-        className={`max-w-[480px] rounded-md border border-[#D9D9D9] bg-gray-50/40 p-4 ${
+        className={`max-w-[700px] rounded-md border border-[#D9D9D9] bg-gray-50/40 p-4 ${
           disabled ? "pointer-events-none opacity-60" : ""
         }`}
       >
@@ -91,39 +133,79 @@ export default function ColumnsManager({
           </p>
         </div>
 
-        <div className="mt-4 max-w-[460px] space-y-2">
+        <div className="mt-4  space-y-2">
           {fields.map((field) => (
-            <div key={field.id} className="flex flex-wrap items-center gap-3 bg-[white] pr-10 py-2">
-              <Checkbox
-                checked={field.required ? true : field.checked}
-                onChange={(checked) => handleToggleEnabled(field.id, checked)}
-                className="!h-4 !w-4"
-                disabled={disabled}
-              />
+            <div key={field.id} className={rowClassName}>
+              <div className="flex items-center">
+                <Checkbox
+                  checked={field.required ? true : field.checked}
+                  onChange={(checked) => handleToggleEnabled(field.id, checked)}
+                  className="!h-4 !w-4"
+                  disabled={disabled}
+                />
+              </div>
 
               <input
                 type="text"
                 value={field.label}
-                onChange={(event) => handleLabelChange(field.id, event.target.value)}
-                className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 font-semibold focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+                onChange={
+                  allowFieldValueEditing
+                    ? (event) => handleLabelChange(field.id, event.target.value)
+                    : undefined
+                }
+                className={`${inputBaseClassName} ${
+                  allowFieldValueEditing
+                    ? "bg-white text-gray-700 focus:border-[var(--color-secondary-300)] focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+                    : "cursor-default bg-white text-gray-700"
+                }`}
+                readOnly={!allowFieldValueEditing}
                 disabled={disabled}
               />
 
-              <div className="ml-auto flex items-center gap-2">
+              <select
+                value={field.dataType ?? DEFAULT_CAMPAIGN_FIELD_DATA_TYPE}
+                onChange={(event) =>
+                  handleDataTypeChange(field.id, event.target.value as CampaignFieldDataType)
+                }
+                className={selectBaseClassName}
+                disabled={disabled}
+                aria-label={`Data type for ${field.label}`}
+              >
+                {CAMPAIGN_FIELD_DATA_TYPES.map((dataType) => (
+                  <option key={dataType} value={dataType}>
+                    {dataType}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex items-center gap-2">
                 <ToggleSwitch
                   checked={field.required ?? false}
                   onChange={(checked) => handleToggleRequired(field.id, checked)}
                   size="sm"
+                  showLabel={false}
                   disabled={disabled}
                 />
                 <span className="text-[11px] text-gray-500">Required</span>
               </div>
+
+              <span className="h-7 w-7" />
             </div>
           ))}
 
           {showAddInput ? (
-            <div className="flex flex-wrap items-center gap-3 bg-white px-3 py-2">
-              <span className="h-4 w-4 flex-shrink-0" />
+            <div className={rowClassName}>
+              <div className="flex items-center">
+                <Checkbox
+                  checked={newFieldRequired ? true : newFieldShowInTable}
+                  onChange={(checked) => {
+                    if (newFieldRequired && !checked) return;
+                    setNewFieldShowInTable(checked);
+                  }}
+                  className="!h-4 !w-4"
+                  disabled={disabled}
+                />
+              </div>
 
               <input
                 type="text"
@@ -131,11 +213,43 @@ export default function ColumnsManager({
                 value={newFieldName}
                 onChange={(event) => setNewFieldName(event.target.value)}
                 onKeyDown={(event) => event.key === "Enter" && handleAddField()}
-                className="flex-1 rounded-sm border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-[var(--color-secondary-300)] focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary-100)]"
+                className={`${inputBaseClassName} bg-white text-gray-700 focus:border-[var(--color-secondary-300)] focus:ring-2 focus:ring-[var(--color-secondary-100)]`}
                 disabled={disabled}
               />
 
-              <div className="ml-auto flex items-center gap-2">
+              <select
+                value={newFieldDataType}
+                onChange={(event) =>
+                  setNewFieldDataType(event.target.value as CampaignFieldDataType)
+                }
+                className={selectBaseClassName}
+                disabled={disabled}
+                aria-label="New field data type"
+              >
+                {CAMPAIGN_FIELD_DATA_TYPES.map((dataType) => (
+                  <option key={dataType} value={dataType}>
+                    {dataType}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex items-center gap-2">
+                <ToggleSwitch
+                  checked={newFieldRequired}
+                  onChange={(checked) => {
+                    setNewFieldRequired(checked);
+                    if (checked) {
+                      setNewFieldShowInTable(true);
+                    }
+                  }}
+                  size="sm"
+                  showLabel={false}
+                  disabled={disabled}
+                />
+                <span className="text-[11px] text-gray-500">Required</span>
+              </div>
+
+              <div className="flex items-center">
                 <button
                   type="button"
                   onClick={handleAddField}
@@ -149,7 +263,6 @@ export default function ColumnsManager({
                 >
                   +
                 </button>
-                <span className="select-none text-[11px] text-transparent">Required</span>
               </div>
             </div>
           ) : null}

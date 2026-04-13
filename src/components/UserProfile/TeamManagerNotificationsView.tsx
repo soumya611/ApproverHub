@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getRoleLabel } from "../../data/appUsers";
 import { EnvelopeIcon, NotificationIcon } from "../../icons";
 import { useUsersStore } from "../../stores/usersStore";
@@ -15,66 +15,138 @@ import {
   getNotificationPreferencesByRole,
   type ProfileNotificationPreference,
 } from "./profileSettingsData";
+import AppBreadcrumb from "../common/AppBreadcrumb";
+import {
+  buildDefaultNotificationSettings,
+  useUserProfileSettingsStore,
+} from "../../stores/userProfileSettingsStore";
 
 type NotificationTab = "in_app" | "email";
+
+interface TeamManagerNotificationsViewProps {
+  userId?: string;
+  backTo?: string;
+}
 
 const NOTIFICATION_TABS: Array<{ id: NotificationTab; label: string }> = [
   { id: "in_app", label: "In-App Notifications" },
   { id: "email", label: "Email Notifications" },
 ];
 
-export default function TeamManagerNotificationsView() {
+export default function TeamManagerNotificationsView({
+  userId,
+  backTo = "/profile",
+}: TeamManagerNotificationsViewProps) {
+  const users = useUsersStore((state) => state.users);
   const defaultUser = useUsersStore((state) => state.getDefaultUser());
-  const storedUser = getStoredUserIdentity();
-  const name = storedUser?.name ?? defaultUser.name;
-  const profileId = storedUser?.id ?? defaultUser.id;
-  const avatarUrl = storedUser?.avatarUrl ?? defaultUser.avatarUrl;
-  const accountStatus = storedUser?.accountStatus ?? defaultUser.accountStatus ?? "active";
-  const role = storedUser?.role ?? defaultUser.appRole ?? "user";
-  const showRole = storedUser?.showRole ?? true;
-  const roleLabel = getRoleLabel(role) || defaultUser.role;
-
-  const [activeTab, setActiveTab] = useState<NotificationTab>("in_app");
-  const [preferences, setPreferences] = useState<ProfileNotificationPreference[]>(() =>
-    getNotificationPreferencesByRole(role)
+  const notificationsByUser = useUserProfileSettingsStore(
+    (state) => state.notificationsByUser
+  );
+  const setNotificationSettings = useUserProfileSettingsStore(
+    (state) => state.setNotificationSettings
+  );
+  const setNotificationPreference = useUserProfileSettingsStore(
+    (state) => state.setNotificationPreference
   );
 
+  const storedUser = getStoredUserIdentity();
+
+  const selectedUser = useMemo(() => {
+    if (userId) {
+      return users.find((user) => user.id === userId) ?? null;
+    }
+    return null;
+  }, [userId, users]);
+
+  const resolvedUser = selectedUser ?? defaultUser;
+  const name = selectedUser?.name ?? storedUser?.name ?? defaultUser.name;
+  const profileId = selectedUser?.id ?? storedUser?.id ?? defaultUser.id;
+  const avatarUrl = selectedUser?.avatarUrl ?? storedUser?.avatarUrl ?? defaultUser.avatarUrl;
+  const accountStatus =
+    selectedUser?.accountStatus ??
+    storedUser?.accountStatus ??
+    defaultUser.accountStatus ??
+    "active";
+  const role = selectedUser?.appRole ?? storedUser?.role ?? defaultUser.appRole ?? "user";
+  const showRole = userId ? true : storedUser?.showRole ?? true;
+  const roleLabel = getRoleLabel(role) || resolvedUser.role;
+  const resolvedUserId = profileId;
+
+  const [activeTab, setActiveTab] = useState<NotificationTab>("in_app");
+
+  const basePreferences = useMemo(
+    () => getNotificationPreferencesByRole(role),
+    [role]
+  );
+
+  const userNotificationOverrides = notificationsByUser[resolvedUserId];
+
+  useEffect(() => {
+    if (!resolvedUserId || userNotificationOverrides) return;
+    setNotificationSettings(resolvedUserId, buildDefaultNotificationSettings(role));
+  }, [resolvedUserId, role, setNotificationSettings, userNotificationOverrides]);
+
+  const preferences = useMemo<ProfileNotificationPreference[]>(() => {
+    return basePreferences.map((preference) => {
+      const override = userNotificationOverrides?.[preference.id];
+      return {
+        ...preference,
+        inApp: override?.inApp ?? preference.inApp,
+        email: override?.email ?? preference.email,
+      };
+    });
+  }, [basePreferences, userNotificationOverrides]);
+
   const enabledCount = useMemo(() => {
-    const count = preferences.filter((preference) =>
+    return preferences.filter((preference) =>
       activeTab === "in_app" ? preference.inApp : preference.email
     ).length;
-    return count;
   }, [activeTab, preferences]);
 
   const allEnabled = preferences.length > 0 && enabledCount === preferences.length;
 
   const togglePreference = (id: string, checked: boolean) => {
-    setPreferences((previous) =>
-      previous.map((preference) => {
-        if (preference.id !== id) return preference;
-        if (activeTab === "in_app") {
-          return { ...preference, inApp: checked };
-        }
-        return { ...preference, email: checked };
-      })
+    setNotificationPreference(
+      resolvedUserId,
+      id,
+      activeTab === "in_app" ? "inApp" : "email",
+      checked
     );
   };
 
   const toggleAll = (checked: boolean) => {
-    setPreferences((previous) =>
-      previous.map((preference) =>
-        activeTab === "in_app"
-          ? { ...preference, inApp: checked }
-          : { ...preference, email: checked }
-      )
-    );
+    const nextSettings = { ...(userNotificationOverrides ?? {}) };
+    preferences.forEach((preference) => {
+      const existing = nextSettings[preference.id] ?? {
+        inApp: preference.inApp,
+        email: preference.email,
+      };
+      nextSettings[preference.id] = {
+        ...existing,
+        [activeTab === "in_app" ? "inApp" : "email"]: checked,
+      };
+    });
+    setNotificationSettings(resolvedUserId, nextSettings);
   };
+
+  const breadcrumbOverride = userId ? (
+    <AppBreadcrumb
+      items={[
+        { label: "Settings", to: "/settings" },
+        { label: "People", to: "/settings/people/users" },
+        { label: "User Detail", to: `/settings/people/users/${userId}` },
+        { label: "Notification" },
+      ]}
+    />
+  ) : undefined;
 
   return (
     <ProfileSettingsPageContainer
-      title="Notifications"
+      title="Notification Settings"
       breadcrumbCurrent="Notifications"
-      subtitle="Control alerts for jobs, workflows, mentions, and deadlines."
+      subtitle="Control your notification alerts"
+      backTo={backTo}
+      breadcrumbOverride={breadcrumbOverride}
     >
       <div className="grid gap-4 xl:grid-cols-[1.15fr_1.2fr]">
         <div className="rounded-sm border border-gray-200 bg-white p-4">

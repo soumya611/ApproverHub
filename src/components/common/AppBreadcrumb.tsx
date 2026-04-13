@@ -25,6 +25,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   users: "Users",
   jobs: "Jobs",
   "job-information": "Job Information",
+  localisation: "Localisation",
   profile: "Profile",
   notifications: "Notifications",
   "work-schedule": "Work Schedule",
@@ -83,6 +84,36 @@ const ROUTE_RESOLVERS: BreadcrumbResolver[] = [
       { label: "People", to: "/settings/people/users" },
       { label: "Users", to: "/settings/people/users" },
       { label: "User Detail" },
+    ],
+  },
+  {
+    pattern: "/settings/people/users/:userId/edit",
+    resolve: (params) => [
+      { label: "Settings", to: "/settings" },
+      { label: "People", to: "/settings/people/users" },
+      { label: "Users", to: "/settings/people/users" },
+      { label: "User Detail", to: `/settings/people/users/${params.userId}` },
+      { label: "Edit" },
+    ],
+  },
+  {
+    pattern: "/settings/people/users/:userId/notifications",
+    resolve: (params) => [
+      { label: "Settings", to: "/settings" },
+      { label: "People", to: "/settings/people/users" },
+      { label: "Users", to: "/settings/people/users" },
+      { label: "User Detail", to: `/settings/people/users/${params.userId}` },
+      { label: "Notification" },
+    ],
+  },
+  {
+    pattern: "/settings/people/users/:userId/work-schedule",
+    resolve: (params) => [
+      { label: "Settings", to: "/settings" },
+      { label: "People", to: "/settings/people/users" },
+      { label: "Users", to: "/settings/people/users" },
+      { label: "User Detail", to: `/settings/people/users/${params.userId}` },
+      { label: "Work Schedule" },
     ],
   },
   {

@@ -57,6 +57,7 @@ export default function CampaignSetting() {
               defaultNewFieldChecked={isNewFieldDefaultChecked}
               addFieldInputVisible={isAddFieldInputVisible}
               onAddFieldInputVisibleChange={handleAddFieldInputVisibleChange}
+              allowFieldValueEditing={false}
             />
           </div>
         </PageContentContainer>

@@ -8,7 +8,6 @@ import AnalyticsNoteItem from "../components/analytics/AnalyticsNoteItem";
 import { StageStepList, WorkflowStageCard, JOB_TRACKER_ITEMS } from "../components/workflow";
 import AdvanceFilter from "../components/ui/advance-filter/AdvanceFilter";
 import ColoumnsFilter from "../components/ui/columns-filter/ColoumnsFilter";
-import ColumnsManager from "../components/ui/columns-filter/ColumnsManager";
 import SelectedItem from "../components/ui/selected-item/SelectedItem";
 import Popup from "../components/ui/popup/Popup";
 import EmailReviewersPopup from "../components/ui/email-reviewers-popup/EmailReviewersPopup";
@@ -69,7 +68,6 @@ import { useCampaignsStore } from "../stores/campaignsStore";
 import { useJobsStore } from "../stores/jobsStore";
 import { resolveLabel } from "../data/localization";
 import { useLocalizationStore } from "../stores/localizationStore";
-import LocalizationSettingsCard from "../components/settings/LocalizationSettingsCard";
 import { useJobInformationSteps } from "../components/ui/job-information/useJobInformationSteps";
 import { useJobInformationStore } from "../stores/jobInformationStore";
 import type { JobInfoQuestion } from "../types/jobInformation";
@@ -657,9 +655,6 @@ export default function Analytics() {
             ))}
           </div>
         </div>
-        <div className="mt-6">
-          <LocalizationSettingsCard />
-        </div>
         <div className="mt-4">
           <StageStepList
             steps={stageStepsWithState}
@@ -752,9 +747,6 @@ export default function Analytics() {
             onItemsChange={setColumns}
             onSaveView={setColumns}
           />
-        </div>
-        <div className="mt-6">
-          <ColumnsManager />
         </div>
         <div className="mt-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">

@@ -59,7 +59,7 @@ export default function ProfileSettingsPageContainer({
                 </button>
               ) : null}
               <div>
-                <h2 className="text-xl font-semibold text-primary">{title}</h2>
+                <h2 className="text-lg font-semibold text-primary">{title}</h2>
                 {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
               </div>
             </div>

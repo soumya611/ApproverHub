@@ -8,6 +8,7 @@ import {
   CalenderIcon,
   EditDetailsIcon,
   EnvelopeIcon,
+  AngleRightIcon,
   Search,
   VerticalDots,
   Ep_sort_Icon,
@@ -163,6 +164,7 @@ export default function SettingsUserDetailView() {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const users = useUsersStore((state) => state.users);
+  const updateUserStatusInStore = useUsersStore((state) => state.updateUserStatus);
   const jobs = useJobsStore((state) => state.jobs);
   const updateJob = useJobsStore((state) => state.updateJob);
 
@@ -614,11 +616,11 @@ export default function SettingsUserDetailView() {
         />
 
         <div className="min-h-full space-y-6 p-6">
-          <div className="w-full xl:w-[68%]">
-            <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-              <div className="rounded-sm border border-gray-200 bg-white p-4">
-                <div className="flex min-h-[144px] items-start justify-between gap-4">
-                  <div className="flex flex-1 items-center gap-4">
+          <div className="w-full">
+            <div className="grid gap-6 xl:grid-cols-[1fr_1fr_1fr]">
+              <div className="rounded-md border border-gray-200 bg-white">
+                <div className="flex min-h-[144px] items-start justify-between gap-3 px-4 py-2">
+                  <div className="flex flex-1 items-center gap-10">
                     <div className="relative">
                       <UserAvatar
                         size="large"
@@ -649,6 +651,7 @@ export default function SettingsUserDetailView() {
                   </div>
                   <button
                     type="button"
+                    onClick={() => navigate(`/settings/people/users/${user.id}/edit`)}
                     className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
                     aria-label="Edit user details"
                   >
@@ -657,30 +660,46 @@ export default function SettingsUserDetailView() {
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-5">
+              <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
                   <span className="flex items-center gap-3 text-base text-gray-800">
                     <EnvelopeIcon className="h-5 w-5 text-gray-500" />
                     Email
                   </span>
                   <span className="text-sm text-gray-500">{user.email || "--"}</span>
                 </div>
-                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-5">
+                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
                   <span className="flex items-center gap-3 text-base text-gray-800">
                     <Call_Icon className="h-5 w-5 text-gray-500" />
                     Contact info
                   </span>
                   <span className="text-sm text-gray-500">{user.phone || "--"}</span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-5">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/settings/people/users/${user.id}/work-schedule`)}
+                  className="flex w-full items-center justify-between px-4 py-4 text-left transition hover:bg-gray-50"
+                >
                   <span className="flex items-center gap-3 text-base text-gray-800">
                     <CalenderIcon className="h-5 w-5 text-gray-500" />
                     Work schedule
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="flex items-center gap-2 text-sm text-gray-500">
                     {user.workSchedule || "Mon Fri"}
+                    <AngleRightIcon className="h-4 w-4 text-gray-400" />
                   </span>
-                </div>
+                </button>
+              </div>
+
+              <div>
+                <Button
+                  type="button"
+                  onClick={() => updateUserStatusInStore(user.id, !user.isActive)}
+                  className={`inline-flex w-full items-center justify-center border px-5 py-3 text-sm font-medium transition rounded-md`}
+                  variant= 'orangebutton'
+                >
+                  {user.isActive ? "Inactive User" : "Active User"}
+                </Button>
               </div>
             </div>
           </div>
