@@ -1479,3 +1479,65 @@ video::cue {
 .e-pv-viewer-container{
   padding: 0px;
 } 
+
+.workflow-datepicker {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.workflow-datepicker .react-datepicker__day {
+  width: 32px;
+  line-height: 32px;
+  margin: 4px;
+  text-align: center;
+}
+
+.workflow-datepicker .react-datepicker__day--selected {
+  background-color: #007B8C !important;
+  border-radius: 9999px !important;
+  color: white !important;
+}
+
+.workflow-datepicker .react-datepicker__day:hover {
+  background-color: #E3F3F6 !important;
+  border-radius: 9999px !important;
+}
+
+.workflow-datepicker .react-datepicker__header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.workflow-datepicker .react-datepicker__day--outside-month {
+  visibility: hidden;
+}
+
+.workflow-datepicker .react-datepicker__day--keyboard-selected:not(.react-datepicker__day--selected) {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+.react-datepicker__day-names {
+    white-space: nowrap;
+    margin-bottom: -8px;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.react-datepicker {
+  padding: 10px;
+}
+
+.react-datepicker__month-container{
+  border: 1px solid #E9E9E9;
+  border-radius: 6px;
+}
+
+.workflow-datepicker .react-datepicker__header{
+  border: none;
+}
+
+.workflow-datepicker .react-datepicker__day-name {
+  color: #676767D1;
+}

@@ -410,7 +410,7 @@ export default function JobDetails() {
     2
   );
 
- const menuItems = useMemo<PopupItem[]>(
+  const menuItems = useMemo<PopupItem[]>(
     () => [
       { id: "share", label: "Share job details" },
       {
@@ -525,8 +525,8 @@ export default function JobDetails() {
                           setIsVersionDropdownOpen(false);
                         }}
                         baseClassName={`block w-full text-left px-4 py-1 text-[15px] hover:bg-gray-50 ${(selectedVersionId || versions[0]?.id) === version.id
-                            ? "font-semibold text-[#007B8C]"
-                            : "text-gray-500"
+                          ? "font-semibold text-[#007B8C]"
+                          : "text-gray-500"
                           }`}
                       >
                         {version.label}
@@ -595,15 +595,15 @@ export default function JobDetails() {
               <div className="mb-2 w-full max-w-[240px] rounded-full border border-gray-200 px-3 py-1.5">
                 <SearchInput
                   placeholder="Search job details"
-                  className="text-xs"
-                  inputClassName="text-xs"
-                  iconClassName="text-gray-300"
+                  className="text-sm"
+                  inputClassName="text-sm"
+                  iconClassName="text-[var(--color-disabled-text)]"
                   iconSize="!h-5"
                 />
               </div>
             </div>
 
-            <div className="p-5">
+            <div className={activeTab === "activity" ? "" : "p-5"}>
               {activeTab === "job-details" ? (
                 <div className="space-y-6">
                   <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
@@ -637,37 +637,37 @@ export default function JobDetails() {
                       <div className="grid gap-20 lg:grid-cols-[2.35fr_0.9fr]">
                         <div className="grid gap-4 gap-x-20 sm:grid-cols-2">
                           <div>
-                            <p className="text-xs font-semibold text-gray-800">Job ID</p>
+                            <p className="text-[15px] font-semibold text-gray-800">Job ID</p>
                             <input
                               value={job.jobNumber}
                               readOnly
-                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-[15px] font-medium text-gray-600"
                             />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-gray-800">
+                            <p className="text-[15px] font-semibold text-gray-800">
                               Associated Campaign
                             </p>
                             <input
                               value={job.campaignId}
                               readOnly
-                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-[15px] font-medium text-gray-600"
                             />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-gray-800">Created Date</p>
+                            <p className="text-[15px]  font-semibold text-gray-800">Created Date</p>
                             <input
                               value={job.created}
                               readOnly
-                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-[15px] font-medium text-gray-600"
                             />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-gray-800">Deadline</p>
+                            <p className="text-[15px] font-semibold text-gray-800">Deadline</p>
                             <input
                               value={activeStage?.dueDate ?? "08 Jan 26"}
                               readOnly
-                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600"
+                              className="mt-1 w-full rounded-xs border border-gray-200 bg-white px-3 py-2 text-[15px] font-medium text-gray-600"
                             />
                           </div>
                         </div>
@@ -682,12 +682,12 @@ export default function JobDetails() {
                             className="items-start"
                             titleWrap={true}
                             align="start"
-                            titleClassName="text-xs font-medium text-gray-700"
+                            titleClassName="text-[15px] font-medium text-gray-700"
                             metaClassName="text-[11px] text-gray-400"
                           />
 
                           <div>
-                            <p className="text-xs font-semibold text-gray-800">Assignee</p>
+                            <p className="text-[15px] font-semibold text-[#000000]">Assignee</p>
                             <button
                               type="button"
                               onClick={() => setAssigneeOpen(true)}
@@ -700,11 +700,12 @@ export default function JobDetails() {
                                 avatarAlt={assigneeMember?.name ?? "Unassigned"}
                                 avatarUrl={assigneeMember?.avatarUrl}
                                 avatarSize="small"
+                                titleWrap={true}
                                 className="w-full justify-between"
-                                titleClassName="text-xs font-medium text-gray-700"
-                                subtitleClassName="text-[10px] text-gray-400"
+                                titleClassName="font-medium text-gray-700"
+                                subtitleClassName="text-gray-400"
                                 rightSlot={
-                                  <EditPenIcon className="h-2 w-2 text-gray-400" />
+                                  <EditPenIcon className="h-2.5 w-2.5 text-gray-400" />
                                 }
                               />
                             </button>
@@ -715,13 +716,13 @@ export default function JobDetails() {
                   </div>
 
                   <div className="rounded-xl border border-gray-200 bg-white">
-                    <div className="grid gap-10 lg:grid-cols-[2fr_1fr] items-center  border-b border-gray-200 px-4 py-3 text-sm font-bold text-gray-700">
+                    <div className="grid gap-10 lg:grid-cols-[2fr_1fr] items-center  border-b border-gray-200 px-4 py-3 text-base font-bold text-gray-700">
                       <span>Job Brief</span>
                       <span>Supporting documents</span>
                     </div>
                     <div className="grid gap-0 lg:grid-cols-[2fr_1fr]">
                       <div className="p-4">
-                        <p className="text-sm leading-relaxed font-medium text-gray-600">
+                        <p className="text-base leading-relaxed font-normal text-[#676767]">
                           {job.brief ??
                             "In any project, it’s crucial to maintain a consistent flow of information. This ensures that all team members are aligned and can focus on their tasks without unnecessary distractions."}
                         </p>
@@ -788,7 +789,7 @@ export default function JobDetails() {
                         key={`info-card-${index}`}
                         className="rounded-xl border border-gray-200 bg-white p-4"
                       >
-                        <p className="text-sm font-semibold text-gray-700">
+                        <p className="text-lg font-bold text-[#212121]">
                           {index === 0 ? "Purpose And Audience" : "Brand And Tone"}
                         </p>
                         <div className="mt-4 space-y-4">
@@ -809,7 +810,7 @@ export default function JobDetails() {
                                 key={question.id}
                                 className="flex items-center justify-between gap-4"
                               >
-                                <p className="text-xs text-gray-600">
+                                <p className="text-sm font-medium text-[#212121]">
                                   {question.text}
                                 </p>
                                 <ToggleSwitch
@@ -834,22 +835,38 @@ export default function JobDetails() {
               ) : null}
 
               {activeTab === "activity" ? (
-                <div className="space-y-2">
+                <div className="divide-y divide-gray-200">
                   {activityItems.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between border-b border-gray-200 py-3 text-sm text-gray-600"
+                      className="grid grid-cols-[0.8fr_2fr_0.6fr] items-center gap-4 px-5 py-3 text-sm text-gray-600"
                     >
+                      {/* User */}
                       <div>
-                        <p className="font-medium text-gray-700">
-                          {item.user}
-                        </p>
-                        <p className="text-sm text-gray-500">{item.message}</p>
+                        <UserCell
+                          title={item.user}
+                          avatarAlt={item.user}
+                          avatarSize="small"
+                          avatarFallback="initials"
+                          className="gap-3"
+                          titleWrap={true}
+                          titleClassName="font-normal! text-base text-[#212121]"
+                        />
                       </div>
-                      <p className="text-xs text-gray-400">{item.date}</p>
+
+                      {/* Message */}
+                      <p className="text-sm text-gray-500 break-words">
+                        {item.message}
+                      </p>
+
+                      {/* Date */}
+                      <p className="text-xs text-gray-400 text-right whitespace-nowrap">
+                        {item.date}
+                      </p>
                     </div>
                   ))}
                 </div>
+
               ) : null}
 
               {activeTab === "emails" ? (
@@ -893,8 +910,8 @@ export default function JobDetails() {
                           )
                         }
                         className={`rounded-md border px-3 py-1 text-xs font-medium ${checklistFilter === filter.id
-                            ? "border-[#007B8C] bg-[#E3F3F6] text-[#007B8C]"
-                            : "border-gray-200 text-gray-500"
+                          ? "border-[#007B8C] bg-[#E3F3F6] text-[#007B8C]"
+                          : "border-gray-200 text-gray-500"
                           }`}
                       >
                         {filter.label}
