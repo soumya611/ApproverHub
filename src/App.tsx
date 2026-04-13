@@ -25,6 +25,9 @@ import SettingsUsers from "./pages/SettingsUsers";
 import SettingsUserDetail from "./pages/SettingsUserDetail";
 import CampaignsRouteGuard from "./components/common/CampaignsRouteGuard";
 import CommentSetting from "./pages/CommentSetting";
+import WorkflowSetting from "./pages/WorkflowSetting";
+import ChecklistSetting from "./pages/ChecklistSetting";
+import CreateChecklist from "./pages/CreateChecklist";
 
 export default function App() {
   return (
@@ -68,6 +71,9 @@ export default function App() {
               <Route path="/job-tracker" element={<JobTracker />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/campaign-setting" element={<CampaignSetting />} />
+              <Route path="/workflow-setting" element={<WorkflowSetting />} />
+              <Route path="/checklist-setting" element={<ChecklistSetting />} />
+              <Route path="/checklist-setting/new" element={<CreateChecklist />} />
               <Route path="/comment-setting" element={<CommentSetting />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
