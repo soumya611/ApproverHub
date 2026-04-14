@@ -40,7 +40,7 @@ export default function QuestionSectionName({
           className="ml-auto shrink-0 text-gray-400 hover:text-gray-600"
           aria-label={isExpanded ? "Collapse section" : "Expand section"}
         >
-          <ToggleIcon className={`transition-transform ${isExpanded ? "" : "rotate-180"}`} />
+          <ToggleIcon className={`h-[6px] w-[10px] transition-transform ${isExpanded ? "" : "rotate-180"}`} />
         </button>
       </div>
     </div>
