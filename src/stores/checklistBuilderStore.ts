@@ -5,6 +5,7 @@ export interface ChecklistQuestion {
   question: string;
   description: string;
   answerType: "pass_fail";
+  selectedAnswer: "pass" | "fail" | null;
   isExpanded: boolean;
 }
 
@@ -30,6 +31,7 @@ interface ChecklistBuilderState {
     updates: Partial<ChecklistQuestion>
   ) => void;
   addQuestion: (sectionId: string) => void;
+  removeQuestion: (sectionId: string, questionId: string) => void;
   toggleQuestionExpanded: (sectionId: string, questionId: string) => void;
   reorderQuestions: (sectionId: string, sourceId: string, targetId: string) => void;
   addSection: () => void;
@@ -42,6 +44,8 @@ interface ChecklistBuilderState {
     dragOverSectionId: string | null
   ) => void;
   clearDragContext: () => void;
+  resetBuilder: () => void;
+  setSections: (sections: ChecklistSection[]) => void;
 }
 
 const createDefaultQuestion = (seed: string): ChecklistQuestion => ({
@@ -49,6 +53,7 @@ const createDefaultQuestion = (seed: string): ChecklistQuestion => ({
   question: "",
   description: "",
   answerType: "pass_fail",
+  selectedAnswer: null,
   isExpanded: true,
 });
 
@@ -60,8 +65,16 @@ const createDefaultSection = (index: number): ChecklistSection => ({
   questions: [createDefaultQuestion(`${Date.now()}-${index}-0`)],
 });
 
+export const createDefaultChecklistSections = (): ChecklistSection[] => [createDefaultSection(1)];
+
+const normalizeSectionSequence = (sections: ChecklistSection[]): ChecklistSection[] =>
+  sections.map((section, index) => ({
+    ...section,
+    sectionName: `Section ${index + 1}`,
+  }));
+
 export const useChecklistBuilderStore = create<ChecklistBuilderState>((set) => ({
-  sections: [createDefaultSection(1)],
+  sections: createDefaultChecklistSections(),
   draggedQuestionId: null,
   draggedSectionId: null,
   dragOverQuestionId: null,
@@ -112,6 +125,28 @@ export const useChecklistBuilderStore = create<ChecklistBuilderState>((set) => (
       ),
     })),
 
+  removeQuestion: (sectionId, questionId) =>
+    set((state) => ({
+      sections: (() => {
+        const sectionsWithQuestionRemoved = state.sections
+          .map((section) =>
+            section.id === sectionId
+              ? {
+                  ...section,
+                  questions: section.questions.filter((question) => question.id !== questionId),
+                }
+              : section
+          )
+          .filter((section) => section.questions.length > 0);
+
+        if (!sectionsWithQuestionRemoved.length) {
+          return createDefaultChecklistSections();
+        }
+
+        return normalizeSectionSequence(sectionsWithQuestionRemoved);
+      })(),
+    })),
+
   toggleQuestionExpanded: (sectionId, questionId) =>
     set((state) => ({
       sections: state.sections.map((section) =>
@@ -144,7 +179,10 @@ export const useChecklistBuilderStore = create<ChecklistBuilderState>((set) => (
 
   addSection: () =>
     set((state) => ({
-      sections: [...state.sections, createDefaultSection(state.sections.length + 1)],
+      sections: normalizeSectionSequence([
+        ...state.sections,
+        createDefaultSection(state.sections.length + 1),
+      ]),
     })),
 
   setDragContext: (draggedQuestionId, draggedSectionId) =>
@@ -155,6 +193,26 @@ export const useChecklistBuilderStore = create<ChecklistBuilderState>((set) => (
 
   clearDragContext: () =>
     set({
+      draggedQuestionId: null,
+      draggedSectionId: null,
+      dragOverQuestionId: null,
+      dragOverSectionId: null,
+    }),
+
+  resetBuilder: () =>
+    set({
+      sections: createDefaultChecklistSections(),
+      draggedQuestionId: null,
+      draggedSectionId: null,
+      dragOverQuestionId: null,
+      dragOverSectionId: null,
+    }),
+
+  setSections: (sections) =>
+    set({
+      sections: sections.length
+        ? normalizeSectionSequence(sections)
+        : createDefaultChecklistSections(),
       draggedQuestionId: null,
       draggedSectionId: null,
       dragOverQuestionId: null,

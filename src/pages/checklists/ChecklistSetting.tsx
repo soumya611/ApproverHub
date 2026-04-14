@@ -12,6 +12,7 @@ import { EditDetailsIcon, VerticalDots } from "@/icons";
 import { useAppNavigate } from "@/hooks/useAppNavigate";
 import { TableHeaderRow } from "@/components/ui/table";
 import Popup from "@/components/ui/popup/Popup";
+import { useChecklistTemplatesStore } from "@/stores/checklistTemplatesStore";
 
 interface ChecklistTemplateRow {
   id: string;
@@ -28,43 +29,6 @@ interface ChecklistColumn {
   className?: string;
 }
 
-const BASE_TEMPLATES: ChecklistTemplateRow[] = [
-  {
-    id: "cl-001",
-    name: "Content quality checklist",
-    created: "Wed, 29 Dec 2:20 am",
-    active: true,
-    ownerName: "Liam West",
-  },
-  {
-    id: "cl-002",
-    name: "Marketing review checklist",
-    created: "Wed, 29 Dec 2:20 am",
-    active: false,
-    ownerName: "Emma Scott",
-  },
-  {
-    id: "cl-003",
-    name: "Campaign launch checklist",
-    created: "Wed, 29 Dec 2:20 am",
-    active: true,
-    ownerName: "Noah Green",
-  },
-];
-
-const MORE_TEMPLATES: ChecklistTemplateRow[] = Array.from({ length: 50 }, (_, index) => {
-  const id = `cl-${String(index + 4).padStart(3, "0")}`;
-  return {
-    id,
-    name: `Checklist template ${index + 4}`,
-    created: "Mon, 15 Jan 9:30 am",
-    active: index % 2 === 0,
-    ownerName: `Owner ${index + 4}`,
-  };
-});
-
-const ALL_TEMPLATES = [...BASE_TEMPLATES, ...MORE_TEMPLATES];
-
 const CHECKLIST_COLUMNS: ChecklistColumn[] = [
   { id: "name", label: "Name", className: "py-3 px-4 text-left" },
   { id: "created", label: "Created", className: "py-3 px-4 text-left" },
@@ -79,14 +43,40 @@ const getOwnerInitials = (name: string) => {
   return compact.slice(0, 2).toUpperCase();
 };
 
+const formatCreatedDate = (isoDate: string) => {
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleDateString("en-GB");
+};
+
 export default function ChecklistSetting() {
   const { goBack } = useAppNavigate();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  const [templates, setTemplates] = useState<ChecklistTemplateRow[]>(ALL_TEMPLATES);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const checklistTemplates = useChecklistTemplatesStore((state) => state.checklistTemplates);
+  const toggleChecklistTemplateStatus = useChecklistTemplatesStore(
+    (state) => state.toggleChecklistTemplateStatus
+  );
+  const duplicateChecklistTemplate = useChecklistTemplatesStore(
+    (state) => state.duplicateChecklistTemplate
+  );
+  const removeChecklistTemplate = useChecklistTemplatesStore((state) => state.removeChecklistTemplate);
+
+  const templates: ChecklistTemplateRow[] = useMemo(
+    () =>
+      checklistTemplates.map((item) => ({
+        id: item.id,
+        name: item.name,
+        created: formatCreatedDate(item.createdAt),
+        active: item.active,
+        ownerName: item.ownerName,
+        ownerAvatarUrl: item.ownerAvatarUrl,
+      })),
+    [checklistTemplates]
+  );
 
   const filteredTemplates = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -105,30 +95,18 @@ export default function ChecklistSetting() {
     : 0;
   const pagedTemplates = filteredTemplates.slice(from > 0 ? from - 1 : 0, to);
 
-  const handleToggle = (id: string, checked: boolean) => {
-    setTemplates((previous) =>
-      previous.map((item) => (item.id === id ? { ...item, active: checked } : item))
-    );
-  };
+  const handleToggle = (id: string, checked: boolean) =>
+    toggleChecklistTemplateStatus(id, checked);
   const handleDuplicateTemplate = (id: string) => {
-    setTemplates((previous) => {
-      const index = previous.findIndex((item) => item.id === id);
-      if (index === -1) return previous;
-      const target = previous[index];
-      const duplicated: ChecklistTemplateRow = {
-        ...target,
-        id: `cl-${Date.now()}`,
-      };
-      return [
-        ...previous.slice(0, index + 1),
-        duplicated,
-        ...previous.slice(index + 1),
-      ];
-    });
+    duplicateChecklistTemplate(id);
     setOpenMenuId(null);
   };
   const handleRemoveTemplate = (id: string) => {
-    setTemplates((previous) => previous.filter((item) => item.id !== id));
+    removeChecklistTemplate(id);
+    setOpenMenuId(null);
+  };
+  const handleOpenDetail = (id: string) => {
+    navigate(`/checklist-setting/${id}/details`);
     setOpenMenuId(null);
   };
 
@@ -194,9 +172,9 @@ export default function ChecklistSetting() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto p-4">
-            <div className="overflow-hidden rounded-md border border-gray-200 bg-white p-3">
-              <div className="overflow-x-auto custom-scrollbar">
+          <div className="min-h-0 flex-1 overflow-hidden p-4">
+            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-gray-200 bg-white p-3">
+              <div className="min-h-0 flex-1 overflow-auto custom-scrollbar">
                 <table className="w-full min-w-[900px] border-separate [border-spacing:0_10px] text-sm">
                   <thead>
                     <TableHeaderRow
@@ -204,7 +182,9 @@ export default function ChecklistSetting() {
                       columns={CHECKLIST_COLUMNS}
                       getColumnKey={(column) => column.id}
                       renderColumn={(column) => column.label}
-                      columnClassName={(column) => column.className ?? "py-3 px-4"}
+                      columnClassName={(column) =>
+                        `${column.className ?? "py-3 px-4"} sticky top-0 z-20 bg-white`
+                      }
                     />
                   </thead>
                   <tbody>
@@ -254,6 +234,7 @@ export default function ChecklistSetting() {
                                 type="button"
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-300 transition hover:bg-gray-100 hover:text-[#007B8C]"
                                 aria-label={`Edit ${item.name}`}
+                                onClick={() => navigate(`/checklist-setting/${item.id}/edit`)}
                               >
                                 <EditDetailsIcon className="h-4 w-4" />
                               </button>
@@ -276,6 +257,11 @@ export default function ChecklistSetting() {
                                   <div className="absolute right-0 top-full z-30 mt-2">
                                     <Popup
                                       items={[
+                                        {
+                                          id: "open-detail",
+                                          label: "Open detail",
+                                          onClick: () => handleOpenDetail(item.id),
+                                        },
                                         {
                                           id: "duplicate",
                                           label: "Duplicate",

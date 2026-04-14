@@ -1,13 +1,18 @@
 import { useChecklistBuilderStore } from "../../stores/checklistBuilderStore";
-import AddSectionButton from "./buttons/AddSectionButton";
-import AddQuestionButton from "./buttons/AddQuestionButton";
+import { ChecklistAccordionIcon } from "@/icons";
+import Button from "../ui/button/Button";
 import PassFailOption from "./PassFailOption";
 import QuestionSectionHeader from "./QuestionSectionHeader";
 import QuestionSectionName from "./QuestionSectionName";
-import ChecklistAccordionIcon from "./icons/ChecklistAccordionIcon";
 import QuestionDescriptionField from "./QuestionDescriptionField";
 
-export default function ChecklistQuestionsBuilder() {
+interface ChecklistQuestionsBuilderProps {
+  showQuestionDeleteAction?: boolean;
+}
+
+export default function ChecklistQuestionsBuilder({
+  showQuestionDeleteAction = false,
+}: ChecklistQuestionsBuilderProps) {
   const {
     sections,
     draggedQuestionId,
@@ -18,6 +23,7 @@ export default function ChecklistQuestionsBuilder() {
     toggleSectionExpanded,
     updateQuestion,
     addQuestion,
+    removeQuestion,
     toggleQuestionExpanded,
     reorderQuestions,
     addSection,
@@ -82,6 +88,11 @@ export default function ChecklistQuestionsBuilder() {
                     isExpanded={question.isExpanded}
                     onToggleExpanded={() => toggleQuestionExpanded(section.id, question.id)}
                     ToggleIcon={ChecklistAccordionIcon}
+                    showDeleteAction={
+                      showQuestionDeleteAction &&
+                      (question.question.trim().length > 0 || question.description.trim().length > 0)
+                    }
+                    onDeleteQuestion={() => removeQuestion(section.id, question.id)}
                   />
 
                   {question.isExpanded ? (
@@ -93,21 +104,40 @@ export default function ChecklistQuestionsBuilder() {
                         }
                       />
 
-                      <PassFailOption />
+                      <PassFailOption
+                        value={question.selectedAnswer}
+                        onChange={(value) =>
+                          updateQuestion(section.id, question.id, { selectedAnswer: value })
+                        }
+                      />
                     </>
                   ) : null}
                 </div>
               ))}
 
               <div className="px-3 py-2.5 pl-[68px]">
-                <AddQuestionButton onClick={() => addQuestion(section.id)} />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => addQuestion(section.id)}
+                  className="!h-auto !border-0 !bg-transparent !p-0 !text-sm !font-semibold !text-[var(--color-secondary-500)] hover:!bg-transparent"
+                >
+                  + Add Question
+                </Button>
               </div>
             </>
           ) : null}
         </div>
       ))}
 
-      <AddSectionButton onClick={addSection} />
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={addSection}
+        className="!flex !w-full !justify-start !rounded-md !border !border-gray-200 !bg-gray-50 !px-3 !py-2.5 !text-base !font-normal !text-gray-500 hover:!bg-gray-100"
+      >
+        + Add Section
+      </Button>
     </div>
   );
 }

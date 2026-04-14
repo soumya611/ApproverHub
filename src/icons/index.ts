@@ -171,6 +171,7 @@ import { ReactComponent as NotesEditIcon } from "./notes-edit.svg?react";
 import { ReactComponent as NotesDelIcon } from "./notes-del.svg?react";
 import { ReactComponent as ListViewIcon } from "./listview-icon.svg?react";
 import { ReactComponent as DropDownArrowIcon } from "./dropdown-arrow.svg?react";
+import { ReactComponent as ChecklistAccordionIcon } from "./checklist-accordion.svg?react";
 
 
 
@@ -355,6 +356,7 @@ export {
   Material_Symbols_Icon,
   JobInfor_trash_Icon,
   DropDownArrowIcon,
+  ChecklistAccordionIcon,
   Ep_sort_Icon,
   Call_Icon,
   Export_Filter_Icon,

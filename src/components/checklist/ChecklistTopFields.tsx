@@ -4,6 +4,7 @@ import { CHECKLIST_FORM_WIDTH_CLASS } from "./layout";
 interface ChecklistTopFieldsProps {
   checklistName: string;
   checklistDescription: string;
+  createdOnLabel: string;
   onChecklistNameChange: (value: string) => void;
   onChecklistDescriptionChange: (value: string) => void;
 }
@@ -11,6 +12,7 @@ interface ChecklistTopFieldsProps {
 export default function ChecklistTopFields({
   checklistName,
   checklistDescription,
+  createdOnLabel,
   onChecklistNameChange,
   onChecklistDescriptionChange,
 }: ChecklistTopFieldsProps) {
@@ -25,7 +27,7 @@ export default function ChecklistTopFields({
           labelClassName="text-[11px] font-medium text-[#64748B]"
           className="!h-8 !rounded-sm !border-gray-200 !px-2.5 !py-1.5 !text-sm !font-semibold !text-[#007B8C] placeholder:!font-semibold placeholder:!text-[#007B8C] focus:!border-[#007B8C] focus:!ring-0"
         />
-        <div className="text-right text-xs text-[#64748B]">Created on :</div>
+        <div className="text-right text-xs text-[#64748B]">Created on : {createdOnLabel}</div>
       </div>
 
       <label className="flex w-full flex-col gap-1">
