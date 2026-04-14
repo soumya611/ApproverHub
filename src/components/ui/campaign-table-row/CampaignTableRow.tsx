@@ -62,6 +62,15 @@ export interface CampaignTableRowProps {
   onEdit?: () => void;
   className?: string;
   visibleColumns?: CampaignColumnId[];
+  stickyDataColumnIds?: Set<CampaignColumnId>;
+  stickyDataColumnOffsets?: Partial<Record<CampaignColumnId, number>>;
+  stickyDataColumnWidths?: Partial<Record<CampaignColumnId, number>>;
+  isSelectionColumnSticky?: boolean;
+  selectionColumnOffset?: number;
+  selectionColumnWidth?: number;
+  isExpandColumnSticky?: boolean;
+  expandColumnOffset?: number;
+  expandColumnWidth?: number;
 }
 
 const STATUS_CLASS: Record<CampaignStatus, string> = {
@@ -121,6 +130,15 @@ export default function CampaignTableRow({
   onEdit,
   className = "",
   visibleColumns,
+  stickyDataColumnIds,
+  stickyDataColumnOffsets,
+  stickyDataColumnWidths,
+  isSelectionColumnSticky = true,
+  selectionColumnOffset = 0,
+  selectionColumnWidth = 120,
+  isExpandColumnSticky = true,
+  expandColumnOffset = 120,
+  expandColumnWidth = 56,
 }: CampaignTableRowProps) {
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const defaultActionConfig = useMemo(
@@ -163,7 +181,11 @@ export default function CampaignTableRow({
   const showExpand = Boolean(onToggleExpand && hasSubRows);
   const baseCellClass =
     "border-y border-gray-200 bg-white px-3 py-3 align-middle text-sm text-gray-600 transition-colors group-hover:bg-gray-50";
-  const leftCellClass = `${baseCellClass} border-l ${
+  const leftCellClass = `${baseCellClass} ${
+    isSelectionColumnSticky
+      ? "sticky z-20 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+      : ""
+  } min-w-[120px] border-l ${
     isExpandedWithRows ? "rounded-tl-sm" : "rounded-l-sm"
   }`;
   const rightCellClass = `${baseCellClass} border-r ${
@@ -171,18 +193,50 @@ export default function CampaignTableRow({
   }`;
   const subBaseCellClass =
     "border-b border-gray-100 bg-white px-3 py-2 align-middle text-xs text-gray-500";
+  const stickyExpandCellClass = `${
+    isExpandColumnSticky
+      ? "sticky z-20 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+      : ""
+  } min-w-[56px] bg-white group-hover:bg-gray-50`;
+  const stickySubExpandCellClass = `${
+    isExpandColumnSticky
+      ? "sticky z-20 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+      : ""
+  } min-w-[56px] bg-white`;
+
+  const getStickyDataClass = (columnId: CampaignColumnId) =>
+    stickyDataColumnIds?.has(columnId)
+      ? "sticky z-10 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+      : "";
+
+  const getStickyDataStyle = (columnId: CampaignColumnId) => {
+    if (!stickyDataColumnIds?.has(columnId)) {
+      return undefined;
+    }
+
+    const width = stickyDataColumnWidths?.[columnId] ?? 150;
+
+    return {
+      left: `${stickyDataColumnOffsets?.[columnId] ?? 0}px`,
+      minWidth: `${width}px`,
+      width: `${width}px`,
+    };
+  };
 
   const renderMainCell = (columnId: CampaignColumnId) => {
+    const cellClassName = `${baseCellClass} ${getStickyDataClass(columnId)}`;
+    const cellStyle = getStickyDataStyle(columnId);
+
     switch (columnId) {
       case "campaign_id":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="font-semibold text-gray-900">{campaignId}</span>
           </td>
         );
       case "campaign_name":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="font-semibold text-gray-800">
               {resolvedCampaignName}
             </span>
@@ -190,7 +244,7 @@ export default function CampaignTableRow({
         );
       case "owner":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <Avatar
               src={ownerAvatarUrl ?? ""}
               alt={ownerName || "Owner"}
@@ -201,13 +255,13 @@ export default function CampaignTableRow({
         );
       case "business_area":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-500">{businessArea ?? "--"}</span>
           </td>
         );
       case "job_status":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <div className="flex flex-col gap-1">
               {jobStatusTag ? (
                 <Tag tone={TAG_TONE_MAP[jobStatusTag]} size="xs" rounded="none">
@@ -223,7 +277,7 @@ export default function CampaignTableRow({
         );
       case "campaign_status":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span
               className={`text-sm font-medium ${STATUS_CLASS[campaignStatus]}`}
             >
@@ -233,7 +287,7 @@ export default function CampaignTableRow({
         );
       case "action":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             {hasActions ? (
               <div className="campaign-action-menu relative inline-flex">
                 <button
@@ -266,31 +320,31 @@ export default function CampaignTableRow({
         );
       case "campaign_type":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-500">{campaignType ?? "--"}</span>
           </td>
         );
       case "created_date":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-500">{createdDate ?? "--"}</span>
           </td>
         );
       case "start_date":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-500">{startDate ?? "--"}</span>
           </td>
         );
       case "end_date":
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-500">{endDate}</span>
           </td>
         );
       default:
         return (
-          <td key={columnId} className={baseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-300">--</span>
           </td>
         );
@@ -303,10 +357,13 @@ export default function CampaignTableRow({
     subActionLabel: string,
     subMenuItems: PopupItem[]
   ) => {
+    const cellClassName = `${subBaseCellClass} ${getStickyDataClass(columnId)}`;
+    const cellStyle = getStickyDataStyle(columnId);
+
     switch (columnId) {
       case "campaign_id":
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <div className="relative pl-4">
               <span className="absolute left-0 top-1/2 h-px w-3 -translate-y-1/2 bg-gray-200" />
               <span className="text-gray-600">{subRow.jobNumber}</span>
@@ -315,13 +372,13 @@ export default function CampaignTableRow({
         );
       case "campaign_name":
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-600">{subRow.title}</span>
           </td>
         );
       case "owner":
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <Avatar
               src={subRow.ownerAvatarUrl ?? ""}
               alt={subRow.ownerName || "Owner"}
@@ -335,19 +392,19 @@ export default function CampaignTableRow({
       case "created_date":
       case "start_date":
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-[10px] text-gray-300">--</span>
           </td>
         );
       case "job_status":
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-600">{subRow.jobProgress}</span>
           </td>
         );
       case "campaign_status":
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-xs text-gray-400">
               {subRow.campaignStatus}
             </span>
@@ -355,7 +412,7 @@ export default function CampaignTableRow({
         );
       case "action":
         return (
-          <td key={columnId}  className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             {subMenuItems.length ? (
               <div className="campaign-action-menu relative inline-flex">
                 <button
@@ -388,13 +445,13 @@ export default function CampaignTableRow({
         );
       case "end_date":
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-gray-400">{subRow.endDate}</span>
           </td>
         );
       default:
         return (
-          <td key={columnId} className={subBaseCellClass}>
+          <td key={columnId} className={cellClassName} style={cellStyle}>
             <span className="text-[10px] text-gray-300">--</span>
           </td>
         );
@@ -404,7 +461,14 @@ export default function CampaignTableRow({
   return (
     <>
       <tr className={`group ${className}`}>
-        <td className={`${leftCellClass} w-10`}>
+        <td
+          className={`${leftCellClass} w-10`}
+          style={{
+            left: `${selectionColumnOffset}px`,
+            minWidth: `${selectionColumnWidth}px`,
+            width: `${selectionColumnWidth}px`,
+          }}
+        >
           {showCheckbox ? (
             <input
               type="checkbox"
@@ -415,7 +479,14 @@ export default function CampaignTableRow({
             />
           ) : null}
         </td>
-        <td className={`${baseCellClass} w-10`}>
+        <td
+          className={`${baseCellClass} ${stickyExpandCellClass} w-10`}
+          style={{
+            left: `${expandColumnOffset}px`,
+            minWidth: `${expandColumnWidth}px`,
+            width: `${expandColumnWidth}px`,
+          }}
+        >
           {showExpand ? (
             <button
               type="button"
@@ -460,7 +531,11 @@ export default function CampaignTableRow({
                 setOpenActionId(null);
               },
             }));
-            const subLeftCellClass = `${subBaseCellClass} border-l ${
+            const subLeftCellClass = `${subBaseCellClass} ${
+              isSelectionColumnSticky
+                ? "sticky z-20 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+                : ""
+            } border-l ${
               isLast ? "rounded-bl-xl" : ""
             }`;
             const subRightCellClass = `${subBaseCellClass} border-r ${
@@ -469,8 +544,22 @@ export default function CampaignTableRow({
 
             return (
               <tr key={subRow.id} className="group">
-                <td className={`${subLeftCellClass} w-10`} />
-                <td className={`${subBaseCellClass} w-10`}>
+                <td
+                  className={`${subLeftCellClass} w-10`}
+                  style={{
+                    left: `${selectionColumnOffset}px`,
+                    minWidth: `${selectionColumnWidth}px`,
+                    width: `${selectionColumnWidth}px`,
+                  }}
+                />
+                <td
+                  className={`${subBaseCellClass} ${stickySubExpandCellClass} w-10`}
+                  style={{
+                    left: `${expandColumnOffset}px`,
+                    minWidth: `${expandColumnWidth}px`,
+                    width: `${expandColumnWidth}px`,
+                  }}
+                >
                   <div className="relative flex h-full items-stretch justify-center">
                     <span
                       className={`block w-px bg-gray-200 ${

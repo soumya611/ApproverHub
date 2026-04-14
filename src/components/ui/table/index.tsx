@@ -1,4 +1,4 @@
-import { ReactNode, HTMLAttributes } from "react";
+import { ReactNode, HTMLAttributes, type CSSProperties } from "react";
 
 // Props for Table
 interface TableProps {
@@ -34,6 +34,7 @@ interface TableCellProps {
 export interface HeaderCellConfig {
   content: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }
 
 export interface TableHeaderRowProps<T> {
@@ -42,6 +43,7 @@ export interface TableHeaderRowProps<T> {
   getColumnKey?: (column: T, index: number) => string;
   className?: string;
   columnClassName?: string | ((column: T, index: number) => string);
+  columnStyle?: CSSProperties | ((column: T, index: number) => CSSProperties | undefined);
   prefixCells?: HeaderCellConfig[];
   suffixCells?: HeaderCellConfig[];
 }
@@ -86,6 +88,7 @@ const TableHeaderRow = <T,>({
   getColumnKey,
   className = "",
   columnClassName = "",
+  columnStyle,
   prefixCells = [],
   suffixCells = [],
 }: TableHeaderRowProps<T>) => {
@@ -102,7 +105,7 @@ const TableHeaderRow = <T,>({
   return (
     <tr className={className}>
       {prefixCells.map((cell, index) => (
-        <th key={`prefix-${index}`} className={cell.className}>
+        <th key={`prefix-${index}`} className={cell.className} style={cell.style}>
           {cell.content}
         </th>
       ))}
@@ -111,14 +114,22 @@ const TableHeaderRow = <T,>({
           typeof columnClassName === "function"
             ? columnClassName(column, index)
             : columnClassName;
+        const resolvedColumnStyle =
+          typeof columnStyle === "function"
+            ? columnStyle(column, index)
+            : columnStyle;
         return (
-          <th key={resolveKey(column, index)} className={resolvedColumnClassName}>
+          <th
+            key={resolveKey(column, index)}
+            className={resolvedColumnClassName}
+            style={resolvedColumnStyle}
+          >
             {renderColumn(column)}
           </th>
         );
       })}
       {suffixCells.map((cell, index) => (
-        <th key={`suffix-${index}`} className={cell.className}>
+        <th key={`suffix-${index}`} className={cell.className} style={cell.style}>
           {cell.content}
         </th>
       ))}

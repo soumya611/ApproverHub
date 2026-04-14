@@ -21,6 +21,7 @@ import SearchInput from "../ui/search-input/SearchInput";
 import SelectedItem, { type SelectedItemAction } from "../ui/selected-item/SelectedItem";
 import ToggleSwitch from "../ui/toggle/ToggleSwitch";
 import AdvanceFilter, {
+  hasActiveAdvanceFilterState,
   type AdvanceFilterState,
   type FilterRow,
 } from "../ui/advance-filter/AdvanceFilter";
@@ -354,6 +355,7 @@ export default function SettingsUsersView() {
   const [addUserRows, setAddUserRows] = useState<AddUserDraft[]>([createAddUserRow()]);
   const [sendInviteOnSave, setSendInviteOnSave] = useState(false);
   const [inviteCooldownIds, setInviteCooldownIds] = useState<Set<string>>(new Set());
+  const hasAppliedFilters = hasActiveAdvanceFilterState(currentFilterState);
 
   const csvFileInputRef = useRef<HTMLInputElement>(null);
   const inviteCooldownTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -484,6 +486,11 @@ export default function SettingsUsersView() {
     }),
     [nameOptions, roleOptions, emailOptions, companyOptions, statusOptions]
   );
+
+  const clearUserFilters = () => {
+    setCurrentFilterState(null);
+    setIsFilterOpen(false);
+  };
 
   const filteredByPanelUsers = useMemo(
     () => applyUsersFilters(users, currentFilterState),
@@ -1089,14 +1096,37 @@ export default function SettingsUsersView() {
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen((previous) => !previous)}
-                className="users-filter-toggle rounded-md border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-gray-50"
-                aria-label="Open filter"
-              >
-                <FilterIcon className="h-4 w-4" />
-              </button>
+              <div className="users-filter-toggle relative">
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen((previous) => !previous)}
+                  className={`flex items-center justify-center rounded-md border bg-white p-2 text-gray-500 transition hover:bg-gray-50 ${
+                    hasAppliedFilters
+                      ? "border-[var(--color-secondary-300)] text-[var(--color-secondary-500)]"
+                      : "border-gray-200"
+                  }`}
+                  aria-label="Open filter"
+                >
+                  <AppIcon
+                    icon={FilterIcon}
+                    size={16}
+                    color={hasAppliedFilters ? "var(--color-secondary-500)" : "currentColor"}
+                  />
+                </button>
+                {hasAppliedFilters ? (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      clearUserFilters();
+                    }}
+                    className="absolute -right-1 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-secondary-500)] text-white shadow-sm"
+                    aria-label="Clear active filters"
+                  >
+                    <CloseIcon className="h-2.5 w-2.5" />
+                  </button>
+                ) : null}
+              </div>
 
               <div className="users-import-menu relative">
                 <button
@@ -1120,13 +1150,25 @@ export default function SettingsUsersView() {
                   <AdvanceFilter
                     defaultTab="quick"
                     defaultRows={DEFAULT_FILTER_ROWS}
-                    onFilterChange={(state) => setCurrentFilterState(state)}
-                    onClear={() => setCurrentFilterState(null)}
+                    initialState={currentFilterState}
+                    onFilterChange={(state) =>
+                      setCurrentFilterState(
+                        hasActiveAdvanceFilterState(state) ? state : null
+                      )
+                    }
+                    onClear={clearUserFilters}
                     className="w-[860px] max-w-[92vw] rounded-xl bg-white"
                     columnOptions={columnOptions}
-                    valueOptions={statusOptions}
                     valueOptionsByColumn={valueOptionsByColumn}
                     quickFilterColumns={quickFilterColumns}
+                    labels={{
+                      headerTitle: "Filter by",
+                    }}
+                    visibility={{
+                      showTabs: false,
+                      showExportAction: false,
+                      showSaveViewAction: false,
+                    }}
                   />
                 </div>
               ) : null}

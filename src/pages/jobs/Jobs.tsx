@@ -8,10 +8,11 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router";
 import PageMeta from "@/components/common/PageMeta";
+import SavedViewChip from "@/components/common/SavedViewChip";
 import PageContentContainer from "@/components/layout/PageContentContainer";
-import PaginationControls from "@/components/common/PaginationControls";
 import SearchInput from "@/components/ui/search-input/SearchInput";
 import AdvanceFilter, {
+  hasActiveAdvanceFilterState,
   type AdvanceFilterState,
   type FilterRow,
 } from "@/components/ui/advance-filter/AdvanceFilter";
@@ -22,14 +23,13 @@ import type { FilterDropdownOption } from "@/components/ui/advance-filter/Filter
 import ColoumnsFilter, {
   type ColumnItem,
 } from "@/components/ui/columns-filter/ColoumnsFilter";
-import Popup from "@/components/ui/popup/Popup";
 import JobCard, { type JobCardData, type JobCardTagTone } from "@/components/ui/job-card/JobCard";
 import AddAssigneePopup, {
   type AssigneeOption,
 } from "@/components/analytics/AddAssigneePopup";
 import { JobsFAB, JobsTable, type JobTag, type JobRowType } from "@/components/jobs";
-import type { JobMember } from "@/components/jobs/types";
-import { FilterIcon, GridIcon, ListViewIcon, VerticalDots } from "@/icons";
+import type { JobColumnId, JobMember } from "@/components/jobs/types";
+import { CloseIcon, FilterIcon, GridIcon, ListViewIcon, VerticalDots } from "@/icons";
 import { resolveLabel } from "@/data/localization";
 import { normalizeColumns } from "@/data/columnsConfig";
 import { useLocalizationStore } from "@/stores/localizationStore";
@@ -37,6 +37,13 @@ import { useJobsStore } from "@/stores/jobsStore";
 import { useJobsColumnsConfig } from "@/context/JobsColumnsConfigContext";
 import { useColumnsConfig } from "@/context/ColumnsConfigContext";
 import type { WorkflowMember } from "@/types/workflow.types";
+import { useInfiniteScrollItems } from "@/hooks/useInfiniteScrollItems";
+import {
+  getSavedViewsStorageKey,
+  readSavedViewsStorage,
+  writeSavedViewsStorage,
+} from "@/utils/savedViewsStorage";
+import AppIcon from "@/components/ui/icon/AppIcon";
 
 type SavedView = {
   id: string;
@@ -51,16 +58,6 @@ const DEFAULT_FILTER_ROWS: FilterRow[] = [
     condition: "",
     value: "",
   },
-];
-
-const STATUS_ORDER = [
-  "In Progress",
-  "Start Pending",
-  "Uploading...",
-  "Upload Failed",
-  "Complete",
-  "Changes required",
-  "On hold",
 ];
 
 const QUERY_FILTER_TO_STATUS: Record<string, JobRowType["status"]> = {
@@ -106,6 +103,25 @@ const TAG_TONE_MAP: Record<Exclude<JobTag, null>, JobCardTagTone> = {
   Expired: "gray",
 };
 
+type JobFilterableColumnId =
+  | "campaign_id"
+  | "job_number"
+  | "job_name"
+  | "created"
+  | "status"
+  | "owner"
+  | "assignee";
+
+const FILTERABLE_JOB_COLUMN_IDS = new Set<JobFilterableColumnId>([
+  "campaign_id",
+  "job_number",
+  "job_name",
+  "created",
+  "status",
+  "owner",
+  "assignee",
+]);
+
 const SELF_ASSIGNEE: AssigneeOption = {
   id: "self-user",
   name: "Thomas Anree",
@@ -148,6 +164,30 @@ const parseQuickSelections = (quickSelections: Record<string, boolean>) => {
   return selectedByColumn;
 };
 
+const getJobFilterValue = (
+  job: JobRowType,
+  columnId: JobFilterableColumnId
+) => {
+  switch (columnId) {
+    case "campaign_id":
+      return job.campaignId;
+    case "job_number":
+      return job.jobNumber;
+    case "job_name":
+      return job.jobName;
+    case "created":
+      return job.created;
+    case "status":
+      return job.status;
+    case "owner":
+      return job.owner;
+    case "assignee":
+      return job.assignee ?? "Unassigned";
+    default:
+      return "";
+  }
+};
+
 const applyQuickFilters = (
   data: JobRowType[],
   quickSelections: Record<string, boolean>
@@ -161,37 +201,24 @@ const applyQuickFilters = (
     return data;
   }
 
-  return data.filter((job) => {
-    const statusSelections = selections["Status"];
-    if (statusSelections?.length && !statusSelections.includes("All")) {
-      if (!statusSelections.includes(job.status)) {
-        return false;
+  return data.filter((job) =>
+    Object.entries(selections).every(([columnKey, selectedValues]) => {
+      if (!selectedValues.length) {
+        return true;
       }
-    }
 
-    const ownerSelections = selections["Owner"];
-    if (ownerSelections?.length && !ownerSelections.includes(job.owner)) {
-      return false;
-    }
-
-    const assigneeSelections = selections["Assignee"];
-    if (assigneeSelections?.length) {
-      const assigneeValue = job.assignee ?? "Unassigned";
-      if (!assigneeSelections.includes(assigneeValue)) {
-        return false;
+      if (!FILTERABLE_JOB_COLUMN_IDS.has(columnKey as JobFilterableColumnId)) {
+        return true;
       }
-    }
 
-    const campaignSelections = selections["Campaign ID"];
-    if (
-      campaignSelections?.length &&
-      !campaignSelections.includes(job.campaignId)
-    ) {
-      return false;
-    }
+      const fieldValue = getJobFilterValue(
+        job,
+        columnKey as JobFilterableColumnId
+      );
 
-    return true;
-  });
+      return Boolean(fieldValue) && selectedValues.includes(fieldValue);
+    })
+  );
 };
 
 const applyAdvancedFilters = (data: JobRowType[], rows: FilterRow[]) => {
@@ -204,24 +231,16 @@ const applyAdvancedFilters = (data: JobRowType[], rows: FilterRow[]) => {
 
   return data.filter((job) =>
     validRows.every((filterRow) => {
-      const fieldValue = (() => {
-        switch (filterRow.column) {
-          case "owner":
-            return job.owner;
-          case "status":
-            return job.status;
-          case "campaign_id":
-            return job.campaignId;
-          case "job_name":
-            return job.jobName;
-          case "assignee":
-            return job.assignee ?? "Unassigned";
-          case "job_number":
-            return job.jobNumber;
-          default:
-            return "";
-        }
-      })();
+      if (
+        !FILTERABLE_JOB_COLUMN_IDS.has(filterRow.column as JobFilterableColumnId)
+      ) {
+        return true;
+      }
+
+      const fieldValue = getJobFilterValue(
+        job,
+        filterRow.column as JobFilterableColumnId
+      );
 
       const targetValue = filterRow.value;
 
@@ -366,16 +385,39 @@ const mergeJobsColumnsWithCampaignFields = (
   return normalizeColumns(mergedColumns);
 };
 
+const JOBS_STICKY_COLUMN_COUNT = 2;
+const JOBS_STICKY_COLUMN_WIDTHS: Partial<Record<JobColumnId, number>> = {
+  campaign_id: 150,
+  job_number: 150,
+  job_name: 260,
+  created: 140,
+  status: 160,
+  action: 140,
+  owner: 120,
+  assignee: 120,
+};
+
 export default function Jobs() {
   const navigate = useNavigate();
   const location = useLocation();
+  const savedViewsStorageKey = useMemo(
+    () => getSavedViewsStorageKey("jobs"),
+    []
+  );
+  const persistedSavedViewsState = useMemo(
+    () => readSavedViewsStorage<AdvanceFilterState>(savedViewsStorageKey),
+    [savedViewsStorageKey]
+  );
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [activeViewId, setActiveViewId] = useState<string>("all");
-  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
-  const [openViewMenuId, setOpenViewMenuId] = useState<string | null>(null);
+  const [activeViewId, setActiveViewId] = useState<string>(
+    persistedSavedViewsState.activeViewId
+  );
+  const [savedViews, setSavedViews] = useState<SavedView[]>(
+    persistedSavedViewsState.savedViews
+  );
   const [currentFilterState, setCurrentFilterState] =
     useState<AdvanceFilterState | null>(null);
   const [filterResetKey, setFilterResetKey] = useState(0);
@@ -390,13 +432,6 @@ export default function Jobs() {
   const updateJob = useJobsStore((state) => state.updateJob);
   const pinJobs = useJobsStore((state) => state.pinJobs);
   const archiveJobs = useJobsStore((state) => state.archiveJobs);
-  const jobsCurrentPage = useJobsStore((state) => state.pagination.currentPage);
-  const jobsPageSize = useJobsStore((state) => state.pagination.pageSize);
-  const goToNextJobsPage = useJobsStore((state) => state.goToNextPage);
-  const goToPreviousJobsPage = useJobsStore((state) => state.goToPreviousPage);
-  const setJobsCurrentPage = useJobsStore((state) => state.setCurrentPage);
-  const setJobsPageSize = useJobsStore((state) => state.setPageSize);
-  const resetJobsPagination = useJobsStore((state) => state.resetPagination);
   const localizationOverrides = useLocalizationStore((s) => s.overrides);
   const jobsTitle = resolveLabel("page.jobs.title", localizationOverrides);
   const { columns: jobsColumns, setColumns: setJobsColumns } = useJobsColumnsConfig();
@@ -420,113 +455,11 @@ export default function Jobs() {
   }, [jobs]);
 
   const filterPanelRef = useRef<HTMLDivElement>(null);
-  const viewMenuRef = useRef<HTMLDivElement>(null);
   const columnsPanelRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const isTableDraggingRef = useRef(false);
   const tableStartXRef = useRef(0);
   const tableScrollLeftRef = useRef(0);
-
-  const statusOptions = useMemo<FilterDropdownOption[]>(() => {
-    const available = STATUS_ORDER.filter((status) =>
-      jobs.some((job) => job.status === status)
-    );
-    const options = available.length ? available : STATUS_ORDER;
-    return options.map((status) => ({ label: status, value: status }));
-  }, [jobs]);
-
-  const ownerOptions = useMemo<FilterDropdownOption[]>(
-    () => getUniqueValues(jobs.map((job) => job.owner)).map((value) => ({
-        label: value,
-        value,
-      })),
-    [jobs]
-  );
-
-  const assigneeOptions = useMemo<FilterDropdownOption[]>(
-    () =>
-      getUniqueValues(jobs.map((job) => job.assignee ?? "Unassigned")).map(
-        (value) => ({
-          label: value,
-          value,
-        })
-      ),
-    [jobs]
-  );
-
-  const campaignOptions = useMemo<FilterDropdownOption[]>(
-    () => getUniqueValues(jobs.map((job) => job.campaignId)).map((value) => ({
-        label: value,
-        value,
-      })),
-    [jobs]
-  );
-
-  const jobNameOptions = useMemo<FilterDropdownOption[]>(
-    () => getUniqueValues(jobs.map((job) => job.jobName)).map((value) => ({
-        label: value,
-        value,
-      })),
-    [jobs]
-  );
-
-  const jobNumberOptions = useMemo<FilterDropdownOption[]>(
-    () => getUniqueValues(jobs.map((job) => job.jobNumber)).map((value) => ({
-        label: value,
-        value,
-      })),
-    [jobs]
-  );
-
-  const quickFilterColumns = useMemo(
-    () => [
-      {
-        title: "Status",
-        items: ["All", ...statusOptions.map((option) => option.label)],
-      },
-      {
-        title: "Owner",
-        items: ownerOptions.map((option) => option.label),
-      },
-      {
-        title: "Assignee",
-        items: assigneeOptions.map((option) => option.label),
-      },
-      {
-        title: "Campaign ID",
-        items: campaignOptions.map((option) => option.label),
-      },
-    ],
-    [statusOptions, ownerOptions, assigneeOptions, campaignOptions]
-  );
-
-  const columnOptions: FilterDropdownOption[] = [
-    { label: "Owner", value: "owner" },
-    { label: "Status", value: "status" },
-    { label: "Campaign ID", value: "campaign_id" },
-    { label: "Job Name", value: "job_name" },
-    { label: "Assignee", value: "assignee" },
-    { label: "Job Number", value: "job_number" },
-  ];
-
-  const valueOptionsByColumn = useMemo(
-    () => ({
-      status: statusOptions,
-      owner: ownerOptions,
-      assignee: assigneeOptions,
-      campaign_id: campaignOptions,
-      job_name: jobNameOptions,
-      job_number: jobNumberOptions,
-    }),
-    [
-      statusOptions,
-      ownerOptions,
-      assigneeOptions,
-      campaignOptions,
-      jobNameOptions,
-      jobNumberOptions,
-    ]
-  );
 
   const mergedColumns = useMemo(
     () => mergeJobsColumnsWithCampaignFields(jobsColumns, campaignColumns),
@@ -544,6 +477,52 @@ export default function Jobs() {
     return Math.max(900, baseWidth + visibleColumns.length * columnWidth);
   }, [visibleColumns.length]);
 
+  const filterableVisibleColumns = useMemo(
+    () =>
+      visibleColumns.filter((column) =>
+        FILTERABLE_JOB_COLUMN_IDS.has(column.id as JobFilterableColumnId)
+      ),
+    [visibleColumns]
+  );
+
+  const valueOptionsByColumn = useMemo(
+    () =>
+      Object.fromEntries(
+        filterableVisibleColumns.map((column) => {
+          const columnId = column.id as JobFilterableColumnId;
+          const options: FilterDropdownOption[] = getUniqueValues(
+            jobs.map((job) => getJobFilterValue(job, columnId))
+          ).map((value) => ({
+            label: value,
+            value,
+          }));
+
+          return [columnId, options];
+        })
+      ),
+    [filterableVisibleColumns, jobs]
+  );
+
+  const quickFilterColumns = useMemo(
+    () =>
+      filterableVisibleColumns.map((column) => ({
+        key: column.id,
+        title: column.label,
+        items:
+          valueOptionsByColumn[column.id]?.map((option) => option.label) ?? [],
+      })),
+    [filterableVisibleColumns, valueOptionsByColumn]
+  );
+
+  const columnOptions = useMemo<FilterDropdownOption[]>(
+    () =>
+      filterableVisibleColumns.map((column) => ({
+        label: column.label,
+        value: column.id,
+      })),
+    [filterableVisibleColumns]
+  );
+
   const activeFilterState = useMemo(() => {
     if (activeViewId === "all") {
       return currentFilterState;
@@ -551,6 +530,7 @@ export default function Jobs() {
     const view = savedViews.find((item) => item.id === activeViewId);
     return view?.filterState ?? currentFilterState;
   }, [activeViewId, savedViews, currentFilterState]);
+  const hasAppliedFilters = hasActiveAdvanceFilterState(activeFilterState);
 
   const statusFilterFromParams = useMemo(
     () => getStatusFilterFromSearch(location.search),
@@ -577,27 +557,26 @@ export default function Jobs() {
     [searchedJobs, pinnedIds]
   );
 
-  const totalJobPages = useMemo(
-    () => Math.max(1, Math.ceil(visibleJobs.length / jobsPageSize)),
-    [visibleJobs.length, jobsPageSize]
+  const jobsInfiniteResetKey = useMemo(
+    () =>
+      JSON.stringify({
+        search,
+        activeViewId,
+        activeFilterState,
+        statusSearch: location.search,
+      }),
+    [search, activeViewId, activeFilterState, location.search]
   );
 
-  const currentJobPage = Math.min(jobsCurrentPage, totalJobPages);
-
-  const paginatedJobs = useMemo(() => {
-    const start = (currentJobPage - 1) * jobsPageSize;
-    return visibleJobs.slice(start, start + jobsPageSize);
-  }, [visibleJobs, currentJobPage, jobsPageSize]);
-
-  const jobsFrom = visibleJobs.length
-    ? (currentJobPage - 1) * jobsPageSize + 1
-    : 0;
-  const jobsTo = visibleJobs.length
-    ? Math.min(visibleJobs.length, currentJobPage * jobsPageSize)
-    : 0;
-
-  const canGoToPreviousJobsPage = currentJobPage > 1;
-  const canGoToNextJobsPage = currentJobPage < totalJobPages;
+  const {
+    visibleItems: renderedJobs,
+    hasMore: hasMoreJobs,
+    loaderRef: jobsLoadMoreRef,
+  } = useInfiniteScrollItems(visibleJobs, {
+    initialCount: 10,
+    step: 10,
+    resetKey: jobsInfiniteResetKey,
+  });
 
   const visibleIds = useMemo(
     () => new Set(visibleJobs.map((row) => row.id)),
@@ -610,15 +589,15 @@ export default function Jobs() {
   );
 
   const allSelected =
-    paginatedJobs.length > 0 &&
-    paginatedJobs.every((job) => selectedIds.has(job.id));
+    renderedJobs.length > 0 &&
+    renderedJobs.every((job) => selectedIds.has(job.id));
 
   const toggleSelectAll = () => {
-    if (paginatedJobs.length === 0) return;
+    if (renderedJobs.length === 0) return;
     if (allSelected) {
       setSelectedIds((prev) => {
         const next = new Set(prev);
-        paginatedJobs.forEach((job) => {
+        renderedJobs.forEach((job) => {
           next.delete(job.id);
         });
         return next;
@@ -626,7 +605,7 @@ export default function Jobs() {
     } else {
       setSelectedIds((prev) => {
         const next = new Set(prev);
-        paginatedJobs.forEach((job) => {
+        renderedJobs.forEach((job) => {
           next.add(job.id);
         });
         return next;
@@ -743,33 +722,30 @@ export default function Jobs() {
 
   const handleAllClick = () => {
     setActiveViewId("all");
-    setOpenViewMenuId(null);
     setCurrentFilterState(null);
     setFilterResetKey((prev) => prev + 1);
-    resetJobsPagination();
+  };
+
+  const handleClearFilters = () => {
+    handleAllClick();
+    setIsFilterOpen(false);
   };
 
   const handleViewSelect = (view: SavedView) => {
     setActiveViewId(view.id);
-    setOpenViewMenuId(null);
     setCurrentFilterState(view.filterState);
   };
 
-  const handleRenameView = (viewId: string) => {
-    const view = savedViews.find((item) => item.id === viewId);
-    if (!view) return;
-    const nextName = window.prompt("Rename view", view.name);
-    if (!nextName?.trim()) return;
+  const handleRenameView = (viewId: string, nextName: string) => {
     setSavedViews((prev) =>
       prev.map((item) =>
-        item.id === viewId ? { ...item, name: nextName.trim() } : item
+        item.id === viewId ? { ...item, name: nextName } : item
       )
     );
   };
 
   const handleRemoveView = (viewId: string) => {
     setSavedViews((prev) => prev.filter((item) => item.id !== viewId));
-    setOpenViewMenuId(null);
     if (activeViewId === viewId) {
       handleAllClick();
     }
@@ -945,7 +921,7 @@ export default function Jobs() {
 
   const jobCards = useMemo<JobCardData[]>(
     () =>
-      paginatedJobs.map((job) => ({
+      renderedJobs.map((job) => ({
         title: job.jobName,
         description: job.campaignId,
         meta: job.jobNumber,
@@ -955,7 +931,7 @@ export default function Jobs() {
         tagTone: job.tag ? TAG_TONE_MAP[job.tag] : undefined,
         thumbnailSrc: "/thumbnail-img.png",
       })),
-    [paginatedJobs]
+    [renderedJobs]
   );
 
   useEffect(() => {
@@ -963,7 +939,6 @@ export default function Jobs() {
     if (!statusFilter) return;
 
     setActiveViewId("all");
-    setOpenViewMenuId(null);
     setCurrentFilterState({
       activeTab: "quick",
       rows: DEFAULT_FILTER_ROWS,
@@ -971,8 +946,7 @@ export default function Jobs() {
         [`Status-${statusFilter}`]: true,
       },
     });
-    resetJobsPagination();
-  }, [location.search, resetJobsPagination]);
+  }, [location.search]);
 
   useEffect(() => {
     if (!isFilterOpen) return;
@@ -987,20 +961,6 @@ export default function Jobs() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isFilterOpen]);
-
-  useEffect(() => {
-    if (!openViewMenuId) return;
-    const handleClickOutside = (event: globalThis.MouseEvent) => {
-      if (
-        viewMenuRef.current &&
-        !viewMenuRef.current.contains(event.target as Node)
-      ) {
-        setOpenViewMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [openViewMenuId]);
 
   useEffect(() => {
     if (!isColumnsOpen) return;
@@ -1024,6 +984,13 @@ export default function Jobs() {
   }, [mergedColumns, isColumnsOpen]);
 
   useEffect(() => {
+    writeSavedViewsStorage(savedViewsStorageKey, {
+      activeViewId,
+      savedViews,
+    });
+  }, [activeViewId, savedViews, savedViewsStorageKey]);
+
+  useEffect(() => {
     setSelectedIds((prev) => {
       const next = new Set(
         Array.from(prev).filter((id) => visibleIds.has(id))
@@ -1037,12 +1004,6 @@ export default function Jobs() {
       setColumnsDraft(mergedColumns);
     }
   }, [mergedColumns, columnsDraft.length]);
-
-  useEffect(() => {
-    if (jobsCurrentPage > totalJobPages) {
-      setJobsCurrentPage(totalJobPages);
-    }
-  }, [jobsCurrentPage, totalJobPages, setJobsCurrentPage]);
 
   return (
     <>
@@ -1084,58 +1045,18 @@ export default function Jobs() {
               {savedViews.map((view) => {
                 const isActive = activeViewId === view.id;
                 return (
-                  <div
+                  <SavedViewChip
                     key={view.id}
-                    className={`group relative inline-flex items-center rounded-sm border ${
-                      isActive
-                        ? "border-transparent bg-[var(--color-primary-50)] text-[var(--color-primary-500)]"
-                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleViewSelect(view)}
-                      className="px-2 py-0.5 text-[13px] font-regular"
-                    >
-                      {view.name} ({getViewCount(view)})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setOpenViewMenuId((prev) =>
-                          prev === view.id ? null : view.id
-                        );
-                        setActiveViewId(view.id);
-                      }}
-                      className="pr-1 text-gray-400 opacity-0 pointer-events-none transition hover:text-gray-600 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
-                      aria-label={`${view.name} options`}
-                    >
-                      <VerticalDots className="h-4 w-4" />
-                    </button>
-                    {openViewMenuId === view.id ? (
-                      <div
-                        ref={viewMenuRef}
-                        className="absolute right-0 top-full z-30 mt-2"
-                      >
-                        <Popup
-                          items={[
-                            {
-                              id: "rename",
-                              label: "Rename",
-                              onClick: () => handleRenameView(view.id),
-                            },
-                            {
-                              id: "remove",
-                              label: "Remove",
-                              onClick: () => handleRemoveView(view.id),
-                            },
-                          ]}
-                          className="!min-w-[160px] rounded-lg"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
+                    id={view.id}
+                    name={view.name}
+                    count={getViewCount(view)}
+                    isActive={isActive}
+                    activeClassName="border-transparent bg-[var(--color-primary-50)] text-[var(--color-primary-500)]"
+                    inactiveClassName="border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    onSelect={() => handleViewSelect(view)}
+                    onRename={(nextName) => handleRenameView(view.id, nextName)}
+                    onRemove={() => handleRemoveView(view.id)}
+                  />
                 );
               })}
             </div>
@@ -1145,11 +1066,32 @@ export default function Jobs() {
               <button
                 type="button"
                 onClick={() => setIsFilterOpen((prev) => !prev)}
-                className="rounded-sm border border-gray-200 bg-white p-1 text-gray-500 transition hover:bg-gray-50"
+                className={`flex items-center justify-center rounded-sm border bg-white p-1 text-gray-500 transition hover:bg-gray-50 ${
+                  hasAppliedFilters
+                    ? "border-[var(--color-secondary-300)] text-[var(--color-secondary-500)]"
+                    : "border-gray-200"
+                }`}
                 aria-label="Open filters"
               >
-                <FilterIcon className="h-3.5 w-3.5" />
+                 <AppIcon 
+                  icon={FilterIcon} 
+                  size={16} 
+                  color={hasAppliedFilters ? "var(--color-secondary-500)" : "currentColor"} 
+                />    
               </button>
+              {hasAppliedFilters ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleClearFilters();
+                  }}
+                  className="absolute -right-1 -top-1 z-40 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--color-secondary-500)] text-white shadow-sm"
+                  aria-label="Clear active filters"
+                >
+                  <AppIcon icon={CloseIcon} size={10} />
+                </button>
+              ) : null}
               <div
                 className={`absolute right-0 top-full z-30 mt-3 transition ${
                   isFilterOpen
@@ -1161,14 +1103,17 @@ export default function Jobs() {
                   key={filterResetKey}
                   defaultTab="quick"
                   defaultRows={DEFAULT_FILTER_ROWS}
+                  initialState={activeFilterState}
                   onFilterChange={(state) => {
-                    setCurrentFilterState(state);
+                    setCurrentFilterState(
+                      hasActiveAdvanceFilterState(state) ? state : null
+                    );
                     setActiveViewId("all");
                   }}
+                  onClear={handleClearFilters}
                   onSaveView={handleSaveView}
                   className="w-[860px] max-w-[90vw] rounded-xl bg-white"
                   columnOptions={columnOptions}
-                  valueOptions={statusOptions}
                   valueOptionsByColumn={valueOptionsByColumn}
                   quickFilterColumns={quickFilterColumns}
                 />
@@ -1236,7 +1181,7 @@ export default function Jobs() {
               className="overflow-x-auto custom-scrollbar cursor-grab active:cursor-grabbing"
             >
               <JobsTable
-                jobs={paginatedJobs}
+                jobs={renderedJobs}
                 selectedIds={selectedIds}
                 onToggleSelectAll={toggleSelectAll}
                 onToggleSelect={toggleSelect}
@@ -1246,6 +1191,8 @@ export default function Jobs() {
                 columns={visibleColumns}
                 columnsMenu={columnsMenu}
                 minWidth={tableMinWidth}
+                stickyColumnCount={JOBS_STICKY_COLUMN_COUNT}
+                stickyColumnWidths={JOBS_STICKY_COLUMN_WIDTHS}
               />
             </div>
           ) : (
@@ -1254,20 +1201,13 @@ export default function Jobs() {
             </div>
           )}
 
-          {visibleJobs.length > 0 ? (
-            <PaginationControls
-              total={visibleJobs.length}
-              from={jobsFrom}
-              to={jobsTo}
-              label="results"
-              canGoPrevious={canGoToPreviousJobsPage}
-              canGoNext={canGoToNextJobsPage}
-              onPrevious={goToPreviousJobsPage}
-              onNext={goToNextJobsPage}
-              pageSize={jobsPageSize}
-              pageSizeOptions={[5, 10, 20]}
-              onPageSizeChange={setJobsPageSize}
-            />
+          {hasMoreJobs ? (
+            <div
+              ref={jobsLoadMoreRef}
+              className="flex justify-center py-5 text-xs text-gray-400"
+            >
+              Scroll to load more jobs
+            </div>
           ) : null}
         </div>
 
@@ -1294,6 +1234,8 @@ export default function Jobs() {
                 minWidth={tableMinWidth}
                 showSelection={false}
                 showEdit={false}
+                stickyColumnCount={JOBS_STICKY_COLUMN_COUNT}
+                stickyColumnWidths={JOBS_STICKY_COLUMN_WIDTHS}
               />
             </div>
           </div>
