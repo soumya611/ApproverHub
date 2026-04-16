@@ -262,8 +262,8 @@ export default function CreateCampaign() {
           </span>
         </p>
 
-        <PageContentContainer className="min-h-0 flex-1 p-6">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
+          <div className="mb-2 shrink-0 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-full max-w-[360px]">
                 <TextInput
@@ -315,7 +315,8 @@ export default function CreateCampaign() {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] border border-gray-200 rounded-sm bg-white p-6">
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+            <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] border border-gray-200 rounded-sm bg-white p-6">
             <div className="space-y-4">
               <UserCell
                 titleWrap={true}
@@ -379,7 +380,7 @@ export default function CreateCampaign() {
             />
           </div>
 
-          <div className="mt-8">
+            <div className="mt-8">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="relative pl-5">
                 <h3 className="text-sm font-semibold text-[#007B8C]">
@@ -424,6 +425,7 @@ export default function CreateCampaign() {
                 getCreated={() => "12/11/2026"}
                 getDeadline={() => "24/11/2026"}
               />
+            </div>
             </div>
           </div>
         </PageContentContainer>

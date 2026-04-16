@@ -342,7 +342,7 @@ export default function JobDetails() {
             </Link>{" "}
             / <span className="text-[#007B8C]">Job details</span>
           </p>
-          <PageContentContainer className="min-h-0 flex-1 p-6">
+          <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
             <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
               We could not find this job.
             </div>
@@ -496,8 +496,8 @@ export default function JobDetails() {
           </Link>{" "}
           / <span className="text-[#007B8C]">Job details</span>
         </p>
-        <PageContentContainer className="min-h-0 flex-1 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
+          <div className="shrink-0 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="lg:text-xl font-semibold text-gray-900">
                 {job.jobName}
@@ -589,7 +589,7 @@ export default function JobDetails() {
             </div>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-white">
+          <div className="custom-scrollbar mt-5 min-h-0 flex-1 overflow-y-auto pr-1">`r`n            <div className="rounded-2xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-5 pt-2">
               <UnderlineTabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
               <div className="mb-2 w-full max-w-[240px] rounded-full border border-gray-200 px-3 py-1.5">
@@ -961,6 +961,7 @@ export default function JobDetails() {
                 </div>
               ) : null}
             </div>
+          </div>
           </div>
         </PageContentContainer>
       </div>

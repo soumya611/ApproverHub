@@ -46,8 +46,8 @@ export default function JobInformationSettings() {
       <PageMeta title="Job Information" description="Job information settings" />
       <div className="flex h-full min-h-0 flex-col gap-4">
         <AppBreadcrumb />
-        <PageContentContainer className="min-h-0 flex-1 p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
+          <div className="shrink-0 flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-3">
               <button
                 type="button"
@@ -85,8 +85,9 @@ export default function JobInformationSettings() {
             </div>
           </div>
 
-          <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4">
-            <div className="overflow-x-auto">
+          <div className="custom-scrollbar mt-5 min-h-0 flex-1 overflow-y-auto pr-1">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] table-fixed border-separate border-spacing-y-2 text-sm">
                 <colgroup>
                   <col className="w-[30%]" />
@@ -192,6 +193,7 @@ export default function JobInformationSettings() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         </PageContentContainer>

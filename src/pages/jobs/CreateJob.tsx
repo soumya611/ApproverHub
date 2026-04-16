@@ -308,8 +308,8 @@ export default function CreateJob() {
             {isEditMode ? "Edit job" : "Create new job"}
           </span>
         </p>
-        <PageContentContainer className="min-h-0 flex-1 p-6">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
+          <div className="mb-6 shrink-0 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <input
                 value={jobName}
@@ -338,7 +338,8 @@ export default function CreateJob() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5">
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <button
               type="button"
               onClick={() => setDetailsOpen((prev) => !prev)}
@@ -394,8 +395,8 @@ export default function CreateJob() {
             ) : null}
           </div>
 
-          {jobInfoEnabled ? (
-            <div className="mt-5">
+            {jobInfoEnabled ? (
+              <div className="mt-5">
               <StepDropdown
                 title="Job Information"
                 steps={jobInfoSteps}
@@ -411,11 +412,11 @@ export default function CreateJob() {
                   {jobInfoValidationError}
                 </p>
               ) : null}
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {!isWorkflowBuilderOpen ? (
-            <div className="mt-4">
+            {!isWorkflowBuilderOpen ? (
+              <div className="mt-4">
               <SelectWorkflowDropdown
                 inline
                 className="w-full"
@@ -423,11 +424,11 @@ export default function CreateJob() {
                 onSelectWorkflow={handleWorkflowSelect}
                 onCreateBuildWorkflow={handleCreateBuildWorkflow}
               />
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {isWorkflowBuilderOpen ? (
-            <div className="mt-4">
+            {isWorkflowBuilderOpen ? (
+              <div className="mt-4">
               <WorkflowBuilder
                 key={customWorkflow?.id ?? "new-workflow"}
                 value={customWorkflow}
@@ -436,8 +437,9 @@ export default function CreateJob() {
                 onSave={handleSaveWorkflowBuilder}
                 onCancel={() => setIsWorkflowBuilderOpen(false)}
               />
-            </div>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
         </PageContentContainer>
       </div>
     </>

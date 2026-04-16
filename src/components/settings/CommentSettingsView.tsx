@@ -78,7 +78,7 @@ export default function CommentSettingsView() {
           <span className="text-[#007B8C]">comment</span>
         </p>
 
-      <PageContentContainer className="p-0">
+      <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
         {/* Page Header — reuses existing PageHeader */}
         <PageHeader
           title="Comments Settings"
@@ -88,7 +88,8 @@ export default function CommentSettingsView() {
           className="!px-4 py-4"
         />
 
-        <div className="p-6 space-y-6 max-w-[480px]">
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+          <div className="p-6 space-y-6 max-w-[480px]">
           {/* ── Labels card ─────────────────────────────── */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
             <p className="text-sm font-semibold text-gray-800">Labels</p>
@@ -228,13 +229,14 @@ export default function CommentSettingsView() {
         </div>
 
         {/* Save button */}
-        <div className="px-6 pb-6">
-          <button
-            type="button"
-            className="rounded-md bg-[#E74C3C] px-5 py-2 text-sm font-semibold text-white hover:bg-[#c0392b] transition"
-          >
-            Save
-          </button>
+          <div className="px-6 pb-6">
+            <button
+              type="button"
+              className="rounded-md bg-[#E74C3C] px-5 py-2 text-sm font-semibold text-white hover:bg-[#c0392b] transition"
+            >
+              Save
+            </button>
+          </div>
         </div>
       </PageContentContainer>
     </div>

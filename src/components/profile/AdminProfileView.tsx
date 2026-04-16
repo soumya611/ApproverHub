@@ -238,12 +238,13 @@ export default function AdminProfileView() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <AppBreadcrumb />
 
-      <PageContentContainer className="min-h-0 flex-1 p-0">
+      <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
         <div className="border-b border-gray-200 px-6 py-5">
           <h2 className="text-xl font-semibold text-primary">Profile</h2>
         </div>
 
-        <div className="space-y-6 p-6">
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
           <div className="grid gap-4 xl:grid-cols-[1.15fr_1.2fr_1.2fr]">
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="flex items-start justify-between">
@@ -351,7 +352,7 @@ export default function AdminProfileView() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="border-b border-gray-200 px-4 pt-2">
               <UnderlineTabs
                 tabs={PROFILE_TABS}
@@ -390,6 +391,7 @@ export default function AdminProfileView() {
                 onToggleSelect={toggleSelectRole}
               />
             ) : null}
+            </div>
           </div>
         </div>
       </PageContentContainer>

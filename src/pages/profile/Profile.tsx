@@ -1,5 +1,6 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import PageMeta from "@/components/common/PageMeta";
+import PageContentContainer from "@/components/layout/PageContentContainer";
 import {
   AdminProfileView,
   TeamManagerProfileView,
@@ -22,14 +23,18 @@ export default function Profile() {
       ) : isAdmin ? (
         <AdminProfileView />
       ) : (
-        <>
+        <div className="flex h-full min-h-0 flex-col gap-4">
           <PageBreadcrumb pageTitle="Profile" />
-          <div className="space-y-6">
-            <UserMetaCard />
-            <UserInfoCard />
-            <UserAddressCard />
-          </div>
-        </>
+          <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
+            <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-6">
+              <div className="space-y-6">
+                <UserMetaCard />
+                <UserInfoCard />
+                <UserAddressCard />
+              </div>
+            </div>
+          </PageContentContainer>
+        </div>
       )}
     </>
   );
