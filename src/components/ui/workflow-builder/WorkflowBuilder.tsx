@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "../button/Button";
-import PopupModal from "../popup-modal/PopupModal";
 import SearchInput from "../search-input/SearchInput";
 import UserCell from "../user-cell/UserCell";
 import { Dropdown } from "../dropdown/Dropdown";
@@ -33,6 +32,7 @@ import type {
   JobWorkflowStageConfig,
 } from "../../jobs/types";
 import DeadlinePicker from "../../form/DatePicker";
+import { useChecklistTemplatesStore } from "@/stores/checklistTemplatesStore";
 
 export interface WorkflowBuilderValue extends JobWorkflowConfig { }
 
@@ -452,8 +452,7 @@ export default function WorkflowBuilder({
 
   const [selectedReviewerIds, setSelectedReviewerIds] = useState<Set<string>>(
     new Set(
-      value?.reviewers?.map((reviewer) => reviewer.id) ??
-      baseReviewers.map((reviewer) => reviewer.id)
+      value?.reviewers?.map((reviewer) => reviewer.id) ?? []
     )
   );
   const [permissionsTab, setPermissionsTab] = useState<"stages" | "reviewers">(
@@ -465,14 +464,24 @@ export default function WorkflowBuilder({
   const [builderOpen, setBuilderOpen] = useState(true);
   const [showFlow, setShowFlow] = useState(false);
   const lastSavedRef = useRef<string>("");
+  const decisionPopupRef = useRef<HTMLDivElement | null>(null);
+  const checklistTemplates = useChecklistTemplatesStore((state) => state.checklistTemplates);
+
+  const checklistItems = useMemo(() => {
+    const dynamicItems = checklistTemplates.map((template) => ({
+      id: template.id,
+      label: template.name,
+    }));
+    return dynamicItems.length > 0 ? dynamicItems : CHECKLIST_ITEMS;
+  }, [checklistTemplates]);
 
   const activeStage = stages.find((stage) => stage.id === activeStageId) ?? stages[0];
   const activeStageIndex = stages.findIndex((stage) => stage.id === activeStageId);
   const isFirstStage = activeStageIndex === 0;
   const activeChecklistItems = useMemo(() => {
     const ids = new Set(activeStage?.checklistIds ?? []);
-    return CHECKLIST_ITEMS.filter((item) => ids.has(item.id));
-  }, [activeStage?.checklistIds]);
+    return checklistItems.filter((item) => ids.has(item.id));
+  }, [activeStage?.checklistIds, checklistItems]);
 
   const stageSteps = useMemo<{ label: string; title: string; isActive: boolean }[]>(
     () =>
@@ -488,6 +497,10 @@ export default function WorkflowBuilder({
     () => availableReviewers.filter((reviewer) => selectedReviewerIds.has(reviewer.id)),
     [availableReviewers, selectedReviewerIds]
   );
+  const decisionMakerReviewers = useMemo(() => {
+    const ids = new Set(activeStage?.decisionMakerIds ?? []);
+    return selectedReviewers.filter((reviewer) => ids.has(reviewer.id));
+  }, [activeStage?.decisionMakerIds, selectedReviewers]);
 
   const flowStages = useMemo<WorkflowStage[]>(() => {
     const members = selectedReviewers.map((reviewer) => ({
@@ -586,22 +599,38 @@ export default function WorkflowBuilder({
   };
 
   const toggleReviewer = (id: string) => {
+    let removedReviewerId: string | null = null;
     setSelectedReviewerIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
+        removedReviewerId = id;
       } else {
         next.add(id);
       }
       return next;
     });
+    if (removedReviewerId) {
+      setStages((prev) =>
+        prev.map((stage) => ({
+          ...stage,
+          decisionMakerIds: stage.decisionMakerIds.filter((reviewerId) => reviewerId !== removedReviewerId),
+        }))
+      );
+    }
     markDirty();
   };
 
   const toggleAllReviewers = (checked: boolean) => {
-    setSelectedReviewerIds(
-      checked ? new Set(availableReviewers.map((reviewer) => reviewer.id)) : new Set()
-    );
+    if (!checked) {
+      setStages((prev) =>
+        prev.map((stage) => ({
+          ...stage,
+          decisionMakerIds: [],
+        }))
+      );
+    }
+    setSelectedReviewerIds(checked ? new Set(availableReviewers.map((reviewer) => reviewer.id)) : new Set());
     markDirty();
   };
 
@@ -692,6 +721,17 @@ export default function WorkflowBuilder({
     setIsDirty(false);
     onSave(config);
   }, [buildConfig, isDirty, isEditMode, onSave]);
+
+  useEffect(() => {
+    if (!decisionPopupOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!decisionPopupRef.current) return;
+      if (decisionPopupRef.current.contains(event.target as Node)) return;
+      setDecisionPopupOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [decisionPopupOpen]);
 
   const activeStartRule = isFirstStage
     ? activeStage?.startRule === "manually"
@@ -945,21 +985,101 @@ export default function WorkflowBuilder({
                       <div className="w-48 min-w-0 space-y-2">
                         <BuilderSelect
                           value={activeStage?.finalStatus ?? ""}
-                          onChange={(value) => updateStage({ finalStatus: value })}
+                          onChange={(value) =>
+                            updateStage({
+                              finalStatus: value,
+                              decisionMakerIds: value === "decision_by" ? activeStage?.decisionMakerIds ?? [] : [],
+                            })
+                          }
                           options={FINAL_STATUS_OPTIONS}
                           placeholder="Select status"
                           className="w-full"
                           selectClassName="h-8 text-[15px] text-[#666666] font-medium"
                         />
                         {activeStage?.finalStatus === "decision_by" ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setDecisionPopupOpen(true)}
-                            className="!rounded-md !px-3 !py-1 text-[11px]"
-                          >
-                            Add user
-                          </Button>
+                          <div className="relative space-y-1" ref={decisionPopupRef}>
+                            {decisionMakerReviewers.length === 0 ? (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => setDecisionPopupOpen(true)}
+                                className="!rounded-md !px-3 !py-1 text-[11px]"
+                              >
+                                Add user
+                              </Button>
+                            ) : null}
+                            {decisionMakerReviewers.length > 0 ? (
+                              <div className="mt-1 max-w-[260px] space-y-1">
+                                {decisionMakerReviewers.map((reviewer) => (
+                                  <div key={reviewer.id} className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <p className="truncate text-[12px] font-medium text-gray-700">
+                                        {reviewer.name}
+                                      </p>
+                                      <p className="truncate text-[10px] text-gray-400">
+                                        {reviewer.email ?? reviewer.id}
+                                      </p>
+                                    </div>
+                                    <span className="shrink-0 text-[11px] text-gray-400">
+                                      {reviewer.role ?? "Guest"}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                            {decisionPopupOpen ? (
+                              <div className="absolute left-0 top-full z-30 mt-2 w-[360px] rounded-2xl border border-gray-200 bg-white p-3 shadow-lg">
+                                <button
+                                  type="button"
+                                  onClick={() => setDecisionPopupOpen(false)}
+                                  className="absolute right-3 top-2 text-lg leading-none text-gray-400 hover:text-gray-600"
+                                  aria-label="Close add user popup"
+                                >
+                                  ×
+                                </button>
+                                {selectedReviewers.length === 0 ? (
+                                  <div className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-center text-xs text-gray-400">
+                                    No user selected.
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1">
+                                    {selectedReviewers.map((reviewer) => {
+                                      const isChecked = activeStage?.decisionMakerIds.includes(reviewer.id);
+                                      return (
+                                        <label
+                                          key={reviewer.id}
+                                          className="flex items-center gap-3 rounded-md px-2 py-2 text-xs text-gray-600 hover:bg-gray-50"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={Boolean(isChecked)}
+                                            onChange={() => toggleDecisionMaker(reviewer.id)}
+                                            className="h-3.5 w-3.5 accent-[#F25C54]"
+                                          />
+                                          <UserCell
+                                            title={reviewer.name}
+                                            subtitle={reviewer.email ?? reviewer.id}
+                                            avatarUrl={reviewer.avatarUrl}
+                                            avatarAlt={reviewer.name}
+                                            avatarSize="xsmall"
+                                            avatarFallback="initials"
+                                            align="start"
+                                            titleWrap
+                                            className="min-w-0 flex-1 gap-2"
+                                            titleClassName="text-[12px] font-medium text-gray-700"
+                                            subtitleClassName="text-[10px] text-gray-400"
+                                          />
+                                          <span className="text-[11px] text-gray-400">
+                                            {reviewer.role ?? "Guest"}
+                                          </span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+                          </div>
                         ) : null}
                       </div>
                     </div>
@@ -974,7 +1094,7 @@ export default function WorkflowBuilder({
                         <ChecklistDropdown
                           value={activeStage?.checklistIds ?? []}
                           onChange={(value) => updateStage({ checklistIds: value })}
-                          items={CHECKLIST_ITEMS}
+                          items={checklistItems}
                         />
                       </div>
                     </div>
@@ -1218,52 +1338,6 @@ export default function WorkflowBuilder({
         </div>
       ) : null}
 
-      <PopupModal
-        isOpen={decisionPopupOpen}
-        onClose={() => setDecisionPopupOpen(false)}
-        title="Add user"
-        className="!max-w-[360px]"
-        contentClassName="!p-4"
-      >
-        {selectedReviewers.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-center text-xs text-gray-400">
-            Add reviewers to select decision makers.
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {selectedReviewers.map((reviewer) => {
-              const isChecked = activeStage?.decisionMakerIds.includes(reviewer.id);
-              return (
-                <label
-                  key={reviewer.id}
-                  className="flex items-center gap-3 rounded-md px-2 py-2 text-xs text-gray-600 hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={Boolean(isChecked)}
-                    onChange={() => toggleDecisionMaker(reviewer.id)}
-                    className="h-3.5 w-3.5 accent-[#F25C54]"
-                  />
-                  <UserCell
-                    title={reviewer.name}
-                    subtitle={reviewer.email ?? reviewer.id}
-                    avatarUrl={reviewer.avatarUrl}
-                    avatarAlt={reviewer.name}
-                    avatarSize="xsmall"
-                    avatarFallback="initials"
-                    className="min-w-0 flex-1 gap-2"
-                    titleClassName="text-[12px] font-medium text-gray-700"
-                    subtitleClassName="text-[10px] text-gray-400"
-                  />
-                  <span className="text-[11px] text-gray-400">
-                    {reviewer.role ?? "Guest"}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </PopupModal>
     </div>
   );
 }
