@@ -5,6 +5,7 @@ export { default as Campaigns } from "./campaigns/Campaigns";
 export { default as CreateCampaign } from "./campaigns/CreateCampaign";
 export { default as ChecklistSetting } from "./checklists/ChecklistSetting";
 export { default as CreateChecklist } from "./checklists/CreateChecklist";
+export { default as ChecklistDetails } from "./checklists/ChecklistDetails";
 export { default as CommentSetting } from "./comments/CommentSetting";
 export { default as Home } from "./home/Home";
 export { default as CreateJob } from "./jobs/CreateJob";
@@ -24,4 +25,6 @@ export { default as SettingsUserEditProfile } from "./settings/users/SettingsUse
 export { default as SettingsUserNotifications } from "./settings/users/SettingsUserNotifications";
 export { default as SettingsUserWorkSchedule } from "./settings/users/SettingsUserWorkSchedule";
 export { default as SettingsUsers } from "./settings/users/SettingsUsers";
+export { default as CreateWorkflow } from "./workflow/CreateWorkflow";
+export { default as WorkflowDetails } from "./workflow/WorkflowDetails";
 export { default as WorkflowSetting } from "./workflow/WorkflowSetting";

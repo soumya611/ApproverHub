@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import AppBreadcrumb from "@/components/common/AppBreadcrumb";
 import PageMeta from "@/components/common/PageMeta";
 import PaginationControls from "@/components/common/PaginationControls";
@@ -11,6 +12,7 @@ import { EditDetailsIcon, VerticalDots } from "@/icons";
 import { useAppNavigate } from "@/hooks/useAppNavigate";
 import { TableHeaderRow } from "@/components/ui/table";
 import Popup, { type PopupItem } from "@/components/ui/popup/Popup";
+import { useWorkflowTemplatesStore } from "@/stores/workflowTemplatesStore";
 
 interface WorkflowTemplateRow {
   id: string;
@@ -27,43 +29,6 @@ interface WorkflowColumn {
   className?: string;
 }
 
-const BASE_TEMPLATES: WorkflowTemplateRow[] = [
-  {
-    id: "wf-001",
-    name: "Content team approval",
-    created: "Wed, 29 Dec 2:20 am",
-    active: true,
-    ownerName: "Liam West",
-  },
-  {
-    id: "wf-002",
-    name: "Marketing campaign",
-    created: "Wed, 29 Dec 2:20 am",
-    active: false,
-    ownerName: "Emma Scott",
-  },
-  {
-    id: "wf-003",
-    name: "Marketing job",
-    created: "Wed, 29 Dec 2:20 am",
-    active: true,
-    ownerName: "Noah Green",
-  },
-];
-
-const MORE_TEMPLATES: WorkflowTemplateRow[] = Array.from({ length: 50 }, (_, index) => {
-  const id = `wf-${String(index + 4).padStart(3, "0")}`;
-  return {
-    id,
-    name: `Workflow template ${index + 4}`,
-    created: "Mon, 15 Jan 9:30 am",
-    active: index % 2 === 0,
-    ownerName: `Owner ${index + 4}`,
-  };
-});
-
-const ALL_TEMPLATES = [...BASE_TEMPLATES, ...MORE_TEMPLATES];
-
 const WORKFLOW_COLUMNS: WorkflowColumn[] = [
   { id: "name", label: "Name", className: "py-3 px-4 text-left" },
   { id: "created", label: "Created", className: "py-3 px-4 text-left" },
@@ -78,13 +43,37 @@ const getOwnerInitials = (name: string) => {
   return compact.slice(0, 2).toUpperCase();
 };
 
+const formatCreatedDate = (isoDate: string) => {
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleDateString("en-GB");
+};
+
 export default function WorkflowSetting() {
   const { goBack } = useAppNavigate();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  const [templates, setTemplates] = useState<WorkflowTemplateRow[]>(ALL_TEMPLATES);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const workflowTemplates = useWorkflowTemplatesStore((state) => state.workflowTemplates);
+  const toggleWorkflowTemplateStatus = useWorkflowTemplatesStore(
+    (state) => state.toggleWorkflowTemplateStatus
+  );
+  const removeWorkflowTemplate = useWorkflowTemplatesStore((state) => state.removeWorkflowTemplate);
+
+  const templates: WorkflowTemplateRow[] = useMemo(
+    () =>
+      workflowTemplates.map((item) => ({
+        id: item.id,
+        name: item.name,
+        created: formatCreatedDate(item.createdAt),
+        active: item.active,
+        ownerName: item.ownerName,
+        ownerAvatarUrl: item.ownerAvatarUrl,
+      })),
+    [workflowTemplates]
+  );
 
   const filteredTemplates = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -103,23 +92,12 @@ export default function WorkflowSetting() {
     : 0;
   const pagedTemplates = filteredTemplates.slice(from > 0 ? from - 1 : 0, to);
 
-  const handleToggle = (id: string, checked: boolean) => {
-    setTemplates((previous) =>
-      previous.map((item) => (item.id === id ? { ...item, active: checked } : item))
-    );
+  const handleToggle = (id: string, checked: boolean) =>
+    toggleWorkflowTemplateStatus(id, checked);
+  const handleDelete = (id: string) => {
+    removeWorkflowTemplate(id);
+    setOpenMenuId(null);
   };
-  const workflowMenuItems: PopupItem[] = [
-    {
-      id: "details",
-      label: "Details",
-      onClick: () => setOpenMenuId(null),
-    },
-    {
-      id: "delete",
-      label: "Delete",
-      onClick: () => setOpenMenuId(null),
-    },
-  ];
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -163,7 +141,7 @@ export default function WorkflowSetting() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto p-4">
+          <div className="min-h-0 flex flex-1 flex-col overflow-hidden p-4">
             <div className="mb-2 flex justify-end">
               <PaginationControls
                 total={filteredTemplates.length}
@@ -187,8 +165,8 @@ export default function WorkflowSetting() {
             </div>
             
 
-            <div className="overflow-hidden rounded-md border border-gray-200 bg-white p-3">
-              <div className="overflow-x-auto custom-scrollbar">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-gray-200 bg-white p-3">
+              <div className="min-h-0 flex-1 overflow-auto custom-scrollbar">
               <table className="w-full min-w-[900px] border-separate [border-spacing:0_10px] text-sm">
                 <thead>
                   <TableHeaderRow
@@ -196,7 +174,9 @@ export default function WorkflowSetting() {
                     columns={WORKFLOW_COLUMNS}
                     getColumnKey={(column) => column.id}
                     renderColumn={(column) => column.label}
-                    columnClassName={(column) => column.className ?? "py-3 px-4"}
+                    columnClassName={(column) =>
+                      `${column.className ?? "py-3 px-4"} sticky top-0 z-20 bg-white`
+                    }
                   />
                 </thead>
                 <tbody>
@@ -246,6 +226,7 @@ export default function WorkflowSetting() {
                               type="button"
                               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-300 transition hover:bg-gray-100 hover:text-[#007B8C]"
                               aria-label={`Edit ${item.name}`}
+                              onClick={() => navigate(`/workflow-setting/${item.id}/edit`)}
                             >
                               <EditDetailsIcon className="h-4 w-4" />
                             </button>
@@ -271,7 +252,21 @@ export default function WorkflowSetting() {
                             {openMenuId === item.id ? (
                               <div className="absolute right-0 top-full z-30 mt-2">
                                 <Popup
-                                  items={workflowMenuItems}
+                                  items={[
+                                    {
+                                      id: "details",
+                                      label: "Details",
+                                      onClick: () => {
+                                        navigate(`/workflow-setting/${item.id}/details`);
+                                        setOpenMenuId(null);
+                                      },
+                                    },
+                                    {
+                                      id: "delete",
+                                      label: "Delete",
+                                      onClick: () => handleDelete(item.id),
+                                    },
+                                  ] as PopupItem[]}
                                   className="!min-w-[120px] rounded-lg"
                                 />
                               </div>
@@ -295,7 +290,7 @@ export default function WorkflowSetting() {
         </PageContentContainer>
       </div>
 
-      <JobsFAB onClick={() => undefined} ariaLabel="Create workflow template" />
+      <JobsFAB onClick={() => navigate("/workflow-setting/new")} ariaLabel="Create workflow template" />
     </>
   );
 }

@@ -64,6 +64,12 @@ export default function JobRow({
   onAssigneeClick,
   onAction,
   visibleColumns,
+  stickyDataColumnIds,
+  stickyDataColumnOffsets,
+  stickyColumnWidths,
+  stickySelectionColumnWidth,
+  isSelectionColumnSticky = true,
+  selectionColumnOffset = 0,
   showSelection = true,
   showEdit = true,
 }: {
@@ -74,6 +80,12 @@ export default function JobRow({
   onAssigneeClick?: (jobId: string) => void;
   onAction?: (jobId: string, actionId: string) => void;
   visibleColumns?: JobColumnId[];
+  stickyDataColumnIds?: Set<JobColumnId>;
+  stickyDataColumnOffsets?: Partial<Record<JobColumnId, number>>;
+  stickyColumnWidths?: Partial<Record<JobColumnId, number>>;
+  stickySelectionColumnWidth?: number;
+  isSelectionColumnSticky?: boolean;
+  selectionColumnOffset?: number;
   showSelection?: boolean;
   showEdit?: boolean;
 }) {
@@ -88,6 +100,7 @@ export default function JobRow({
   const resolvedColumns = visibleColumns ?? DEFAULT_COLUMN_ORDER;
   const showFailureReason = job.status === "Upload Failed";
   const failureReasonText = job.statusReason ?? "Upload failed";
+  const selectionColumnWidth = stickySelectionColumnWidth ?? 140;
 
   const menuItems = useMemo(
     () =>
@@ -114,22 +127,46 @@ export default function JobRow({
   }, [isActionOpen]);
 
   const renderCell = (columnId: JobColumnId) => {
+    const isStickyDataColumn = stickyDataColumnIds?.has(columnId) ?? false;
+    const stickyDataClass = isStickyDataColumn
+      ? "sticky z-10 bg-white shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)] group-hover:bg-gray-50/80"
+      : "";
+    const stickyDataStyle = isStickyDataColumn
+      ? {
+          left: `${stickyDataColumnOffsets?.[columnId] ?? 0}px`,
+          minWidth: `${stickyColumnWidths?.[columnId] ?? 150}px`,
+          width: `${stickyColumnWidths?.[columnId] ?? 150}px`,
+        }
+      : undefined;
+
     switch (columnId) {
       case "campaign_id":
         return (
-          <td key={columnId} className="py-3 px-4 text-center align-middle">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-center align-middle ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             <span className="font-medium text-gray-900">{job.campaignId}</span>
           </td>
         );
       case "job_number":
         return (
-          <td key={columnId} className="py-3 px-4 text-gray-600 text-center align-middle text-sm">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-gray-600 text-center align-middle text-sm ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             {job.jobNumber}
           </td>
         );
       case "job_name":
         return (
-          <td key={columnId} className="py-3 px-4 text-left align-middle">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-left align-middle ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             <div className="flex flex-col justify-center gap-0.5 ml-18">
               {job.tag ? (
                 <Tag tone={TAG_TONE_MAP[job.tag]} size="xs" rounded="none">
@@ -143,13 +180,21 @@ export default function JobRow({
         );
       case "created":
         return (
-          <td key={columnId} className="py-3 px-4 text-gray-600 text-center align-middle text-sm">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-gray-600 text-center align-middle text-sm ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             {job.created}
           </td>
         );
       case "status":
         return (
-          <td key={columnId} className="py-3 px-4 text-center align-middle">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-center align-middle ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             <span
               className={`inline-flex items-center gap-1 px-4.5 py-1 rounded-full text-xs font-medium ${getStatusClass(
                 job.status
@@ -169,7 +214,11 @@ export default function JobRow({
         );
       case "action":
         return (
-          <td key={columnId} className="py-3 px-4 text-center align-middle">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-center align-middle ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             {hasActions ? (
               <div className="job-action-menu relative inline-flex">
                 <button
@@ -195,7 +244,11 @@ export default function JobRow({
         );
       case "owner":
         return (
-          <td key={columnId} className="py-3 px-4 text-center align-middle">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-center align-middle ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             <div className="flex justify-center">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-400">
                 {job.owner}
@@ -205,7 +258,11 @@ export default function JobRow({
         );
       case "assignee":
         return (
-          <td key={columnId} className="py-3 px-4 text-center align-middle">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-center align-middle ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             <div className="flex justify-center">
               {job.assignee ? (
                 <Avatar
@@ -230,7 +287,11 @@ export default function JobRow({
         );
       default:
         return (
-          <td key={columnId} className="py-3 px-4 text-center align-middle text-gray-300">
+          <td
+            key={columnId}
+            className={`py-3 px-4 text-center align-middle text-gray-300 ${stickyDataClass}`}
+            style={stickyDataStyle}
+          >
             --
           </td>
         );
@@ -238,8 +299,19 @@ export default function JobRow({
   };
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors">
-      <td className="py-3 px-4 w-8 align-middle">
+    <tr className="group border-b border-gray-100 transition-colors hover:bg-gray-50/80">
+      <td
+        className={`min-w-[140px] bg-white py-3 px-4 align-middle group-hover:bg-gray-50/80 ${
+          isSelectionColumnSticky
+            ? "sticky z-20 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+            : ""
+        }`}
+        style={{
+          left: `${selectionColumnOffset}px`,
+          minWidth: `${selectionColumnWidth}px`,
+          width: `${selectionColumnWidth}px`,
+        }}
+      >
         <div className="flex items-center gap-6">
           {showSelection ? (
             <input

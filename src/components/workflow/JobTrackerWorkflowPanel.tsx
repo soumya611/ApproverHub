@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from "react";
-import { AlertIcon, ChevronsRight, ChevronsLeft } from "../../icons";
+import { ChevronsRight, ChevronsLeft } from "../../icons";
 import JobTrackerSummaryCard from "./JobTrackerSummaryCard";
 import WorkflowStageCard from "./WorkflowStageCard";
 import type { JobTrackerSummary, WorkflowStage } from "./types";
@@ -81,7 +81,6 @@ export default function JobTrackerWorkflowPanel({
       <div className="flex items-stretch">
         <JobTrackerSummaryCard
           summary={summary}
-          statusIcon={<AlertIcon className="h-3 w-3" />}
           className="relative z-20 shrink-0 shadow-[12px_0_14px_-12px_rgba(15,23,42,0.35)]"
         />
 

@@ -1,33 +1,43 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type WheelEvent } from "react";
 import { useNavigate } from "react-router";
 import PageMeta from "@/components/common/PageMeta";
+import SavedViewChip from "@/components/common/SavedViewChip";
 import PageContentContainer from "@/components/layout/PageContentContainer";
-import PaginationControls from "@/components/common/PaginationControls";
 import SearchInput from "@/components/ui/search-input/SearchInput";
 import AdvanceFilter, {
+  hasActiveAdvanceFilterState,
   type AdvanceFilterState,
   type FilterRow,
 } from "@/components/ui/advance-filter/AdvanceFilter";
 import SelectedItem, {
   type SelectedItemAction,
 } from "@/components/ui/selected-item/SelectedItem";
-import Popup from "@/components/ui/popup/Popup";
+import type { FilterDropdownOption } from "@/components/ui/advance-filter/FilterDropdown";
 import ColoumnsFilter, {
   type ColumnItem,
 } from "@/components/ui/columns-filter/ColoumnsFilter";
-import CampaignTableRow from "@/components/ui/campaign-table-row/CampaignTableRow";
+import CampaignTableRow, {
+  type CampaignColumnId,
+} from "@/components/ui/campaign-table-row/CampaignTableRow";
 import { JobsFAB } from "@/components/jobs";
 import { TableHeaderRow } from "@/components/ui/table";
-import { ChevronDownIcon, FilterIcon, VerticalDots } from "@/icons";
+import { ChevronDownIcon, CloseIcon, FilterIcon, VerticalDots } from "@/icons";
 import { normalizeColumns } from "@/data/columnsConfig";
 import {
   type CampaignRowData,
-  type StatusCategory,
 } from "@/data/campaigns";
 import { useColumnsConfig } from "@/context/ColumnsConfigContext";
 import { useCampaignsStore } from "@/stores/campaignsStore";
 import { resolveLabel } from "@/data/localization";
 import { useLocalizationStore } from "@/stores/localizationStore";
+import { getStickyColumns } from "@/utils/stickyColumns";
+import { useInfiniteScrollItems } from "@/hooks/useInfiniteScrollItems";
+import {
+  getSavedViewsStorageKey,
+  readSavedViewsStorage,
+  writeSavedViewsStorage,
+} from "@/utils/savedViewsStorage";
+import AppIcon from "@/components/ui/icon/AppIcon";
 type SavedView = {
   id: string;
   name: string;
@@ -43,22 +53,47 @@ const DEFAULT_FILTER_ROWS: FilterRow[] = [
   },
 ];
 
-const STATUS_LABEL_TO_CATEGORY: Record<string, StatusCategory | null> = {
-  Complete: "complete",
-  "In process": "in_progress",
-  "On Hold": "on_hold",
-  "Not Started": "not_started",
-  Live: "live",
-  Archive: "archive",
-  All: null,
-};
+const CAMPAIGNS_STICKY_COLUMN_COUNT = 3;
+const CAMPAIGN_PREFIX_COLUMN_WIDTHS = [120, 56];
+const CAMPAIGN_STICKY_COLUMN_WIDTHS: Partial<Record<CampaignColumnId, number>> =
+  {
+    campaign_id: 140,
+    campaign_name: 240,
+    owner: 110,
+    business_area: 170,
+    job_status: 170,
+    campaign_status: 160,
+    action: 140,
+    campaign_type: 160,
+    created_date: 150,
+    start_date: 150,
+    end_date: 140,
+  };
 
-const ADVANCED_VALUE_TO_CATEGORY: Record<string, StatusCategory | null> = {
-  todo: "not_started",
-  in_progress: "in_progress",
-  complete: "complete",
-  on_hold: "on_hold",
-};
+type CampaignFilterableColumnId =
+  | "campaign_id"
+  | "campaign_name"
+  | "owner"
+  | "business_area"
+  | "job_status"
+  | "campaign_status"
+  | "campaign_type"
+  | "created_date"
+  | "start_date"
+  | "end_date";
+
+const FILTERABLE_CAMPAIGN_COLUMN_IDS = new Set<CampaignFilterableColumnId>([
+  "campaign_id",
+  "campaign_name",
+  "owner",
+  "business_area",
+  "job_status",
+  "campaign_status",
+  "campaign_type",
+  "created_date",
+  "start_date",
+  "end_date",
+]);
 
 const ADVANCED_VALUE_TO_LABEL: Record<string, string> = {
   todo: "To do",
@@ -88,6 +123,49 @@ const parseQuickSelections = (quickSelections: Record<string, boolean>) => {
   return selectedByColumn;
 };
 
+const normalizeCampaignFilterColumn = (columnId: string) => {
+  switch (columnId) {
+    case "campaign":
+      return "campaign_name";
+    case "status":
+      return "campaign_status";
+    case "due_date":
+      return "end_date";
+    default:
+      return columnId;
+  }
+};
+
+const getCampaignFilterValue = (
+  row: CampaignRowData,
+  columnId: CampaignFilterableColumnId
+) => {
+  switch (columnId) {
+    case "campaign_id":
+      return row.campaignId;
+    case "campaign_name":
+      return row.campaignName ?? row.title;
+    case "owner":
+      return row.ownerName;
+    case "business_area":
+      return row.businessArea ?? "";
+    case "job_status":
+      return row.jobProgress;
+    case "campaign_status":
+      return row.campaignStatus;
+    case "campaign_type":
+      return row.campaignType ?? "";
+    case "created_date":
+      return row.createdDate ?? "";
+    case "start_date":
+      return row.startDate ?? "";
+    case "end_date":
+      return row.endDate;
+    default:
+      return "";
+  }
+};
+
 const applyQuickFilters = (
   data: CampaignRowData[],
   quickSelections: Record<string, boolean>
@@ -101,56 +179,29 @@ const applyQuickFilters = (
     return data;
   }
 
-  return data.filter((row) => {
-    const teamSelections = selections["My Teams"];
-    if (teamSelections?.length && !teamSelections.includes(row.team ?? "")) {
-      return false;
-    }
-
-    const campaignSelections = selections["Campaign Name"];
-    const campaignLabel = row.campaignName ?? row.title;
-    if (
-      campaignSelections?.length &&
-      !campaignSelections.includes(campaignLabel)
-    ) {
-      return false;
-    }
-
-    const ownerSelections = selections["Owner"];
-    if (ownerSelections?.length && !ownerSelections.includes(row.ownerName)) {
-      return false;
-    }
-
-    const reviewerSelections = selections["Reviewer"];
-    if (
-      reviewerSelections?.length &&
-      !reviewerSelections.includes(row.reviewerName ?? "")
-    ) {
-      return false;
-    }
-
-    const statusSelections = selections["Status"];
-    if (statusSelections?.length && !statusSelections.includes("All")) {
-      const categories = statusSelections
-        .map((item) => STATUS_LABEL_TO_CATEGORY[item])
-        .filter((value): value is StatusCategory => Boolean(value));
-      if (categories.length > 0 && !categories.includes(row.statusCategory)) {
-        return false;
+  return data.filter((row) =>
+    Object.entries(selections).every(([columnKey, selectedValues]) => {
+      if (!selectedValues.length) {
+        return true;
       }
-    }
 
-    const dueSelections = selections["Due Date"];
-    if (dueSelections?.length && !dueSelections.includes("All")) {
-      const categories = dueSelections
-        .map((item) => STATUS_LABEL_TO_CATEGORY[item])
-        .filter((value): value is StatusCategory => Boolean(value));
-      if (categories.length > 0 && !categories.includes(row.dueDateCategory)) {
-        return false;
+      const normalizedColumn = normalizeCampaignFilterColumn(columnKey);
+      if (
+        !FILTERABLE_CAMPAIGN_COLUMN_IDS.has(
+          normalizedColumn as CampaignFilterableColumnId
+        )
+      ) {
+        return true;
       }
-    }
 
-    return true;
-  });
+      const fieldValue = getCampaignFilterValue(
+        row,
+        normalizedColumn as CampaignFilterableColumnId
+      );
+
+      return Boolean(fieldValue) && selectedValues.includes(fieldValue);
+    })
+  );
 };
 
 const matchCondition = (fieldValue: string, condition: string, target: string) => {
@@ -178,28 +229,21 @@ const applyAdvancedFilters = (data: CampaignRowData[], rows: FilterRow[]) => {
 
   return data.filter((row) =>
     validRows.every((filterRow) => {
-      const column = filterRow.column;
-      const isStatusColumn = column === "status" || column === "due_date";
-      const fieldValue = (() => {
-        switch (column) {
-          case "owner":
-            return row.ownerName;
-          case "status":
-            return row.statusCategory;
-          case "campaign":
-            return row.campaignName ?? row.title;
-          case "reviewer":
-            return row.reviewerName ?? "";
-          case "due_date":
-            return row.dueDateCategory ?? row.endDate;
-          default:
-            return "";
-        }
-      })();
+      const normalizedColumn = normalizeCampaignFilterColumn(filterRow.column);
+      if (
+        !FILTERABLE_CAMPAIGN_COLUMN_IDS.has(
+          normalizedColumn as CampaignFilterableColumnId
+        )
+      ) {
+        return true;
+      }
 
-      const targetValue = isStatusColumn
-        ? ADVANCED_VALUE_TO_CATEGORY[filterRow.value] ?? ""
-        : ADVANCED_VALUE_TO_LABEL[filterRow.value] ?? filterRow.value;
+      const fieldValue = getCampaignFilterValue(
+        row,
+        normalizedColumn as CampaignFilterableColumnId
+      );
+      const targetValue =
+        ADVANCED_VALUE_TO_LABEL[filterRow.value] ?? filterRow.value;
 
       if (!fieldValue || !targetValue) {
         return true;
@@ -272,15 +316,26 @@ const applyFilters = (
 };
 
 export default function Campaigns() {
+  const savedViewsStorageKey = useMemo(
+    () => getSavedViewsStorageKey("campaigns"),
+    []
+  );
+  const persistedSavedViewsState = useMemo(
+    () => readSavedViewsStorage<AdvanceFilterState>(savedViewsStorageKey),
+    [savedViewsStorageKey]
+  );
   const [search, setSearch] = useState("");
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
   const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(
     null
   );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [activeViewId, setActiveViewId] = useState<string>("all");
-  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
-  const [openViewMenuId, setOpenViewMenuId] = useState<string | null>(null);
+  const [activeViewId, setActiveViewId] = useState<string>(
+    persistedSavedViewsState.activeViewId
+  );
+  const [savedViews, setSavedViews] = useState<SavedView[]>(
+    persistedSavedViewsState.savedViews
+  );
   const [currentFilterState, setCurrentFilterState] =
     useState<AdvanceFilterState | null>(null);
   const [filterResetKey, setFilterResetKey] = useState(0);
@@ -295,7 +350,6 @@ export default function Campaigns() {
   const navigate = useNavigate();
 
   const filterPanelRef = useRef<HTMLDivElement>(null);
-  const viewMenuRef = useRef<HTMLDivElement>(null);
   const columnsPanelRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const isTableDraggingRef = useRef(false);
@@ -307,24 +361,82 @@ export default function Campaigns() {
     duplicateCampaigns,
     archiveCampaigns,
     pinCampaigns,
-    pagination,
-    goToNextPage,
-    goToPreviousPage,
-    setCurrentPage,
-    setPageSize,
-    resetPagination,
   } = useCampaignsStore();
-  const campaignsCurrentPage = pagination.currentPage;
-  const campaignsPageSize = pagination.pageSize;
   const allCount = campaigns.length;
   const visibleColumns = useMemo(() => columns.filter((item) => item.checked), [
     columns,
   ]);
+  const visibleColumnIds = useMemo(
+    () => visibleColumns.map((column) => column.id as CampaignColumnId),
+    [visibleColumns]
+  );
+  const stickyColumns = useMemo(
+    () =>
+      getStickyColumns({
+        stickyColumnCount: CAMPAIGNS_STICKY_COLUMN_COUNT,
+        prefixColumnWidths: CAMPAIGN_PREFIX_COLUMN_WIDTHS,
+        visibleColumnIds,
+        dataColumnWidths: CAMPAIGN_STICKY_COLUMN_WIDTHS,
+      }),
+    [visibleColumnIds]
+  );
   const tableMinWidth = useMemo(() => {
     const baseWidth = 320;
     const columnWidth = 150;
     return Math.max(900, baseWidth + visibleColumns.length * columnWidth);
   }, [visibleColumns.length]);
+
+  const filterableVisibleColumns = useMemo(
+    () =>
+      visibleColumns.filter((column) =>
+        FILTERABLE_CAMPAIGN_COLUMN_IDS.has(
+          column.id as CampaignFilterableColumnId
+        )
+      ),
+    [visibleColumns]
+  );
+
+  const valueOptionsByColumn = useMemo(
+    () =>
+      Object.fromEntries(
+        filterableVisibleColumns.map((column) => {
+          const columnId = column.id as CampaignFilterableColumnId;
+          const options: FilterDropdownOption[] = Array.from(
+            new Set(
+              campaigns
+                .map((row) => getCampaignFilterValue(row, columnId))
+                .filter(Boolean)
+            )
+          ).map((value) => ({
+            label: value,
+            value,
+          }));
+
+          return [column.id, options];
+        })
+      ),
+    [campaigns, filterableVisibleColumns]
+  );
+
+  const quickFilterColumns = useMemo(
+    () =>
+      filterableVisibleColumns.map((column) => ({
+        key: column.id,
+        title: column.label,
+        items:
+          valueOptionsByColumn[column.id]?.map((option) => option.label) ?? [],
+      })),
+    [filterableVisibleColumns, valueOptionsByColumn]
+  );
+
+  const columnOptions = useMemo<FilterDropdownOption[]>(
+    () =>
+      filterableVisibleColumns.map((column) => ({
+        label: column.label,
+        value: column.id,
+      })),
+    [filterableVisibleColumns]
+  );
 
   const renderColumnHeader = (column: ColumnItem) => {
     if (column.id === "campaign_status") {
@@ -345,6 +457,7 @@ export default function Campaigns() {
     const view = savedViews.find((item) => item.id === activeViewId);
     return view?.filterState ?? currentFilterState;
   }, [activeViewId, savedViews, currentFilterState]);
+  const hasAppliedFilters = hasActiveAdvanceFilterState(activeFilterState);
 
   const filteredCampaigns = useMemo(
     () => applyFilters(campaigns, activeFilterState),
@@ -356,27 +469,25 @@ export default function Campaigns() {
     [filteredCampaigns, search]
   );
 
-  const totalCampaignPages = useMemo(
-    () => Math.max(1, Math.ceil(visibleCampaigns.length / campaignsPageSize)),
-    [visibleCampaigns.length, campaignsPageSize]
+  const campaignsInfiniteResetKey = useMemo(
+    () =>
+      JSON.stringify({
+        search,
+        activeViewId,
+        activeFilterState,
+      }),
+    [search, activeViewId, activeFilterState]
   );
 
-  const currentCampaignPage = Math.min(campaignsCurrentPage, totalCampaignPages);
-
-  const paginatedCampaigns = useMemo(() => {
-    const start = (currentCampaignPage - 1) * campaignsPageSize;
-    return visibleCampaigns.slice(start, start + campaignsPageSize);
-  }, [visibleCampaigns, currentCampaignPage, campaignsPageSize]);
-
-  const campaignsFrom = visibleCampaigns.length
-    ? (currentCampaignPage - 1) * campaignsPageSize + 1
-    : 0;
-  const campaignsTo = visibleCampaigns.length
-    ? Math.min(visibleCampaigns.length, currentCampaignPage * campaignsPageSize)
-    : 0;
-
-  const canGoToPreviousCampaignPage = currentCampaignPage > 1;
-  const canGoToNextCampaignPage = currentCampaignPage < totalCampaignPages;
+  const {
+    visibleItems: renderedCampaigns,
+    hasMore: hasMoreCampaigns,
+    loaderRef: campaignsLoadMoreRef,
+  } = useInfiniteScrollItems(visibleCampaigns, {
+    initialCount: 10,
+    step: 10,
+    resetKey: campaignsInfiniteResetKey,
+  });
 
   const visibleIds = useMemo(
     () => new Set(visibleCampaigns.map((row) => row.id)),
@@ -384,8 +495,8 @@ export default function Campaigns() {
   );
 
   const allCampaignsSelected =
-    paginatedCampaigns.length > 0 &&
-    paginatedCampaigns.every((row) => selectedCampaignIds.includes(row.id));
+    renderedCampaigns.length > 0 &&
+    renderedCampaigns.every((row) => selectedCampaignIds.includes(row.id));
 
   const selectionActions: SelectedItemAction[] = [
     {
@@ -474,20 +585,6 @@ export default function Campaigns() {
   }, [isFilterOpen]);
 
   useEffect(() => {
-    if (!openViewMenuId) return;
-    const handleClickOutside = (event: globalThis.MouseEvent) => {
-      if (
-        viewMenuRef.current &&
-        !viewMenuRef.current.contains(event.target as Node)
-      ) {
-        setOpenViewMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [openViewMenuId]);
-
-  useEffect(() => {
     if (!isColumnsOpen) return;
     const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (
@@ -507,6 +604,13 @@ export default function Campaigns() {
       setColumnsDraft(columns);
     }
   }, [columns, isColumnsOpen]);
+
+  useEffect(() => {
+    writeSavedViewsStorage(savedViewsStorageKey, {
+      activeViewId,
+      savedViews,
+    });
+  }, [activeViewId, savedViews, savedViewsStorageKey]);
 
   useEffect(() => {
     setSelectedCampaignIds((prev) => {
@@ -529,11 +633,11 @@ export default function Campaigns() {
     setSelectedCampaignIds((prev) => {
       if (!checked) {
         return prev.filter(
-          (id) => !paginatedCampaigns.some((row) => row.id === id)
+          (id) => !renderedCampaigns.some((row) => row.id === id)
         );
       }
       const next = new Set(prev);
-      paginatedCampaigns.forEach((row) => {
+      renderedCampaigns.forEach((row) => {
         next.add(row.id);
       });
       return Array.from(next);
@@ -565,15 +669,17 @@ export default function Campaigns() {
 
   const handleAllClick = () => {
     setActiveViewId("all");
-    setOpenViewMenuId(null);
     setCurrentFilterState(null);
     setFilterResetKey((prev) => prev + 1);
-    resetPagination();
+  };
+
+  const handleClearFilters = () => {
+    handleAllClick();
+    setIsFilterOpen(false);
   };
 
   const handleViewSelect = (view: SavedView) => {
     setActiveViewId(view.id);
-    setOpenViewMenuId(null);
     setCurrentFilterState(view.filterState);
   };
 
@@ -623,21 +729,16 @@ export default function Campaigns() {
     isTableDraggingRef.current = false;
   };
 
-  const handleRenameView = (viewId: string) => {
-    const view = savedViews.find((item) => item.id === viewId);
-    if (!view) return;
-    const nextName = window.prompt("Rename view", view.name);
-    if (!nextName?.trim()) return;
+  const handleRenameView = (viewId: string, nextName: string) => {
     setSavedViews((prev) =>
       prev.map((item) =>
-        item.id === viewId ? { ...item, name: nextName.trim() } : item
+        item.id === viewId ? { ...item, name: nextName } : item
       )
     );
   };
 
   const handleRemoveView = (viewId: string) => {
     setSavedViews((prev) => prev.filter((item) => item.id !== viewId));
-    setOpenViewMenuId(null);
     if (activeViewId === viewId) {
       handleAllClick();
     }
@@ -645,12 +746,6 @@ export default function Campaigns() {
 
   const getViewCount = (view: SavedView) =>
     applyFilters(campaigns, view.filterState).length;
-
-  useEffect(() => {
-    if (campaignsCurrentPage > totalCampaignPages) {
-      setCurrentPage(totalCampaignPages);
-    }
-  }, [campaignsCurrentPage, totalCampaignPages, setCurrentPage]);
 
   return (
     <>
@@ -692,58 +787,18 @@ export default function Campaigns() {
               {savedViews.map((view) => {
                 const isActive = activeViewId === view.id;
                 return (
-                  <div
+                  <SavedViewChip
                     key={view.id}
-                    className={`group relative inline-flex items-center rounded-sm border ${
-                      isActive
-                        ? "border-transparent bg-[var(--color-10)] text-[var(--color-primary-500)]"
-                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleViewSelect(view)}
-                      className="px-2 py-0.5 text-[13px] font-regular"
-                    >
-                      {view.name} ({getViewCount(view)})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setOpenViewMenuId((prev) =>
-                          prev === view.id ? null : view.id
-                        );
-                        setActiveViewId(view.id);
-                      }}
-                      className="pr-1 text-gray-400 opacity-0 pointer-events-none transition hover:text-gray-600 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
-                      aria-label={`${view.name} options`}
-                    >
-                      <VerticalDots className="h-4 w-4" />
-                    </button>
-                    {openViewMenuId === view.id ? (
-                      <div
-                        ref={viewMenuRef}
-                        className="absolute right-0 top-full z-30 mt-2"
-                      >
-                        <Popup
-                          items={[
-                            {
-                              id: "rename",
-                              label: "Rename",
-                              onClick: () => handleRenameView(view.id),
-                            },
-                            {
-                              id: "remove",
-                              label: "Remove",
-                              onClick: () => handleRemoveView(view.id),
-                            },
-                          ]}
-                          className="!min-w-[160px] rounded-lg"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
+                    id={view.id}
+                    name={view.name}
+                    count={getViewCount(view)}
+                    isActive={isActive}
+                    activeClassName="border-transparent bg-[var(--color-10)] text-[var(--color-primary-500)]"
+                    inactiveClassName="border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    onSelect={() => handleViewSelect(view)}
+                    onRename={(nextName) => handleRenameView(view.id, nextName)}
+                    onRemove={() => handleRemoveView(view.id)}
+                  />
                 );
               })}
             </div>
@@ -753,11 +808,32 @@ export default function Campaigns() {
               <button
                 type="button"
                 onClick={() => setIsFilterOpen((prev) => !prev)}
-                className="rounded-sm border border-gray-200 bg-white p-1 text-gray-500 transition hover:bg-gray-50"
+                className={`flex items-center justify-center rounded-sm border bg-white p-1 text-gray-500 transition hover:bg-gray-50 ${
+                  hasAppliedFilters
+                    ? "border-[var(--color-secondary-300)] text-[var(--color-secondary-500)]"
+                    : "border-gray-200"
+                }`}
                 aria-label="Open filters"
               >
-                <FilterIcon  className="h-3 w-3" />
+               <AppIcon 
+                                icon={FilterIcon} 
+                                size={16} 
+                                color={hasAppliedFilters ? "var(--color-secondary-500)" : "currentColor"} 
+                              /> 
               </button>
+              {hasAppliedFilters ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleClearFilters();
+                  }}
+                  className="absolute -right-1 -top-1 z-40 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-secondary-500)] text-white shadow-sm"
+                  aria-label="Clear active filters"
+                >
+                  <CloseIcon className="h-2.5 w-2.5" />
+                </button>
+              ) : null}
               <div
                 className={`absolute right-0 top-full z-30 mt-3 transition ${
                   isFilterOpen
@@ -769,12 +845,19 @@ export default function Campaigns() {
                   key={filterResetKey}
                   defaultTab="quick"
                   defaultRows={DEFAULT_FILTER_ROWS}
+                  initialState={activeFilterState}
                   onFilterChange={(state) => {
-                    setCurrentFilterState(state);
+                    setCurrentFilterState(
+                      hasActiveAdvanceFilterState(state) ? state : null
+                    );
                     setActiveViewId("all");
                   }}
+                  onClear={handleClearFilters}
                   onSaveView={handleSaveView}
                   className="w-[860px] max-w-[90vw] rounded-xl bg-white"
+                  columnOptions={columnOptions}
+                  valueOptionsByColumn={valueOptionsByColumn}
+                  quickFilterColumns={quickFilterColumns}
                 />
               </div>
             </div>
@@ -813,10 +896,45 @@ export default function Campaigns() {
                     columns={visibleColumns}
                     getColumnKey={(column) => column.id}
                     renderColumn={renderColumnHeader}
-                    columnClassName="px-3 py-2"
+                    columnClassName={(column) => {
+                      const columnId = column.id as CampaignColumnId;
+                      const isSticky =
+                        stickyColumns.stickyDataColumnIds.has(columnId);
+
+                      return `px-3 py-2 ${
+                        isSticky
+                          ? "sticky z-20 bg-white shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+                          : ""
+                      }`;
+                    }}
+                    columnStyle={(column) => {
+                      const columnId = column.id as CampaignColumnId;
+
+                      if (!stickyColumns.stickyDataColumnIds.has(columnId)) {
+                        return undefined;
+                      }
+
+                      const width =
+                        CAMPAIGN_STICKY_COLUMN_WIDTHS[columnId] ?? 150;
+
+                      return {
+                        left: `${stickyColumns.stickyDataOffsets[columnId] ?? 0}px`,
+                        minWidth: `${width}px`,
+                        width: `${width}px`,
+                      };
+                    }}
                     prefixCells={[
                       {
-                        className: "px-3 py-2 text-gray-300",
+                        className: `${
+                          stickyColumns.stickyPrefixIndexes.has(0)
+                            ? "sticky z-30 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+                            : ""
+                        } min-w-[120px] bg-white px-3 py-2 text-gray-300`,
+                        style: {
+                          left: `${stickyColumns.stickyPrefixOffsets[0] ?? 0}px`,
+                          minWidth: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}px`,
+                          width: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}px`,
+                        },
                         content: (
                           <label className="flex items-center gap-2 text-right whitespace-nowrap">
                             <input
@@ -831,7 +949,19 @@ export default function Campaigns() {
                           </label>
                         ),
                       },
-                      { className: "px-3 py-2", content: null },
+                      {
+                        className: `${
+                          stickyColumns.stickyPrefixIndexes.has(1)
+                            ? "sticky z-30 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+                            : ""
+                        } min-w-[56px] bg-white px-3 py-2`,
+                        style: {
+                          left: `${stickyColumns.stickyPrefixOffsets[1] ?? 0}px`,
+                          minWidth: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}px`,
+                          width: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}px`,
+                        },
+                        content: null,
+                      },
                     ]}
                     suffixCells={[
                       {
@@ -872,7 +1002,7 @@ export default function Campaigns() {
                   />
                 </thead>
                 <tbody>
-                  {paginatedCampaigns.map((row) => (
+                  {renderedCampaigns.map((row) => (
                     <CampaignTableRow
                       key={row.id}
                       campaignId={row.campaignId}
@@ -898,7 +1028,22 @@ export default function Campaigns() {
                         )
                       }
                       onEdit={() => navigate(`/campaigns/${row.id}/edit`)}
-                      visibleColumns={visibleColumns.map((column) => column.id)}
+                      visibleColumns={visibleColumnIds}
+                      stickyDataColumnIds={stickyColumns.stickyDataColumnIds}
+                      stickyDataColumnOffsets={stickyColumns.stickyDataOffsets}
+                      stickyDataColumnWidths={CAMPAIGN_STICKY_COLUMN_WIDTHS}
+                      isSelectionColumnSticky={stickyColumns.stickyPrefixIndexes.has(
+                        0
+                      )}
+                      selectionColumnOffset={
+                        stickyColumns.stickyPrefixOffsets[0] ?? 0
+                      }
+                      selectionColumnWidth={CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}
+                      isExpandColumnSticky={stickyColumns.stickyPrefixIndexes.has(
+                        1
+                      )}
+                      expandColumnOffset={stickyColumns.stickyPrefixOffsets[1] ?? 0}
+                      expandColumnWidth={CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}
                     />
                   ))}
                 </tbody>
@@ -910,20 +1055,13 @@ export default function Campaigns() {
             </div>
           )}
 
-          {visibleCampaigns.length > 0 ? (
-            <PaginationControls
-              total={visibleCampaigns.length}
-              from={campaignsFrom}
-              to={campaignsTo}
-              label="results"
-              canGoPrevious={canGoToPreviousCampaignPage}
-              canGoNext={canGoToNextCampaignPage}
-              onPrevious={goToPreviousPage}
-              onNext={goToNextPage}
-              pageSize={campaignsPageSize}
-              pageSizeOptions={[5, 10, 20]}
-              onPageSizeChange={setPageSize}
-            />
+          {hasMoreCampaigns ? (
+            <div
+              ref={campaignsLoadMoreRef}
+              className="flex justify-center py-5 text-xs text-gray-400"
+            >
+              Scroll to load more campaigns
+            </div>
           ) : null}
         </div>
       </PageContentContainer>
