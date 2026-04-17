@@ -608,14 +608,14 @@ export default function SettingsUserDetailView() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <AppBreadcrumb items={USER_DETAIL_BREADCRUMB_ITEMS} />
 
-      <PageContentContainer className="relative min-h-0 flex-1 overflow-y-auto p-0">
+      <PageContentContainer className="relative min-h-0 flex-1 overflow-hidden p-0">
         <PageHeader
           title="Users Details"
           titleClassName="!text-[18px]"
           onBackClick={() => navigate("/settings/people/users")}
         />
 
-        <div className="min-h-full space-y-6 p-6">
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-6">
           <div className="w-full">
             <div className="grid gap-6 xl:grid-cols-[1fr_1fr_1fr]">
               <div className="rounded-md border border-gray-200 bg-white">

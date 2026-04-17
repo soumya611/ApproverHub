@@ -150,14 +150,14 @@ export default function SettingsUserEditProfileView() {
         ]}
       />
 
-      <PageContentContainer className="relative min-h-0 flex-1 overflow-y-auto p-0">
+      <PageContentContainer className="relative min-h-0 flex-1 overflow-hidden p-0">
         <PageHeader
           title="Edit Profile"
           titleClassName="!text-[20px] !font-semibold"
           onBackClick={() => navigate(`/settings/people/users/${user.id}`)}
         />
 
-        <div className="min-h-full p-6">
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-6">
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_430px]">
             <div className="rounded-sm border border-gray-200 bg-white p-5">
               <div className="flex justify-end text-sm text-gray-500">Employee ID:{user.id}</div>

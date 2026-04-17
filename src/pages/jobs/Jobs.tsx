@@ -1009,12 +1009,13 @@ export default function Jobs() {
     <>
       <PageMeta title={jobsTitle} description="Manage jobs and campaigns" />
 
-      <PageContentContainer className="p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-bold text-primary">{jobsTitle}</h1>
-        </div>
+      <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
+        <div className="shrink-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-xl font-bold text-primary">{jobsTitle}</h1>
+          </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
           <div className="flex flex-1 flex-wrap items-center gap-3">
             <div className="flex min-w-[220px] max-w-[320px] flex-1 items-center rounded-full border border-gray-200 bg-white px-2 py-1">
               <SearchInput
@@ -1144,6 +1145,7 @@ export default function Jobs() {
               <ListViewIcon className="h-3.5 w-3.5" />
             </button>
           </div>
+          </div>
         </div>
 
         {viewMode === "list" && selectedIds.size > 0 ? (
@@ -1157,7 +1159,8 @@ export default function Jobs() {
           </div>
         ) : null}
 
-        <div className="mt-6 bg-white">
+        <div className="custom-scrollbar mt-6 min-h-0 flex-1 overflow-y-auto pr-1">
+          <div className="bg-white">
           {viewMode === "grid" ? (
             visibleJobs.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
@@ -1209,37 +1212,38 @@ export default function Jobs() {
               Scroll to load more jobs
             </div>
           ) : null}
-        </div>
-
-        {viewMode === "list" && archivedJobs.length > 0 ? (
-          <div className="mt-10">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-700">
-                Archived Jobs
-              </h2>
-              <span className="text-xs text-gray-400">
-                {archivedJobs.length} archived
-              </span>
-            </div>
-            <div className="mt-4 overflow-x-auto custom-scrollbar">
-              <JobsTable
-                jobs={archivedJobs}
-                selectedIds={new Set()}
-                onToggleSelectAll={() => {}}
-                onToggleSelect={() => {}}
-                onEdit={handleEdit}
-                onAssigneeClick={undefined}
-                columns={visibleColumns}
-                columnsMenu={null}
-                minWidth={tableMinWidth}
-                showSelection={false}
-                showEdit={false}
-                stickyColumnCount={JOBS_STICKY_COLUMN_COUNT}
-                stickyColumnWidths={JOBS_STICKY_COLUMN_WIDTHS}
-              />
-            </div>
           </div>
-        ) : null}
+
+          {viewMode === "list" && archivedJobs.length > 0 ? (
+            <div className="mt-10">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-700">
+                  Archived Jobs
+                </h2>
+                <span className="text-xs text-gray-400">
+                  {archivedJobs.length} archived
+                </span>
+              </div>
+              <div className="mt-4 overflow-x-auto custom-scrollbar">
+                <JobsTable
+                  jobs={archivedJobs}
+                  selectedIds={new Set()}
+                  onToggleSelectAll={() => {}}
+                  onToggleSelect={() => {}}
+                  onEdit={handleEdit}
+                  onAssigneeClick={undefined}
+                  columns={visibleColumns}
+                  columnsMenu={null}
+                  minWidth={tableMinWidth}
+                  showSelection={false}
+                  showEdit={false}
+                  stickyColumnCount={JOBS_STICKY_COLUMN_COUNT}
+                  stickyColumnWidths={JOBS_STICKY_COLUMN_WIDTHS}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
       </PageContentContainer>
 
       <JobsFAB onClick={() => navigate("/jobs/new")} ariaLabel="Create new job" />

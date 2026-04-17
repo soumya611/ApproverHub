@@ -1,8 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import Button from "../button/Button";
 import FilterCheckboxItem from "./FilterCheckboxItem";
 import FilterDropdown, { type FilterDropdownOption } from "./FilterDropdown";
-import { Clear_Icon, CloseIcon, Export_Filter_Icon } from "../../../icons";
+import {
+  ChevronDownIcon,
+  Clear_Icon,
+  CloseIcon,
+  Export_Filter_Icon,
+} from "../../../icons";
 import AppIcon from "../icon/AppIcon";
 
 export type FilterRow = {
@@ -153,6 +164,20 @@ const getQuickColumnKey = (column: AdvanceFilterQuickColumn) =>
 
 const cloneRows = (rows: FilterRow[]) => rows.map((row) => ({ ...row }));
 
+const buildQuickSearchTerms = (
+  columns: AdvanceFilterQuickColumn[],
+  existingTerms?: Record<string, string>
+) => {
+  const nextTerms: Record<string, string> = {};
+
+  columns.forEach((column) => {
+    const columnKey = getQuickColumnKey(column);
+    nextTerms[columnKey] = existingTerms?.[columnKey] ?? "";
+  });
+
+  return nextTerms;
+};
+
 const buildQuickSelections = (
   columns: AdvanceFilterQuickColumn[],
   existingSelections?: Record<string, boolean>
@@ -230,6 +255,13 @@ const AdvanceFilter = ({
   className = "w-2/3",
 }: AdvanceFilterProps) => {
   const onFilterChangeRef = useRef(onFilterChange);
+  const quickFilterScrollRef = useRef<HTMLDivElement | null>(null);
+  const quickSearchInputRefs = useRef<Record<string, HTMLInputElement | null>>(
+    {}
+  );
+  const isQuickFilterDraggingRef = useRef(false);
+  const quickFilterDragStartXRef = useRef(0);
+  const quickFilterScrollLeftRef = useRef(0);
   const resolvedColumnOptions = columnOptions ?? DEFAULT_COLUMN_OPTIONS;
   const resolvedConditionOptions =
     conditionOptions ?? DEFAULT_CONDITION_OPTIONS;
@@ -291,6 +323,13 @@ const AdvanceFilter = ({
   const [quickSelections, setQuickSelections] = useState<Record<string, boolean>>(
     () => buildQuickSelections(resolvedQuickFilterColumns, initialState?.quickSelections)
   );
+  const [quickSearchTerms, setQuickSearchTerms] = useState<Record<string, string>>(
+    () => buildQuickSearchTerms(resolvedQuickFilterColumns)
+  );
+  const [activeQuickSearchColumn, setActiveQuickSearchColumn] = useState<string | null>(
+    null
+  );
+  const [isQuickFilterDragging, setIsQuickFilterDragging] = useState(false);
 
   const currentState = useMemo(
     () => ({
@@ -391,6 +430,8 @@ const AdvanceFilter = ({
     setActiveTab(resolvedDefaultTab);
     setRows(nextRows);
     setQuickSelections(nextQuickSelections);
+    setQuickSearchTerms(buildQuickSearchTerms(resolvedQuickFilterColumns));
+    setActiveQuickSearchColumn(null);
     emitFilterChange(nextState);
     onClear?.();
   };
@@ -407,6 +448,34 @@ const AdvanceFilter = ({
   useEffect(() => {
     onFilterChangeRef.current = onFilterChange;
   }, [onFilterChange]);
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      isQuickFilterDraggingRef.current = false;
+      setIsQuickFilterDragging(false);
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeQuickSearchColumn) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const input = quickSearchInputRefs.current[activeQuickSearchColumn];
+      input?.focus();
+      input?.select();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [activeQuickSearchColumn]);
 
   useEffect(() => {
     if (!availableTabs.includes(activeTab)) {
@@ -434,6 +503,82 @@ const AdvanceFilter = ({
     fallbackRows,
     resolvedQuickFilterColumns,
   ]);
+
+  useEffect(() => {
+    setQuickSearchTerms((previous) =>
+      buildQuickSearchTerms(resolvedQuickFilterColumns, previous)
+    );
+    setActiveQuickSearchColumn((previous) =>
+      previous &&
+      resolvedQuickFilterColumns.some(
+        (column) => getQuickColumnKey(column) === previous
+      )
+        ? previous
+        : null
+    );
+  }, [resolvedQuickFilterColumns]);
+
+  const handleQuickSearchToggle = (columnKey: string) => {
+    if (activeQuickSearchColumn === columnKey) {
+      setQuickSearchTerms((previous) => ({
+        ...previous,
+        [columnKey]: "",
+      }));
+      setActiveQuickSearchColumn(null);
+      return;
+    }
+
+    setActiveQuickSearchColumn(columnKey);
+  };
+
+  const handleQuickSearchChange = (columnKey: string, value: string) => {
+    setQuickSearchTerms((previous) => ({
+      ...previous,
+      [columnKey]: value,
+    }));
+    setActiveQuickSearchColumn(columnKey);
+  };
+
+  const handleQuickFilterMouseDown = (
+    event: ReactMouseEvent<HTMLDivElement>
+  ) => {
+    const container = quickFilterScrollRef.current;
+    if (!container || event.button !== 0) {
+      return;
+    }
+
+    if (container.scrollWidth <= container.clientWidth) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest("button, input, label, textarea, select")) {
+      return;
+    }
+
+    isQuickFilterDraggingRef.current = true;
+    quickFilterDragStartXRef.current = event.clientX;
+    quickFilterScrollLeftRef.current = container.scrollLeft;
+    setIsQuickFilterDragging(true);
+  };
+
+  const handleQuickFilterMouseMove = (
+    event: ReactMouseEvent<HTMLDivElement>
+  ) => {
+    const container = quickFilterScrollRef.current;
+    if (!container || !isQuickFilterDraggingRef.current) {
+      return;
+    }
+
+    const delta = event.clientX - quickFilterDragStartXRef.current;
+    container.scrollLeft = quickFilterScrollLeftRef.current - delta;
+    event.preventDefault();
+  };
+
+  const stopQuickFilterDragging = () => {
+    isQuickFilterDraggingRef.current = false;
+    setIsQuickFilterDragging(false);
+  };
 
   const showHeader =
     resolvedVisibility.showHeader &&
@@ -646,39 +791,145 @@ const AdvanceFilter = ({
           </div>
         </div>
       ) : (
-        <div className={`${showHeader ? "mt-4" : ""} overflow-x-auto custom-scrollbar`}>
-          <div className="grid min-w-max grid-flow-col auto-cols-[minmax(150px,1fr)] gap-1">
+        <div
+          ref={quickFilterScrollRef}
+          onMouseDown={handleQuickFilterMouseDown}
+          onMouseMove={handleQuickFilterMouseMove}
+          onMouseUp={stopQuickFilterDragging}
+          onMouseLeave={stopQuickFilterDragging}
+          className={`${showHeader ? "mt-4" : ""} custom-scrollbar overflow-x-auto ${
+            isQuickFilterDragging ? "cursor-grabbing select-none" : "cursor-grab"
+          }`}
+        >
+          <div className="grid min-w-max grid-flow-col auto-cols-[minmax(150px,1fr)] gap-2 pb-1">
             {resolvedQuickFilterColumns.map((column) => {
               const columnKey = getQuickColumnKey(column);
+              const isSearchOpen = activeQuickSearchColumn === columnKey;
+              const searchTerm = isSearchOpen
+                ? quickSearchTerms[columnKey] ?? ""
+                : "";
+              const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+              const filteredItems = normalizedSearchTerm
+                ? column.items.filter((item) =>
+                    item.toLowerCase().includes(normalizedSearchTerm)
+                  )
+                : column.items;
 
               return (
-                <div key={columnKey} className="space-y-1">
-                  <FilterCheckboxItem
-                    id={`quick-${columnKey}-header`}
-                    label={column.title}
-                    checked={quickSelections[`${columnKey}-__header__`] ?? false}
-                    onChange={(checked) =>
-                      handleQuickToggle(column, null, checked)
-                    }
-                    className="!border-transparent !bg-[#EBE9E9] !py-1.5 font-semibold text-gray-600 !shadow-none"
-                  />
+                <div key={columnKey} className="flex min-w-[150px] flex-col gap-1">
+                  {isSearchOpen ? (
+                    <div className="overflow-hidden rounded-sm bg-white shadow-sm ring-1 ring-gray-100">
+                      <div className="flex items-center gap-2 border border-[var(--color-secondary-300)] px-2.5 py-1.5">
+                        <input
+                          ref={(node) => {
+                            quickSearchInputRefs.current[columnKey] = node;
+                          }}
+                          type="text"
+                          value={searchTerm}
+                          onChange={(event) =>
+                            handleQuickSearchChange(columnKey, event.target.value)
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") {
+                              setQuickSearchTerms((previous) => ({
+                                ...previous,
+                                [columnKey]: "",
+                              }));
+                              setActiveQuickSearchColumn(null);
+                            }
+                          }}
+                          placeholder="Search..."
+                          aria-label={`Search ${column.title}`}
+                          className="h-5 w-full bg-transparent text-[11px] text-gray-700 outline-none placeholder:text-gray-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleQuickSearchToggle(columnKey)}
+                          className="rounded-sm p-0.5 text-gray-400 transition hover:text-gray-600"
+                          aria-label={`Close ${column.title} search`}
+                        >
+                          <CloseIcon className="h-3 w-3" />
+                        </button>
+                      </div>
 
-                  {column.items.map((item) => {
-                    const itemKey = `${columnKey}-${item}`;
+                      <div className="custom-scrollbar min-h-[132px] max-h-[160px] overflow-y-auto px-2 py-2">
+                        <div className="space-y-1">
+                          {filteredItems.length > 0 ? (
+                            filteredItems.map((item) => {
+                              const itemKey = `${columnKey}-${item}`;
 
-                    return (
-                      <FilterCheckboxItem
-                        key={itemKey}
-                        id={`quick-${itemKey}`}
-                        label={item}
-                        checked={quickSelections[itemKey] ?? false}
-                        onChange={(checked) =>
-                          handleQuickToggle(column, item, checked)
-                        }
-                        className="!py-1.5 !shadow-none"
-                      />
-                    );
-                  })}
+                              return (
+                                <FilterCheckboxItem
+                                  key={itemKey}
+                                  id={`quick-${itemKey}`}
+                                  label={item}
+                                  checked={quickSelections[itemKey] ?? false}
+                                  onChange={(checked) =>
+                                    handleQuickToggle(column, item, checked)
+                                  }
+                                  className="!border-transparent !bg-transparent !px-2 !py-1.5 !text-[11px] !shadow-none hover:!border-transparent hover:!bg-gray-50"
+                                />
+                              );
+                            })
+                          ) : (
+                            <div className="flex min-h-[56px] items-center rounded-sm px-2 text-[11px] text-gray-400">
+                              No values found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 border border-transparent bg-[#EBE9E9] px-3 py-2 text-xs text-gray-600 shadow-sm">
+                        <input
+                          id={`quick-${columnKey}-header`}
+                          type="checkbox"
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-[var(--color-secondary-500)] focus:ring-[var(--color-secondary-500)]"
+                          checked={quickSelections[`${columnKey}-__header__`] ?? false}
+                          onChange={(event) =>
+                            handleQuickToggle(column, null, event.target.checked)
+                          }
+                        />
+                        <span className="min-w-0 flex-1 truncate font-semibold">
+                          {column.title}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickSearchToggle(columnKey)}
+                          className="rounded-sm p-1 text-gray-400 transition hover:bg-white hover:text-gray-600"
+                          aria-label={`Search ${column.title}`}
+                        >
+                          <ChevronDownIcon className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="custom-scrollbar min-h-[188px] max-h-[220px] space-y-1 overflow-y-auto pr-1">
+                        {filteredItems.length > 0 ? (
+                          filteredItems.map((item) => {
+                            const itemKey = `${columnKey}-${item}`;
+
+                            return (
+                              <FilterCheckboxItem
+                                key={itemKey}
+                                id={`quick-${itemKey}`}
+                                label={item}
+                                checked={quickSelections[itemKey] ?? false}
+                                onChange={(checked) =>
+                                  handleQuickToggle(column, item, checked)
+                                }
+                                className="!py-1.5 !shadow-none"
+                              />
+                            );
+                          })
+                        ) : (
+                          <div className="flex min-h-[56px] items-center rounded-sm border border-dashed border-gray-200 bg-white px-3 text-[11px] text-gray-400 shadow-sm">
+                            No values found
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}

@@ -1068,7 +1068,7 @@ export default function SettingsUsersView() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <AppBreadcrumb />
 
-      <PageContentContainer className="relative min-h-0  flex-1 p-0">
+      <PageContentContainer className="relative min-h-0 flex-1 overflow-hidden p-0">
              <PageHeader
              className="!px-4 py-3"
                         title="Users"
@@ -1077,7 +1077,7 @@ export default function SettingsUsersView() {
                 onBackClick={() => navigate("/settings")}
                     />
 
-        <div className="px-4 py-2">
+        <div className="shrink-0 px-4 py-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex items-center gap-2">
               <div className="w-[250px] rounded-full border border-gray-200 bg-white px-3 py-2 sm:w-[300px]">
@@ -1196,7 +1196,7 @@ export default function SettingsUsersView() {
           </div>
         </div>
 
-        <div className="px-4">
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white px-3 py-1 custom-scrollbar">
             <table className="w-full min-w-[1100px] border-separate border-spacing-y-3  text-sm">
               <thead>
