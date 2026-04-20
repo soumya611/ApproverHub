@@ -29,7 +29,7 @@ export default function CommentSetting() {
         description="Configure how comments can be labelled on the review panel"
       />
 
-      <div className="space-y-4">
+      <div className="flex h-full min-h-0 flex-col space-y-4">
         {/* Breadcrumb */}
         <p className="text-sm text-gray-500">
           <button

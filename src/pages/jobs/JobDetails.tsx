@@ -589,7 +589,7 @@ export default function JobDetails() {
             </div>
           </div>
 
-          <div className="custom-scrollbar mt-5 min-h-0 flex-1 overflow-y-auto pr-1">`r`n            <div className="rounded-2xl border border-gray-200 bg-white">
+          <div className="custom-scrollbar mt-5 min-h-0 flex-1 overflow-y-auto pr-1">  <div className="rounded-2xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-5 pt-2">
               <UnderlineTabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
               <div className="mb-2 w-full max-w-[240px] rounded-full border border-gray-200 px-3 py-1.5">
@@ -724,7 +724,7 @@ export default function JobDetails() {
                       <div className="p-4">
                         <p className="text-base leading-relaxed font-normal text-[#676767]">
                           {job.brief ??
-                            "In any project, it’s crucial to maintain a consistent flow of information. This ensures that all team members are aligned and can focus on their tasks without unnecessary distractions."}
+                            "In any project, itï¿½s crucial to maintain a consistent flow of information. This ensures that all team members are aligned and can focus on their tasks without unnecessary distractions."}
                         </p>
                       </div>
                       <div className="border-t border-gray-200 p-4 lg:border-l lg:border-t-0">
