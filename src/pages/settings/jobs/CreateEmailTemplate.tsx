@@ -84,11 +84,11 @@ export default function CreateEmailTemplate() {
                         className="!px-6 py-4 shrink-0"
                     />
 
-                    {/* Two-column body — 50 / 50 */}
+                    {/* Two-column */}
                     <div className="flex flex-1 min-h-0 overflow-hidden">
 
-                        {/* ── LEFT PANEL (50%) ── */}
-                        <div className="w-1/2 border-r border-gray-200 flex flex-col min-h-0">
+                        {/* ── LEFT PANEL  ── */}
+                        <div className="w-1/2  flex flex-col min-h-0">
 
                             {/* Scrollable fields */}
                             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
@@ -182,14 +182,14 @@ export default function CreateEmailTemplate() {
                                 <button
                                     type="button"
                                     onClick={handleCancel}
-                                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                                    className="rounded-[4px] px-4 py-2 text-base bg-[#9F9F9F26] font-medium text-[#676767D1] transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleSave}
-                                    className="rounded-lg bg-[#F25C54] px-4 py-2 text-sm font-medium text-white hover:bg-[#e04e47] transition-colors"
+                                    className="rounded-[4px] bg-[#F25C54] px-4 py-2 text-base font-medium text-white hover:bg-[#e04e47] transition-colors"
                                 >
                                     Save
                                 </button>
@@ -226,11 +226,11 @@ export default function CreateEmailTemplate() {
                                 </div>
 
                                 {/* Preview */}
-                                <div className="rounded-lg border border-gray-200 bg-gray-50">
-                                    <div className="px-4 py-2 border-b border-gray-200">
+                                <div className="rounded-t-none rounded-b-[6px] bg-[#F6F6F6]">
+                                    <div className="px-4 py-2 border-b border-gray-200 bg-[#F0F0F0]">
                                         <p className="text-sm font-semibold text-gray-700">Preview</p>
                                     </div>
-                                    <div className="px-4 py-3 flex flex-col gap-1 min-h-[120px]">
+                                    <div className="px-4 py-3 flex flex-col gap-1 min-h-[320px]">
                                         <p className="text-sm text-gray-400">{form.recipients || "Recipient"}</p>
                                         <p className="text-sm text-gray-500">{form.subject || "Subject"}</p>
                                         {form.body && (
@@ -240,22 +240,23 @@ export default function CreateEmailTemplate() {
                                             />
                                         )}
                                     </div>
+                                    {/* ── Right footer: Search to send email (uses SearchInput) ── */}
+                                    <div className="shrink-0 border-t border-[#B1B1B1] px-6 py-4">
+                                        <div className="flex items-center gap-2 bg-[#F25C54] rounded-[4px] border border-[#F25C54] px-3 py-2 w-fit">
+                                            <SearchInput
+                                                placeholder="Search to send email"
+                                                inputClassName="!text-sm !text-[#FFFFFF] placeholder:!text-[#FFFFFF] text-sm!"
+                                                iconClassName="text-white"
+                                                minSearchLength={1}
+                                                containerClassName="w-44"
+                                                iconSize="h-5! w-5!"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* ── Right footer: Search to send email (uses SearchInput) ── */}
-                            <div className="shrink-0 border-t border-gray-200 px-6 py-4 bg-white">
-                                <div className="flex items-center gap-2 bg-[#F25C54] rounded-lg border border-[#F25C54] px-3 py-2 w-fit">
-                                    <SearchInput
-                                        placeholder="Search to send email"
-                                        inputClassName="!text-sm !text-[#FFFFFF] placeholder:!text-[#FFFFFF] text-sm!"
-                                        iconClassName="text-white"
-                                        minSearchLength={1}
-                                        containerClassName="w-44"
-                                        iconSize="h-5! w-5!"
-                                    />
-                                </div>
-                            </div>
+
 
                         </div>
                     </div>
