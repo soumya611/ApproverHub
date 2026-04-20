@@ -111,6 +111,7 @@ export default function Analytics() {
         { id: "job-info-1-opt-1", label: "PDF" },
         { id: "job-info-1-opt-2", label: "PPT" },
       ],
+      branchRules: [],
     },
     {
       id: "job-info-2",
@@ -118,6 +119,7 @@ export default function Analytics() {
       type: "checkbox",
       required: false,
       options: [{ id: "job-info-2-opt-1", label: "Yes, mark as urgent" }],
+      branchRules: [],
     },
     {
       id: "job-info-3",
@@ -125,6 +127,7 @@ export default function Analytics() {
       type: "choice",
       required: false,
       options: [],
+      branchRules: [],
     },
   ]);
   const [workflowSavedName, setWorkflowSavedName] = useState<string | null>(null);
@@ -472,6 +475,7 @@ export default function Analytics() {
         type: "choice",
         required: false,
         options: [],
+        branchRules: [],
       },
     ]);
   };
