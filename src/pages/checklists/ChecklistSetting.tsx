@@ -125,7 +125,13 @@ export default function ChecklistSetting() {
     <>
       <PageMeta title="Checklist Settings | Approver Hub" description="Manage checklist templates" />
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <AppBreadcrumb />
+        <AppBreadcrumb
+          items={[
+            { label: "Home", to: "/home" },
+            { label: "Setting", to: "/settings" },
+            { label: "Checklist" },
+          ]}
+        />
         <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
           <PageHeader
             title="Checklist Templates"

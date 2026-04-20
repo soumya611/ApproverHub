@@ -4,6 +4,8 @@ import { ScrollToTop } from "@/components/common/ScrollToTop";
 import AppLayout from "@/layout/AppLayout";
 import {
   Analytics,
+  AnalyticsSettings,
+  AssigneeRules,
   CampaignSetting,
   Campaigns,
   ChecklistDetails,
@@ -23,10 +25,12 @@ import {
   JobTracker,
   Localisation,
   Login,
+  MyTeams,
   Profile,
   ProfileNotifications,
   ProfileWorkSchedule,
   Settings,
+  SiteInfo,
   SettingsUserDetail,
   SettingsUserEditProfile,
   SettingsUserNotifications,
@@ -88,8 +92,12 @@ export default function AppRouter() {
           <Route path="/comment-setting" element={<CommentSetting />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/assignee" element={<AssigneeRules />} />
+          <Route path="/settings/analytics" element={<AnalyticsSettings />} />
+          <Route path="/settings/site-info" element={<SiteInfo />} />
           <Route path="/settings/localisation" element={<Localisation />} />
           <Route path="/settings/people/users" element={<SettingsUsers />} />
+          <Route path="/settings/people/teams" element={<MyTeams />} />
           <Route path="/settings/people/users/:userId" element={<SettingsUserDetail />} />
           <Route
             path="/settings/people/users/:userId/edit"

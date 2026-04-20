@@ -75,6 +75,7 @@ interface AdvanceFilterProps {
   labels?: Partial<AdvanceFilterLabels>;
   visibility?: Partial<AdvanceFilterVisibility>;
   className?: string;
+  advancedHeaderRowOnly?: boolean;
 }
 
 const DEFAULT_COLUMN_OPTIONS: FilterDropdownOption[] = [
@@ -253,6 +254,7 @@ const AdvanceFilter = ({
   labels,
   visibility,
   className = "w-2/3",
+  advancedHeaderRowOnly = false,
 }: AdvanceFilterProps) => {
   const onFilterChangeRef = useRef(onFilterChange);
   const quickFilterScrollRef = useRef<HTMLDivElement | null>(null);
@@ -377,7 +379,24 @@ const AdvanceFilter = ({
   };
 
   const handleRemoveRow = (id: string) => {
-    setRows((previous) => previous.filter((row) => row.id !== id));
+    setRows((previous) => {
+      const nextRows = previous.filter((row) => row.id !== id);
+      if (nextRows.length === 0) {
+        const resetRows = [createRow()];
+        emitFilterChange({
+          activeTab: "advanced",
+          rows: resetRows,
+          quickSelections,
+        });
+        return resetRows;
+      }
+      emitFilterChange({
+        activeTab: "advanced",
+        rows: nextRows,
+        quickSelections,
+      });
+      return nextRows;
+    });
   };
 
   const handleQuickToggle = (column: AdvanceFilterQuickColumn, item: string | null, checked: boolean) => {
@@ -716,9 +735,25 @@ const AdvanceFilter = ({
 
       {activeTab === "advanced" ? (
         <div className={`${showHeader ? "mt-4" : ""} w-full space-y-4`}>
+          {advancedHeaderRowOnly ? (
+            <div className="pl-[52px]">
+              <div className="grid w-full grid-cols-[minmax(140px,1fr)_minmax(140px,1fr)_minmax(140px,1fr)_16px] gap-2">
+                <span className="min-w-[140px] flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm font-medium text-gray-500">
+                  Column
+                </span>
+                <span className="min-w-[140px] flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm font-medium text-gray-500">
+                  Condition
+                </span>
+                <span className="min-w-[140px] flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm font-medium text-gray-500">
+                  Value
+                </span>
+                <span className="w-4" />
+              </div>
+            </div>
+          ) : null}
           {rows.map((row, index) => (
-            <div key={row.id} className="flex flex-wrap items-center gap-2">
-              {index === 0 ? (
+            <div key={row.id} className="flex flex-wrap items-start gap-2">
+              {!advancedHeaderRowOnly && index === 0 ? (
                 <span className="w-12 text-xs font-semibold text-gray-500">
                   {resolvedLabels.whereLabel}
                 </span>
@@ -726,13 +761,19 @@ const AdvanceFilter = ({
                 <span className="w-12" />
               )}
 
-              <div className="flex w-full flex-1 flex-wrap gap-2">
+              <div
+                className={
+                  advancedHeaderRowOnly
+                    ? "grid w-full flex-1 grid-cols-[minmax(140px,1fr)_minmax(140px,1fr)_minmax(140px,1fr)_16px] gap-2"
+                    : "flex w-full flex-1 flex-wrap gap-2"
+                }
+              >
                 <FilterDropdown
                   value={row.column}
                   options={resolvedColumnOptions}
                   placeholder="Column"
                   onChange={(value) => handleRowChange(row.id, "column", value)}
-                  className="min-w-[140px] flex-1"
+                  className={advancedHeaderRowOnly ? "w-full" : "min-w-[140px] flex-1"}
                 />
                 <FilterDropdown
                   value={row.condition}
@@ -741,7 +782,7 @@ const AdvanceFilter = ({
                   onChange={(value) =>
                     handleRowChange(row.id, "condition", value)
                   }
-                  className="min-w-[140px] flex-1"
+                  className={advancedHeaderRowOnly ? "w-full" : "min-w-[140px] flex-1"}
                 />
                 <FilterDropdown
                   value={row.value}
@@ -750,11 +791,25 @@ const AdvanceFilter = ({
                   }
                   placeholder="Value"
                   onChange={(value) => handleRowChange(row.id, "value", value)}
-                  className="min-w-[140px] flex-1"
+                  className={advancedHeaderRowOnly ? "w-full" : "min-w-[140px] flex-1"}
                 />
+                {advancedHeaderRowOnly ? (
+                  <div className="flex items-center justify-center">
+                    {rows.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRow(row.id)}
+                        className="text-gray-400 transition hover:text-gray-600"
+                        aria-label="Remove filter row"
+                      >
+                        <CloseIcon className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
-              {rows.length > 1 ? (
+              {!advancedHeaderRowOnly && rows.length > 1 ? (
                 <button
                   type="button"
                   onClick={() => handleRemoveRow(row.id)}

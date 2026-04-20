@@ -10,8 +10,11 @@ import {
   AssigneeIcon,
   SiteInfoIcon,
   CustomisationIcon,
+  TeamsIcon,
+  RolesPermissionIcon,
   DashboardSetting,
   UserSettingIcon,
+  UsersTabIcon,
   EmailSettingIcon,
   EmailTemplateIcon,
   ExpiryIcon,
@@ -48,7 +51,7 @@ const SETTINGS_TABS: Array<{ id: AdminSettingsTab; label: string; onClickPath?: 
   { id: "jobs", label: "Jobs" },
   { id: "workflow", label: "Workflow", onClickPath: "/workflow-setting" },
   { id: "checklist", label: "Checklist", onClickPath: "/checklist-setting" },
-  { id: "analytics", label: "Analytics" },
+  { id: "analytics", label: "Analytics", onClickPath: "/settings/analytics" },
 ];
 
 const SETTINGS_ITEMS: AdminSettingItem[] = [
@@ -67,6 +70,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     description:
       "Set default assignment rules and preferences for jobs to streamline workflows.",
     tab: "general",
+    onClickPath: "/settings/assignee",
   },
   {
     id: "site_info",
@@ -75,6 +79,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     description:
       "Adjust language, date formats, and regional settings to support local preferences and global accessibility.",
     tab: "general",
+    onClickPath: "/settings/site-info",
   },
   {
     id: "customisation",
@@ -94,11 +99,27 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   },
   {
     id: "people_roles",
-    icon: UserSettingIcon,
+    icon: UsersTabIcon,
     title: "Users",
     description: "Add,edit,or remove users and manage their access to the system.",
     tab: "people",
     onClickPath: "/settings/people/users",
+  },
+  {
+    id: "people_my_teams",
+    icon: TeamsIcon,
+    title: "My Teams",
+    description: "Create, edit, your teams in your team",
+    tab: "people",
+    onClickPath: "/settings/people/teams",
+  },
+  {
+    id: "people_workflows",
+    icon: RolesPermissionIcon,
+    title: "Workflows",
+    description:
+      "Set up and manage job workflows, approval processes, and task sequences to streamline project progress.",
+    tab: "people",
   },
   {
     id: "campaign_defaults",
@@ -177,6 +198,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     title: "Analytics Alerts",
     description: "Set threshold notifications and summary schedules.",
     tab: "analytics",
+    onClickPath: "/settings/analytics",
   },
 ];
 

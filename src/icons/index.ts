@@ -158,6 +158,8 @@ import { ReactComponent as BrandingIcon } from "./branding-icon.svg?react";
 import { ReactComponent as AssigneeIcon } from "./assignee-icon.svg?react";
 import { ReactComponent as SiteInfoIcon } from "./site-info.svg?react";
 import { ReactComponent as CustomisationIcon } from "./customisation.svg?react";
+import { ReactComponent as TeamsIcon } from "./teams-icon.svg?react";
+import { ReactComponent as RolesPermissionIcon } from "./roles-permission-icon.svg?react";
 import { ReactComponent as DashboardSetting } from "./dashboard-setting.svg?react";
 import { ReactComponent as UserSettingIcon } from "./user-setting.svg?react";
 import { ReactComponent as EmailSettingIcon } from "./emails-setting.svg?react";
@@ -165,6 +167,7 @@ import { ReactComponent as EmailTemplateIcon } from "./email-template.svg?react"
 import { ReactComponent as ArchiveIcon } from "./archive-icon.svg?react";
 import { ReactComponent as CommentSettingIcon } from "./comment-setting.svg?react";
 import { ReactComponent as ExpiryIcon } from "./expiry-setting.svg?react";
+import { ReactComponent as UsersTabIcon } from "./users-tab-icon.svg?react";
 import { ReactComponent as NotesIcon } from "./notes-icon.svg?react";
 import { ReactComponent as NotesPlusIcon } from "./note-plus.svg?react";
 import { ReactComponent as NotesEditIcon } from "./notes-edit.svg?react";
@@ -341,6 +344,8 @@ export {
   AssigneeIcon,
   SiteInfoIcon,
   CustomisationIcon,
+  TeamsIcon,
+  RolesPermissionIcon,
   DashboardSetting,
   UserSettingIcon,
   EmailSettingIcon,
@@ -348,6 +353,7 @@ export {
   ArchiveIcon,
   CommentSettingIcon,
   ExpiryIcon,
+  UsersTabIcon,
   NotesIcon,
   NotesPlusIcon,
   NotesDelIcon,
