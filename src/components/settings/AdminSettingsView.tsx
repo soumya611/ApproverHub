@@ -134,7 +134,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     title: "Email",
     description: "customize email notification and communication templates sent to users.",
     tab: "jobs",
-    onClickPath: "/settings/jobs/job-information",
+    onClickPath: "/settings/jobs/email",
   },
    {
     id: "email_templates",
@@ -142,7 +142,7 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
     title: "Email Templates",
     description: "Create and manage reusable templates for common emails to ensure consistent messaging.",
     tab: "jobs",
-    onClickPath: "/settings/jobs/job-information",
+    onClickPath: "/settings/jobs/email-templates",
   },
    {
     id: "expiry_management",

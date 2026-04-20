@@ -77,7 +77,7 @@ const INITIAL_TEMPLATES: WorkflowTemplate[] = [
   },
 ];
 
-export const useWorkflowTemplatesStore = create<WorkflowTemplatesState>((set, get) => ({
+export const useWorkflowTemplatesStore = create<WorkflowTemplatesState>((set) => ({
   workflowTemplates: INITIAL_TEMPLATES,
 
   createWorkflowTemplate: ({ workflowConfig, ownerName, ownerAvatarUrl }) => {

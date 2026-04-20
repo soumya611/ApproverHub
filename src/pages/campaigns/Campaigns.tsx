@@ -751,12 +751,13 @@ export default function Campaigns() {
     <>
       <PageMeta title={campaignsTitle} description="Manage campaigns" />
 
-      <PageContentContainer className="p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-bold text-[#007B8C]">{campaignsTitle}</h1>
-        </div>
+      <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
+        <div className="shrink-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-xl font-bold text-[#007B8C]">{campaignsTitle}</h1>
+          </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
           <div className="flex flex-1 flex-wrap items-center gap-3">
             <div className="flex min-w-[220px] max-w-[320px] flex-1 items-center rounded-full border border-gray-200 bg-white px-2 py-1">
               <SearchInput
@@ -862,6 +863,7 @@ export default function Campaigns() {
               </div>
             </div>
           </div>
+          </div>
         </div>
 
         {selectedCampaignIds.length > 0 ? (
@@ -875,194 +877,196 @@ export default function Campaigns() {
           </div>
         ) : null}
 
-        <div className="mt-6 bg-white">
-          {visibleCampaigns.length > 0 ? (
-            <div
-              ref={tableScrollRef}
-              onWheel={handleTableWheel}
-              onMouseDown={handleTableMouseDown}
-              onMouseMove={handleTableMouseMove}
-              onMouseUp={stopTableDragging}
-              onMouseLeave={stopTableDragging}
-              className="overflow-x-auto custom-scrollbar cursor-grab active:cursor-grabbing"
-            >
-              <table
-                className="w-full border-separate border-spacing-y-2"
-                style={{ minWidth: `${tableMinWidth}px` }}
+        <div className="custom-scrollbar mt-6 min-h-0 flex-1 overflow-y-auto pr-1">
+          <div className="bg-white">
+            {visibleCampaigns.length > 0 ? (
+              <div
+                ref={tableScrollRef}
+                onWheel={handleTableWheel}
+                onMouseDown={handleTableMouseDown}
+                onMouseMove={handleTableMouseMove}
+                onMouseUp={stopTableDragging}
+                onMouseLeave={stopTableDragging}
+                className="overflow-x-auto custom-scrollbar cursor-grab active:cursor-grabbing"
               >
-                <thead>
-                  <TableHeaderRow
-                    className="text-left text-[12px] font-bold text-gray-600"
-                    columns={visibleColumns}
-                    getColumnKey={(column) => column.id}
-                    renderColumn={renderColumnHeader}
-                    columnClassName={(column) => {
-                      const columnId = column.id as CampaignColumnId;
-                      const isSticky =
-                        stickyColumns.stickyDataColumnIds.has(columnId);
+                <table
+                  className="w-full border-separate border-spacing-y-2"
+                  style={{ minWidth: `${tableMinWidth}px` }}
+                >
+                  <thead>
+                    <TableHeaderRow
+                      className="text-left text-[12px] font-bold text-gray-600"
+                      columns={visibleColumns}
+                      getColumnKey={(column) => column.id}
+                      renderColumn={renderColumnHeader}
+                      columnClassName={(column) => {
+                        const columnId = column.id as CampaignColumnId;
+                        const isSticky =
+                          stickyColumns.stickyDataColumnIds.has(columnId);
 
-                      return `px-3 py-2 ${
-                        isSticky
-                          ? "sticky z-20 bg-white shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
-                          : ""
-                      }`;
-                    }}
-                    columnStyle={(column) => {
-                      const columnId = column.id as CampaignColumnId;
-
-                      if (!stickyColumns.stickyDataColumnIds.has(columnId)) {
-                        return undefined;
-                      }
-
-                      const width =
-                        CAMPAIGN_STICKY_COLUMN_WIDTHS[columnId] ?? 150;
-
-                      return {
-                        left: `${stickyColumns.stickyDataOffsets[columnId] ?? 0}px`,
-                        minWidth: `${width}px`,
-                        width: `${width}px`,
-                      };
-                    }}
-                    prefixCells={[
-                      {
-                        className: `${
-                          stickyColumns.stickyPrefixIndexes.has(0)
-                            ? "sticky z-30 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+                        return `px-3 py-2 ${
+                          isSticky
+                            ? "sticky z-20 bg-white shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
                             : ""
-                        } min-w-[120px] bg-white px-3 py-2 text-gray-300`,
-                        style: {
-                          left: `${stickyColumns.stickyPrefixOffsets[0] ?? 0}px`,
-                          minWidth: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}px`,
-                          width: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}px`,
-                        },
-                        content: (
-                          <label className="flex items-center gap-2 text-right whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              checked={allCampaignsSelected}
-                              onChange={(event) =>
-                                toggleAllCampaigns(event.target.checked)
-                              }
-                              className="h-4 w-4 columns-checkbox"
-                            />
-                            Select All
-                          </label>
-                        ),
-                      },
-                      {
-                        className: `${
-                          stickyColumns.stickyPrefixIndexes.has(1)
-                            ? "sticky z-30 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
-                            : ""
-                        } min-w-[56px] bg-white px-3 py-2`,
-                        style: {
-                          left: `${stickyColumns.stickyPrefixOffsets[1] ?? 0}px`,
-                          minWidth: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}px`,
-                          width: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}px`,
-                        },
-                        content: null,
-                      },
-                    ]}
-                    suffixCells={[
-                      {
-                        className: "px-3 py-2 text-right",
-                        content: (
-                          <div
-                            ref={columnsPanelRef}
-                            className="relative flex justify-end"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (isColumnsOpen) {
-                                  setIsColumnsOpen(false);
-                                  setColumnsDraft(columns);
-                                } else {
-                                  handleColumnsOpen();
+                        }`;
+                      }}
+                      columnStyle={(column) => {
+                        const columnId = column.id as CampaignColumnId;
+
+                        if (!stickyColumns.stickyDataColumnIds.has(columnId)) {
+                          return undefined;
+                        }
+
+                        const width =
+                          CAMPAIGN_STICKY_COLUMN_WIDTHS[columnId] ?? 150;
+
+                        return {
+                          left: `${stickyColumns.stickyDataOffsets[columnId] ?? 0}px`,
+                          minWidth: `${width}px`,
+                          width: `${width}px`,
+                        };
+                      }}
+                      prefixCells={[
+                        {
+                          className: `${
+                            stickyColumns.stickyPrefixIndexes.has(0)
+                              ? "sticky z-30 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+                              : ""
+                          } min-w-[120px] bg-white px-3 py-2 text-gray-300`,
+                          style: {
+                            left: `${stickyColumns.stickyPrefixOffsets[0] ?? 0}px`,
+                            minWidth: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}px`,
+                            width: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}px`,
+                          },
+                          content: (
+                            <label className="flex items-center gap-2 text-right whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                checked={allCampaignsSelected}
+                                onChange={(event) =>
+                                  toggleAllCampaigns(event.target.checked)
                                 }
-                              }}
-                              className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                              aria-label="Open column settings"
+                                className="h-4 w-4 columns-checkbox"
+                              />
+                              Select All
+                            </label>
+                          ),
+                        },
+                        {
+                          className: `${
+                            stickyColumns.stickyPrefixIndexes.has(1)
+                              ? "sticky z-30 shadow-[4px_0_6px_-6px_rgba(15,23,42,0.2)]"
+                              : ""
+                          } min-w-[56px] bg-white px-3 py-2`,
+                          style: {
+                            left: `${stickyColumns.stickyPrefixOffsets[1] ?? 0}px`,
+                            minWidth: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}px`,
+                            width: `${CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}px`,
+                          },
+                          content: null,
+                        },
+                      ]}
+                      suffixCells={[
+                        {
+                          className: "px-3 py-2 text-right",
+                          content: (
+                            <div
+                              ref={columnsPanelRef}
+                              className="relative flex justify-end"
                             >
-                              <VerticalDots className="h-4 w-4" />
-                            </button>
-                            {isColumnsOpen ? (
-                              <div className="absolute right-0 top-full z-30 mt-2">
-                                <ColoumnsFilter
-                                  items={columnsDraft}
-                                  onItemsChange={setColumnsDraft}
-                                  onSaveView={handleColumnsSave}
-                                />
-                              </div>
-                            ) : null}
-                          </div>
-                        ),
-                      },
-                    ]}
-                  />
-                </thead>
-                <tbody>
-                  {renderedCampaigns.map((row) => (
-                    <CampaignTableRow
-                      key={row.id}
-                      campaignId={row.campaignId}
-                      title={row.title}
-                      endDate={row.endDate}
-                      jobProgress={row.jobProgress}
-                      campaignStatus={row.campaignStatus}
-                      jobStatusTag={row.jobStatusTag}
-                      ownerName={row.ownerName}
-                      ownerAvatarUrl={row.ownerAvatarUrl}
-                      subRows={row.subRows}
-                      businessArea={row.businessArea}
-                      campaignType={row.campaignType}
-                      createdDate={row.createdDate}
-                      startDate={row.startDate}
-                      campaignName={row.campaignName}
-                      isSelected={selectedCampaignIds.includes(row.id)}
-                      onToggleSelect={() => toggleCampaignSelection(row.id)}
-                      isExpanded={expandedCampaignId === row.id}
-                      onToggleExpand={() =>
-                        setExpandedCampaignId((prev) =>
-                          prev === row.id ? null : row.id
-                        )
-                      }
-                      onEdit={() => navigate(`/campaigns/${row.id}/edit`)}
-                      visibleColumns={visibleColumnIds}
-                      stickyDataColumnIds={stickyColumns.stickyDataColumnIds}
-                      stickyDataColumnOffsets={stickyColumns.stickyDataOffsets}
-                      stickyDataColumnWidths={CAMPAIGN_STICKY_COLUMN_WIDTHS}
-                      isSelectionColumnSticky={stickyColumns.stickyPrefixIndexes.has(
-                        0
-                      )}
-                      selectionColumnOffset={
-                        stickyColumns.stickyPrefixOffsets[0] ?? 0
-                      }
-                      selectionColumnWidth={CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}
-                      isExpandColumnSticky={stickyColumns.stickyPrefixIndexes.has(
-                        1
-                      )}
-                      expandColumnOffset={stickyColumns.stickyPrefixOffsets[1] ?? 0}
-                      expandColumnWidth={CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isColumnsOpen) {
+                                    setIsColumnsOpen(false);
+                                    setColumnsDraft(columns);
+                                  } else {
+                                    handleColumnsOpen();
+                                  }
+                                }}
+                                className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                aria-label="Open column settings"
+                              >
+                                <VerticalDots className="h-4 w-4" />
+                              </button>
+                              {isColumnsOpen ? (
+                                <div className="absolute right-0 top-full z-30 mt-2">
+                                  <ColoumnsFilter
+                                    items={columnsDraft}
+                                    onItemsChange={setColumnsDraft}
+                                    onSaveView={handleColumnsSave}
+                                  />
+                                </div>
+                              ) : null}
+                            </div>
+                          ),
+                        },
+                      ]}
                     />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-sm text-gray-400">
-              No campaigns match the current filters.
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {renderedCampaigns.map((row) => (
+                      <CampaignTableRow
+                        key={row.id}
+                        campaignId={row.campaignId}
+                        title={row.title}
+                        endDate={row.endDate}
+                        jobProgress={row.jobProgress}
+                        campaignStatus={row.campaignStatus}
+                        jobStatusTag={row.jobStatusTag}
+                        ownerName={row.ownerName}
+                        ownerAvatarUrl={row.ownerAvatarUrl}
+                        subRows={row.subRows}
+                        businessArea={row.businessArea}
+                        campaignType={row.campaignType}
+                        createdDate={row.createdDate}
+                        startDate={row.startDate}
+                        campaignName={row.campaignName}
+                        isSelected={selectedCampaignIds.includes(row.id)}
+                        onToggleSelect={() => toggleCampaignSelection(row.id)}
+                        isExpanded={expandedCampaignId === row.id}
+                        onToggleExpand={() =>
+                          setExpandedCampaignId((prev) =>
+                            prev === row.id ? null : row.id
+                          )
+                        }
+                        onEdit={() => navigate(`/campaigns/${row.id}/edit`)}
+                        visibleColumns={visibleColumnIds}
+                        stickyDataColumnIds={stickyColumns.stickyDataColumnIds}
+                        stickyDataColumnOffsets={stickyColumns.stickyDataOffsets}
+                        stickyDataColumnWidths={CAMPAIGN_STICKY_COLUMN_WIDTHS}
+                        isSelectionColumnSticky={stickyColumns.stickyPrefixIndexes.has(
+                          0
+                        )}
+                        selectionColumnOffset={
+                          stickyColumns.stickyPrefixOffsets[0] ?? 0
+                        }
+                        selectionColumnWidth={CAMPAIGN_PREFIX_COLUMN_WIDTHS[0]}
+                        isExpandColumnSticky={stickyColumns.stickyPrefixIndexes.has(
+                          1
+                        )}
+                        expandColumnOffset={stickyColumns.stickyPrefixOffsets[1] ?? 0}
+                        expandColumnWidth={CAMPAIGN_PREFIX_COLUMN_WIDTHS[1]}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm text-gray-400">
+                No campaigns match the current filters.
+              </div>
+            )}
 
-          {hasMoreCampaigns ? (
-            <div
-              ref={campaignsLoadMoreRef}
-              className="flex justify-center py-5 text-xs text-gray-400"
-            >
-              Scroll to load more campaigns
-            </div>
-          ) : null}
+            {hasMoreCampaigns ? (
+              <div
+                ref={campaignsLoadMoreRef}
+                className="flex justify-center py-5 text-xs text-gray-400"
+              >
+                Scroll to load more campaigns
+              </div>
+            ) : null}
+          </div>
         </div>
       </PageContentContainer>
 

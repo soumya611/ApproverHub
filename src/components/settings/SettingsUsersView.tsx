@@ -44,7 +44,6 @@ type AddUserDraft = {
   firstName: string;
   lastName: string;
   email: string;
-  contactInfo: string;
   role: string;
   company: string;
 };
@@ -77,6 +76,7 @@ const ROLE_OPTIONS: Array<{ value: Exclude<AppUserRole, "org_admin">; label: str
 const GUEST_ROLE_OPTIONS = ROLE_OPTIONS.filter((option) => option.value !== "admin");
 
 const MAX_ADD_USERS = 10;
+const MAX_ADD_USER_ROWS = MAX_ADD_USERS + 1;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INVITE_COOLDOWN_MS = 30_000;
 
@@ -86,7 +86,6 @@ const createAddUserRow = (): AddUserDraft => ({
   firstName: "",
   lastName: "",
   email: "",
-  contactInfo: "",
   role: "user",
   company: "",
 });
@@ -297,18 +296,6 @@ const inferCompanyFromEmail = (email: string) => {
   return primaryDomain ? toTitleCase(primaryDomain.replace(/[-_]/g, " ")) : "";
 };
 
-const inferInviteStateFromStatus = (status: string): InviteState => {
-  const normalized = status.trim().toLowerCase();
-  if (!normalized) return "none";
-  if (normalized === "issue" || normalized === "resend" || normalized === "resend_invite") {
-    return "resend";
-  }
-  if (normalized === "inactive" || normalized === "send" || normalized === "send_invite") {
-    return "send";
-  }
-  return "none";
-};
-
 const getCsvCell = (row: string[], headerMap: Map<string, number>, keys: string[]) => {
   for (const key of keys) {
     const index = headerMap.get(key);
@@ -317,6 +304,110 @@ const getCsvCell = (row: string[], headerMap: Map<string, number>, keys: string[
     }
   }
   return "";
+};
+
+const splitFullName = (value: string) => {
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return { firstName: "", lastName: "" };
+  }
+
+  if (parts.length === 1) {
+    return { firstName: toTitleCase(parts[0]), lastName: "" };
+  }
+
+  return {
+    firstName: toTitleCase(parts[0]),
+    lastName: toTitleCase(parts.slice(1).join(" ")),
+  };
+};
+
+const getUserTypeFromValue = (value?: string | null): UserType =>
+  value?.trim().toLowerCase() === "guest" ? "guest" : "users";
+
+const getUserTypeFromUser = (user: SettingsUserRow): UserType =>
+  getUserTypeFromValue(user.title);
+
+const getDraftRoleValue = (role: string, userType: UserType) => {
+  const normalizedRole = normalizeAppRole(role);
+  if (!normalizedRole) return "user";
+  if (userType === "guest" && normalizedRole === "admin") {
+    return "user";
+  }
+  return normalizedRole;
+};
+
+const hasAddUserRowInput = (row: AddUserDraft) =>
+  row.firstName.trim() ||
+  row.lastName.trim() ||
+  row.email.trim() ||
+  row.company.trim() ||
+  row.userType !== "users" ||
+  row.role.trim() !== "user";
+
+const buildImportedAddUserRow = (
+  row: string[],
+  headerMap: Map<string, number>,
+  rowIndex: number
+): AddUserDraft | null => {
+  const name = getCsvCell(row, headerMap, ["name", "full_name", "user_name"]);
+  const firstNameValue = getCsvCell(row, headerMap, ["first_name", "firstname"]);
+  const lastNameValue = getCsvCell(row, headerMap, ["last_name", "lastname"]);
+  const email = getCsvCell(row, headerMap, ["email", "email_address"]).toLowerCase();
+  const roleRaw = getCsvCell(row, headerMap, ["role", "roles"]);
+  const companyRaw = getCsvCell(row, headerMap, ["company", "organization", "organisation"]);
+  const typeRaw = getCsvCell(row, headerMap, ["user_type", "type"]);
+
+  const composedName =
+    name ||
+    [firstNameValue, lastNameValue].filter(Boolean).join(" ") ||
+    email.split("@")[0]?.replace(/[._-]+/g, " ") ||
+    "";
+
+  const nameParts = splitFullName(composedName);
+  const firstName = firstNameValue ? toTitleCase(firstNameValue) : nameParts.firstName;
+  const lastName = lastNameValue ? toTitleCase(lastNameValue) : nameParts.lastName;
+  const userType = getUserTypeFromValue(typeRaw);
+
+  if (!firstName && !lastName && !email) {
+    return null;
+  }
+
+  if (email && !EMAIL_PATTERN.test(email)) {
+    return null;
+  }
+
+  return {
+    id: `imported-add-user-${Date.now()}-${rowIndex + 1}`,
+    userType,
+    firstName,
+    lastName,
+    email,
+    role: getDraftRoleValue(roleRaw, userType),
+    company: companyRaw || inferCompanyFromEmail(email),
+  };
+};
+
+const mergeImportedAddUserRows = (
+  currentRows: AddUserDraft[],
+  importedRows: AddUserDraft[]
+) => {
+  const currentRowsWithData = currentRows.filter(hasAddUserRowInput);
+  const hasOnlyEmptyStarterRow =
+    currentRows.length === 1 && currentRowsWithData.length === 0;
+  const baseRows = hasOnlyEmptyStarterRow ? [] : currentRowsWithData;
+  const availableSlots = Math.max(0, MAX_ADD_USER_ROWS - baseRows.length);
+  const rowsToAppend = importedRows.slice(0, availableSlots);
+  const nextRows = [...baseRows, ...rowsToAppend];
+
+  return {
+    rows: nextRows.length ? nextRows : [createAddUserRow()],
+    omittedCount: importedRows.length - rowsToAppend.length,
+  };
 };
 
 const buildTransferSourceLabel = (sourceUsers: SettingsUserRow[]) => {
@@ -556,14 +647,7 @@ export default function SettingsUsersView() {
   );
 
   const addUserRowsWithData = useMemo(
-    () =>
-      addUserRows.filter(
-        (row) =>
-          row.firstName.trim() ||
-          row.lastName.trim() ||
-          row.email.trim() ||
-          row.role.trim() !== "user"
-      ),
+    () => addUserRows.filter(hasAddUserRowInput),
     [addUserRows]
   );
 
@@ -808,9 +892,11 @@ export default function SettingsUsersView() {
 
     const headers = [
       "ID",
+      "User Type",
+      "First Name",
+      "Last Name",
       "Name",
       "Email",
-      "Contact Info",
       "Role",
       "Company",
       "Status",
@@ -819,11 +905,14 @@ export default function SettingsUsersView() {
     ];
     const lines = rows.map((user) => {
       const status = user.isActive ? "active" : "inactive";
+      const { firstName, lastName } = splitFullName(user.name);
       return [
         user.id,
+        getUserTypeFromUser(user),
+        firstName,
+        lastName,
         user.name,
         user.email,
-        user.phone || "",
         user.role,
         user.company,
         status,
@@ -844,73 +933,6 @@ export default function SettingsUsersView() {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
-  };
-  const buildImportedUser = (row: string[], headerMap: Map<string, number>, rowIndex: number) => {
-    const name = getCsvCell(row, headerMap, ["name", "full_name", "user_name"]);
-    const firstName = getCsvCell(row, headerMap, ["first_name", "firstname"]);
-    const lastName = getCsvCell(row, headerMap, ["last_name", "lastname"]);
-    const email = getCsvCell(row, headerMap, ["email", "email_address"]).toLowerCase();
-    const roleRaw = getCsvCell(row, headerMap, ["role", "roles"]);
-    const contactInfo = getCsvCell(row, headerMap, [
-      "contact_info",
-      "contact",
-      "phone",
-      "phone_number",
-      "mobile",
-    ]);
-    const companyRaw = getCsvCell(row, headerMap, ["company", "organization", "organisation"]);
-    const statusRaw = getCsvCell(row, headerMap, ["status", "account_status"]);
-    const inviteRaw = getCsvCell(row, headerMap, ["invite_state", "invite"]);
-    const isActiveRaw = getCsvCell(row, headerMap, ["is_active", "active"]);
-    const typeRaw = getCsvCell(row, headerMap, ["user_type", "type"]);
-
-    const composedName =
-      name ||
-      [firstName, lastName].filter(Boolean).join(" ") ||
-      email.split("@")[0]?.replace(/[._-]+/g, " ") ||
-      "Imported User";
-
-    const normalizedRole = normalizeAppRole(roleRaw);
-    const roleLabel =
-      (normalizedRole ? getRoleLabel(normalizedRole) : "") ||
-      roleRaw ||
-      (typeRaw.toLowerCase() === "guest" ? "Guest" : "User");
-
-    const inviteStateFromStatus = inferInviteStateFromStatus(statusRaw);
-    const inviteState: InviteState =
-      inviteRaw === "none" || inviteRaw === "send" || inviteRaw === "resend"
-        ? inviteRaw
-        : inviteStateFromStatus;
-
-    const normalizedActiveFlag = isActiveRaw.trim().toLowerCase();
-    const isActive =
-      normalizedActiveFlag === "true" || normalizedActiveFlag === "1"
-        ? true
-        : normalizedActiveFlag === "false" || normalizedActiveFlag === "0"
-          ? false
-          : inviteState === "none" && statusRaw.trim().toLowerCase() !== "inactive";
-
-    const shouldSkip = !composedName.trim() && !email.trim();
-    if (shouldSkip) return null;
-
-    if (email && !EMAIL_PATTERN.test(email)) {
-      return null;
-    }
-
-    return {
-      id: `imported-user-${Date.now()}-${rowIndex + 1}`,
-      name: toTitleCase(composedName),
-      email,
-      role: roleLabel,
-      appRole: normalizedRole,
-      phone: contactInfo || undefined,
-      company: companyRaw || inferCompanyFromEmail(email),
-      isActive,
-      accountStatus: isActive ? "active" : "inactive",
-      inviteState,
-      lastSent: inviteState === "resend" ? "Last sent recently" : undefined,
-      source: "session" as const,
-    } satisfies UnifiedUser;
   };
 
   const handleImportCsv = (event: ChangeEvent<HTMLInputElement>) => {
@@ -934,16 +956,34 @@ export default function SettingsUsersView() {
         }
       });
 
-      const importedUsers = rows.slice(1).reduce<UnifiedUser[]>((accumulator, row, index) => {
-        const importedUser = buildImportedUser(row, headerMap, index);
-        if (importedUser) {
-          accumulator.push(importedUser);
+      const importedDraftRows = rows.slice(1).reduce<AddUserDraft[]>((accumulator, row, index) => {
+        const importedDraft = buildImportedAddUserRow(row, headerMap, index);
+        if (importedDraft) {
+          accumulator.push(importedDraft);
         }
         return accumulator;
       }, []);
 
-      if (importedUsers.length > 0) {
-        setUsers([...users, ...importedUsers]);
+      if (importedDraftRows.length === 0) {
+        window.alert("No valid user rows were found in the CSV file.");
+        event.target.value = "";
+        return;
+      }
+
+      const { rows: nextRows, omittedCount } = mergeImportedAddUserRows(
+        addUserRows,
+        importedDraftRows
+      );
+
+      setAddUserRows(nextRows);
+      setIsAddUserModalOpen(true);
+
+      if (omittedCount > 0) {
+        window.alert(
+          `${omittedCount} imported row${
+            omittedCount === 1 ? "" : "s"
+          } were skipped because the Add User modal is already full.`
+        );
       }
 
       event.target.value = "";
@@ -986,7 +1026,7 @@ export default function SettingsUsersView() {
 
   const addNewUserRow = () => {
     setAddUserRows((previous) => {
-      if (previous.length >= MAX_ADD_USERS + 1) return previous;
+      if (previous.length >= MAX_ADD_USER_ROWS) return previous;
       return [...previous, createAddUserRow()];
     });
   };
@@ -1008,7 +1048,7 @@ export default function SettingsUsersView() {
       const email = row.email.trim().toLowerCase();
       const inviteState: InviteState = sendInviteOnSave ? "resend" : "send";
       const fullName = [row.firstName.trim(), row.lastName.trim()].filter(Boolean).join(" ");
-      const company = inferCompanyFromEmail(email);
+      const company = row.company.trim() || inferCompanyFromEmail(email);
 
       const nextUser: UnifiedUser = {
         id: `session-user-${Date.now()}-${index + 1}`,
@@ -1017,7 +1057,6 @@ export default function SettingsUsersView() {
         role: roleLabel,
         appRole: normalizedRole,
         company,
-        phone: row.contactInfo.trim() || undefined,
         isActive: false,
         accountStatus: "inactive",
         inviteState,
@@ -1068,7 +1107,7 @@ export default function SettingsUsersView() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <AppBreadcrumb />
 
-      <PageContentContainer className="relative min-h-0  flex-1 p-0">
+      <PageContentContainer className="relative min-h-0 flex-1 overflow-hidden p-0">
              <PageHeader
              className="!px-4 py-3"
                         title="Users"
@@ -1077,7 +1116,7 @@ export default function SettingsUsersView() {
                 onBackClick={() => navigate("/settings")}
                     />
 
-        <div className="px-4 py-2">
+        <div className="shrink-0 px-4 py-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex items-center gap-2">
               <div className="w-[250px] rounded-full border border-gray-200 bg-white px-3 py-2 sm:w-[300px]">
@@ -1196,7 +1235,7 @@ export default function SettingsUsersView() {
           </div>
         </div>
 
-        <div className="px-4">
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white px-3 py-1 custom-scrollbar">
             <table className="w-full min-w-[1100px] border-separate border-spacing-y-3  text-sm">
               <thead>
@@ -1525,12 +1564,10 @@ export default function SettingsUsersView() {
                       className={isInvalidEmail ? "!border-red-400 focus:!border-red-400" : ""}
                     />
                     <TextInput
-                      label="Contact info"
+                      label="Company"
                       placeholder="Enter"
-                      value={row.contactInfo}
-                      onChange={(event) =>
-                        updateAddUserRow(row.id, "contactInfo", event.target.value)
-                      }
+                      value={row.company}
+                      onChange={(event) => updateAddUserRow(row.id, "company", event.target.value)}
                     />
 
                     <label className="flex w-full flex-col gap-2">

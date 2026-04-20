@@ -22,21 +22,8 @@ import type {
 import { DEFAULT_JOB_MEMBERS } from "@/components/jobs/types";
 import { useJobInformationSteps } from "@/components/ui/job-information/useJobInformationSteps";
 import { useJobInformationStore } from "@/stores/jobInformationStore";
-import type { JobInfoQuestion } from "@/types/jobInformation";
+import { getFirstMissingRequiredQuestionIndex } from "@/utils/jobInformationBranching";
 import type { WorkflowMember, WorkflowStage } from "@/types/workflow.types";
-
-const getFirstMissingRequiredQuestionIndex = (
-  questions: JobInfoQuestion[],
-  answers: Record<string, string | string[]>
-) =>
-  questions.findIndex((question) => {
-    if (!question.required) return false;
-    const answer = answers[question.id];
-    if (question.type === "checkbox") {
-      return !Array.isArray(answer) || answer.length === 0;
-    }
-    return typeof answer !== "string" || answer.trim().length === 0;
-  });
 
 export default function CreateJob() {
   const navigate = useNavigate();
@@ -159,7 +146,8 @@ export default function CreateJob() {
     if (jobInfoEnabled && jobInfoQuestions.length > 0) {
       const missingRequiredQuestionIndex = getFirstMissingRequiredQuestionIndex(
         jobInfoQuestions,
-        jobInfoAnswers
+        jobInfoAnswers,
+        jobInfoStepIndex
       );
       if (missingRequiredQuestionIndex >= 0) {
         const missingQuestion = jobInfoQuestions[missingRequiredQuestionIndex];
@@ -281,7 +269,8 @@ export default function CreateJob() {
     const jobInfoQuestions = activeJobInfoTemplate?.questions ?? [];
     const missingRequiredQuestionIndex = getFirstMissingRequiredQuestionIndex(
       jobInfoQuestions,
-      jobInfoAnswers
+      jobInfoAnswers,
+      jobInfoStepIndex
     );
     if (missingRequiredQuestionIndex < 0) {
       setJobInfoValidationError(null);
@@ -290,6 +279,7 @@ export default function CreateJob() {
     activeJobInfoTemplate,
     jobInfoAnswers,
     jobInfoValidationError,
+    jobInfoStepIndex,
   ]);
 
   return (
@@ -308,8 +298,8 @@ export default function CreateJob() {
             {isEditMode ? "Edit job" : "Create new job"}
           </span>
         </p>
-        <PageContentContainer className="min-h-0 flex-1 p-6">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-6">
+          <div className="mb-6 shrink-0 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <input
                 value={jobName}
@@ -338,7 +328,8 @@ export default function CreateJob() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5">
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <button
               type="button"
               onClick={() => setDetailsOpen((prev) => !prev)}
@@ -394,8 +385,8 @@ export default function CreateJob() {
             ) : null}
           </div>
 
-          {jobInfoEnabled ? (
-            <div className="mt-5">
+            {jobInfoEnabled ? (
+              <div className="mt-5">
               <StepDropdown
                 title="Job Information"
                 steps={jobInfoSteps}
@@ -403,7 +394,6 @@ export default function CreateJob() {
                 onOpenChange={setIsJobInfoOpen}
                 stepIndex={jobInfoStepIndex}
                 onStepChange={setJobInfoStepIndex}
-                resetStepOnClose
                 className="w-full"
               />
               {jobInfoValidationError ? (
@@ -411,11 +401,11 @@ export default function CreateJob() {
                   {jobInfoValidationError}
                 </p>
               ) : null}
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {!isWorkflowBuilderOpen ? (
-            <div className="mt-4">
+            {!isWorkflowBuilderOpen ? (
+              <div className="mt-4">
               <SelectWorkflowDropdown
                 inline
                 className="w-full"
@@ -423,11 +413,11 @@ export default function CreateJob() {
                 onSelectWorkflow={handleWorkflowSelect}
                 onCreateBuildWorkflow={handleCreateBuildWorkflow}
               />
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {isWorkflowBuilderOpen ? (
-            <div className="mt-4">
+            {isWorkflowBuilderOpen ? (
+              <div className="mt-4">
               <WorkflowBuilder
                 key={customWorkflow?.id ?? "new-workflow"}
                 value={customWorkflow}
@@ -436,8 +426,9 @@ export default function CreateJob() {
                 onSave={handleSaveWorkflowBuilder}
                 onCancel={() => setIsWorkflowBuilderOpen(false)}
               />
-            </div>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
         </PageContentContainer>
       </div>
     </>

@@ -34,7 +34,7 @@ export default function TableGridHeader({
       {columns.map((col, index) => (
         <div
           key={index}
-          className={`text-sm font-medium text-gray-700 ${alignClass(col.align)}`}
+          className={`text-base font-medium text-gray-700 ${alignClass(col.align)}`}
         >
           {col.label}
         </div>

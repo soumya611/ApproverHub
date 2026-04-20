@@ -29,7 +29,7 @@ export default function CommentSetting() {
         description="Configure how comments can be labelled on the review panel"
       />
 
-      <div className="space-y-4">
+      <div className="flex h-full min-h-0 flex-col space-y-4">
         {/* Breadcrumb */}
         <p className="text-sm text-gray-500">
           <button
@@ -51,7 +51,7 @@ export default function CommentSetting() {
           <span className="font-semibold text-[#007B8C]">Comments Settings</span>
         </p>
 
-        <PageContentContainer className="p-0">
+        <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
           {/* Header */}
           <PageHeader
             title="Comments Settings"
@@ -61,6 +61,7 @@ export default function CommentSetting() {
             className="!px-4 py-4"
           />
 
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
           <div className="p-6 space-y-5 max-w-[560px]">
             {/* Single "Allow tags" toggle — flat, no card */}
             <ToggleSwitch
@@ -87,6 +88,7 @@ export default function CommentSetting() {
             >
               Save
             </button>
+          </div>
           </div>
         </PageContentContainer>
       </div>

@@ -25,7 +25,7 @@ interface SearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
 export default function SearchInput({
   containerClassName = "",
   inputClassName = "",
-  iconClassName = "-disabled-text",
+  iconClassName = "",
   icon,
   iconSize,
   iconPosition = "left",
@@ -108,7 +108,7 @@ export default function SearchInput({
       {iconPosition === "left" && (  
         <span className={iconClassName}>
           {icon ?? (
-            <Search className={`h-6 w-6 text-disabled-text ${iconSize}`} />
+            <Search className={`h-6 w-6 ${iconSize}`} />
           )}
         </span>
       )}

@@ -20,6 +20,7 @@ import {
   JobInformationBranching,
   JobInformationEditor,
   JobInformationSettings,
+  EmailSettings,
   Jobs,
   JobTracker,
   Localisation,
@@ -37,6 +38,8 @@ import {
   SettingsUsers,
   WorkflowSetting,
   WorkflowDetails,
+  EmailTemplates,
+  CreateEmailTemplate,
 } from "@/pages";
 
 export default function AppRouter() {
@@ -115,6 +118,10 @@ export default function AppRouter() {
             element={<JobInformationSettings />}
           />
           <Route path="/settings/jobs/comment" element={<CommentSetting />} />
+          <Route path="/settings/jobs/email" element={<EmailSettings />} />
+           <Route path="/settings/jobs/email-templates" element={<EmailTemplates />} />
+          <Route path="/settings/jobs/email-templates/new" element={<CreateEmailTemplate />} />
+          <Route path="/settings/jobs/email-templates/:templateId/edit" element={<CreateEmailTemplate />} />
           <Route
             path="/settings/jobs/job-information/new"
             element={<JobInformationEditor />}

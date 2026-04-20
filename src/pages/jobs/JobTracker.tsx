@@ -398,8 +398,8 @@ export default function JobTracker() {
         description="Track workflow progress by stage"
       />
 
-      <PageContentContainer className="p-4 sm:p-6">
-        <div className="mb-4 flex flex-col gap-3">
+      <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-4 sm:p-6">
+        <div className="mb-4 flex shrink-0 flex-col gap-3">
           <div>
             <h1 className="text-xl font-bold text-[#007B8C]">
               {jobTrackerTitle}
@@ -584,33 +584,35 @@ export default function JobTracker() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {visibleTrackerItems.map((item) => (
-            <JobTrackerWorkflowPanel
-              key={`${item.id}-${batchKey}`}
-              summary={item.summary}
-              stages={item.stages}
-              defaultExpanded={allExpandedDefault}
-            />
-          ))}
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
+          <div className="space-y-4">
+            {visibleTrackerItems.map((item) => (
+              <JobTrackerWorkflowPanel
+                key={`${item.id}-${batchKey}`}
+                summary={item.summary}
+                stages={item.stages}
+                defaultExpanded={allExpandedDefault}
+              />
+            ))}
 
-          {filteredTrackerItems.length === 0 ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-              {trackerItems.length === 0
-                ? "No jobs are available in Job Tracker."
-                : "No jobs match the current search or filters."}
+            {filteredTrackerItems.length === 0 ? (
+              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+                {trackerItems.length === 0
+                  ? "No jobs are available in Job Tracker."
+                  : "No jobs match the current search or filters."}
+              </div>
+            ) : null}
+          </div>
+
+          {hasMoreTrackerItems ? (
+            <div
+              ref={trackerLoadMoreRef}
+              className="flex justify-center py-5 text-xs text-gray-400"
+            >
+              Scroll to load more jobs
             </div>
           ) : null}
         </div>
-
-        {hasMoreTrackerItems ? (
-          <div
-            ref={trackerLoadMoreRef}
-            className="flex justify-center py-5 text-xs text-gray-400"
-          >
-            Scroll to load more jobs
-          </div>
-        ) : null}
       </PageContentContainer>
     </>
   );
