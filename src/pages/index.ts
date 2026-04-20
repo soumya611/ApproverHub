@@ -20,6 +20,7 @@ export { default as AnalyticsSettings } from "./settings/AnalyticsSettings";
 export { default as AssigneeRules } from "./settings/AssigneeRules";
 export { default as SiteInfo } from "./settings/SiteInfo";
 export { default as MyTeams } from "./settings/MyTeams";
+export { default as RolesAndPermission } from "./settings/RolesAndPermission";
 export { default as Settings } from "./settings/Settings";
 export { default as JobInformationBranching } from "./settings/jobs/JobInformationBranching";
 export { default as JobInformationEditor } from "./settings/jobs/JobInformationEditor";

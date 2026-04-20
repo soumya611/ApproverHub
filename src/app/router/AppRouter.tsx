@@ -29,6 +29,7 @@ import {
   Profile,
   ProfileNotifications,
   ProfileWorkSchedule,
+  RolesAndPermission,
   Settings,
   SiteInfo,
   SettingsUserDetail,
@@ -98,6 +99,7 @@ export default function AppRouter() {
           <Route path="/settings/localisation" element={<Localisation />} />
           <Route path="/settings/people/users" element={<SettingsUsers />} />
           <Route path="/settings/people/teams" element={<MyTeams />} />
+          <Route path="/settings/people/roles-permission" element={<RolesAndPermission />} />
           <Route path="/settings/people/users/:userId" element={<SettingsUserDetail />} />
           <Route
             path="/settings/people/users/:userId/edit"

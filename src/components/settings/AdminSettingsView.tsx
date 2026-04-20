@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import type { AppSvgIcon } from "../../icons";
 import {
   JobIcon,
@@ -34,6 +34,16 @@ type AdminSettingsTab =
   | "workflow"
   | "checklist"
   | "analytics";
+
+const SETTINGS_TAB_IDS = new Set<AdminSettingsTab>([
+  "general",
+  "people",
+  "campaigns",
+  "jobs",
+  "workflow",
+  "checklist",
+  "analytics",
+]);
 
 interface AdminSettingItem {
   id: string;
@@ -116,10 +126,11 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
   {
     id: "people_workflows",
     icon: RolesPermissionIcon,
-    title: "Workflows",
+    title: "Roles And Permission",
     description:
-      "Set up and manage job workflows, approval processes, and task sequences to streamline project progress.",
+      "Define roles and assign permissions to control what users can view or edit within the platform.",
     tab: "people",
+    onClickPath: "/settings/people/roles-permission",
   },
   {
     id: "campaign_defaults",
@@ -204,14 +215,28 @@ const SETTINGS_ITEMS: AdminSettingItem[] = [
 
 export default function AdminSettingsView() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchValue, setSearchValue] = useState("");
-  const [activeTab, setActiveTab] = useState<AdminSettingsTab>("general");
+  const initialTabFromUrl = useMemo(() => {
+    const tabFromQuery = new URLSearchParams(location.search).get("tab");
+    if (tabFromQuery && SETTINGS_TAB_IDS.has(tabFromQuery as AdminSettingsTab)) {
+      return tabFromQuery as AdminSettingsTab;
+    }
+    return "general";
+  }, [location.search]);
+  const [activeTab, setActiveTab] = useState<AdminSettingsTab>(initialTabFromUrl);
+
+  useEffect(() => {
+    setActiveTab(initialTabFromUrl);
+  }, [initialTabFromUrl]);
 
   const handleTabChange = (nextTab: AdminSettingsTab) => {
     setActiveTab(nextTab);
     const tab = SETTINGS_TABS.find((item) => item.id === nextTab);
     if (tab?.onClickPath) {
       navigate(tab.onClickPath);
+    } else {
+      navigate(`/settings?tab=${nextTab}`, { replace: true });
     }
   };
 

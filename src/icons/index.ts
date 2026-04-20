@@ -168,6 +168,7 @@ import { ReactComponent as ArchiveIcon } from "./archive-icon.svg?react";
 import { ReactComponent as CommentSettingIcon } from "./comment-setting.svg?react";
 import { ReactComponent as ExpiryIcon } from "./expiry-setting.svg?react";
 import { ReactComponent as UsersTabIcon } from "./users-tab-icon.svg?react";
+import { ReactComponent as TeamsEditIcon } from "./teams-edit-icon.svg?react";
 import { ReactComponent as NotesIcon } from "./notes-icon.svg?react";
 import { ReactComponent as NotesPlusIcon } from "./note-plus.svg?react";
 import { ReactComponent as NotesEditIcon } from "./notes-edit.svg?react";
@@ -354,6 +355,7 @@ export {
   CommentSettingIcon,
   ExpiryIcon,
   UsersTabIcon,
+  TeamsEditIcon,
   NotesIcon,
   NotesPlusIcon,
   NotesDelIcon,
