@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Radio from "../../form/input/Radio";
 import type { StepDropdownStep } from "../step-dropdown/StepDropdown";
 import type {
   JobInfoAnswers,
   JobInfoQuestion,
-  JobInfoQuestionType,
 } from "../../../types/jobInformation";
+import {
+  getNextQuestionIdForAnswer,
+  isCheckboxQuestion,
+  normalizeJobInfoQuestions,
+  resolveQuestionIndex,
+} from "@/utils/jobInformationBranching";
 
 const DEFAULT_QUESTIONS: JobInfoQuestion[] = [
   {
@@ -17,6 +22,7 @@ const DEFAULT_QUESTIONS: JobInfoQuestion[] = [
       { id: "q1-yes", label: "Yes", nextQuestionId: "q2" },
       { id: "q1-no", label: "No", nextQuestionId: "q2" },
     ],
+    branchRules: [],
   },
   {
     id: "q2",
@@ -27,10 +33,9 @@ const DEFAULT_QUESTIONS: JobInfoQuestion[] = [
       { id: "q2-yes", label: "Yes" },
       { id: "q2-no", label: "No" },
     ],
+    branchRules: [],
   },
 ];
-
-const isCheckboxQuestion = (type: JobInfoQuestionType) => type === "checkbox";
 
 const getDefaultAnswers = (questions: JobInfoQuestion[], initial?: JobInfoAnswers) => {
   if (initial) return initial;
@@ -44,7 +49,11 @@ export function useJobInformationSteps(
   questions: JobInfoQuestion[] = DEFAULT_QUESTIONS,
   initialAnswers?: JobInfoAnswers
 ) {
-  const resolvedQuestions = questions.length ? questions : DEFAULT_QUESTIONS;
+  const resolvedQuestions = useMemo(
+    () =>
+      normalizeJobInfoQuestions(questions.length ? questions : DEFAULT_QUESTIONS),
+    [questions]
+  );
   const [answers, setAnswers] = useState<JobInfoAnswers>(
     getDefaultAnswers(resolvedQuestions, initialAnswers)
   );
@@ -57,29 +66,13 @@ export function useJobInformationSteps(
     setStepHistory([]);
   }, [resolvedQuestions, initialAnswers]);
 
-  const resolveNextIndex = (
-    questionIndex: number,
-    nextQuestionId?: string
-  ) => {
-    if (nextQuestionId) {
-      const linkedIndex = resolvedQuestions.findIndex(
-        (item) => item.id === nextQuestionId
-      );
-      if (linkedIndex >= 0) return linkedIndex;
-    }
-    if (questionIndex < resolvedQuestions.length - 1) {
-      return questionIndex + 1;
-    }
-    return questionIndex;
-  };
-
-  const goToStep = (nextIndex: number) => {
+  const goToStep = useCallback((nextIndex: number) => {
     if (nextIndex === stepIndex) return;
     setStepHistory((prev) => [...prev, stepIndex]);
     setStepIndexState(nextIndex);
-  };
+  }, [stepIndex]);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (!stepHistory.length) {
       setStepIndexState((current) => Math.max(current - 1, 0));
       return;
@@ -87,9 +80,9 @@ export function useJobInformationSteps(
     const previousIndex = stepHistory[stepHistory.length - 1];
     setStepHistory((prev) => prev.slice(0, -1));
     setStepIndexState(previousIndex);
-  };
+  }, [stepHistory]);
 
-  const setStepIndex = (nextIndex: number) => {
+  const setStepIndex = useCallback((nextIndex: number) => {
     if (nextIndex === stepIndex) return;
     if (nextIndex === 0) {
       setStepHistory([]);
@@ -101,21 +94,21 @@ export function useJobInformationSteps(
       return;
     }
     goToStep(nextIndex);
-  };
+  }, [goBack, goToStep, stepIndex]);
 
-  const handleChoiceSelect = (questionIndex: number, value: string) => {
+  const handleChoiceSelect = useCallback((questionIndex: number, value: string) => {
     const question = resolvedQuestions[questionIndex];
     if (!question) return;
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
-    const selectedOption = question.options.find((opt) => opt.id === value);
-    const nextIndex = resolveNextIndex(
+    const nextIndex = resolveQuestionIndex(
+      resolvedQuestions,
       questionIndex,
-      selectedOption?.nextQuestionId ?? question.fallbackNextQuestionId
+      getNextQuestionIdForAnswer(question, value)
     );
     goToStep(nextIndex);
-  };
+  }, [goToStep, resolvedQuestions]);
 
-  const handleCheckboxToggle = (questionId: string, optionId: string) => {
+  const handleCheckboxToggle = useCallback((questionId: string, optionId: string) => {
     setAnswers((prev) => {
       const current = prev[questionId];
       const currentArray = Array.isArray(current) ? current : [];
@@ -124,9 +117,9 @@ export function useJobInformationSteps(
         : [...currentArray, optionId];
       return { ...prev, [questionId]: next };
     });
-  };
+  }, []);
 
-  const handleCheckboxContinue = (questionIndex: number) => {
+  const handleCheckboxContinue = useCallback((questionIndex: number) => {
     const question = resolvedQuestions[questionIndex];
     if (!question) return;
 
@@ -136,18 +129,13 @@ export function useJobInformationSteps(
       return;
     }
 
-    const selectedOptions = question.options.filter((option) =>
-      selectedArray.includes(option.id)
-    );
-    const firstLinkedOption = selectedOptions.find(
-      (option) => Boolean(option.nextQuestionId)
-    );
-    const nextIndex = resolveNextIndex(
+    const nextIndex = resolveQuestionIndex(
+      resolvedQuestions,
       questionIndex,
-      firstLinkedOption?.nextQuestionId ?? question.fallbackNextQuestionId
+      getNextQuestionIdForAnswer(question, selectedArray)
     );
     goToStep(nextIndex);
-  };
+  }, [answers, goToStep, resolvedQuestions]);
 
   const steps = useMemo<StepDropdownStep[]>(
     () =>
@@ -212,7 +200,7 @@ export function useJobInformationSteps(
           ),
         };
       }),
-    [answers, resolvedQuestions]
+    [answers, handleCheckboxContinue, handleCheckboxToggle, handleChoiceSelect, resolvedQuestions]
   );
 
   return { steps, stepIndex, setStepIndex, answers, setAnswers };
