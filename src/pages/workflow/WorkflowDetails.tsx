@@ -40,8 +40,9 @@ export default function WorkflowDetails() {
         <AppBreadcrumb
           items={[
             { label: "Home", to: "/home" },
+            { label: "Setting", to: "/settings" },
             { label: "Workflow", to: "/workflow-setting" },
-            { label: "Workflow new" },
+            { label: "Workflow Details" },
           ]}
         />
         <PageContentContainer className="min-h-0 flex-1 overflow-auto p-0">

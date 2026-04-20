@@ -114,7 +114,13 @@ export default function WorkflowSetting() {
     <>
       <PageMeta title="Workflow Settings | Approver Hub" description="Manage workflow templates" />
       <div className="flex h-full min-h-0 flex-col gap-4">
-        <AppBreadcrumb />
+        <AppBreadcrumb
+          items={[
+            { label: "Home", to: "/home" },
+            { label: "Setting", to: "/settings" },
+            { label: "Workflow" },
+          ]}
+        />
         <PageContentContainer className="min-h-0 flex-1 overflow-hidden p-0">
           <PageHeader
             title="Workflow Templates"

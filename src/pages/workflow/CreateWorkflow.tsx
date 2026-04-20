@@ -55,19 +55,20 @@ export default function CreateWorkflow() {
         <AppBreadcrumb
           items={[
             { label: "Home", to: "/home" },
+            { label: "Setting", to: "/settings" },
             { label: "Workflow", to: "/workflow-setting" },
-            { label: isEditMode ? "Workflow edit" : "Workflow new" },
+            { label: isEditMode ? "Edit Workflow" : "Create New Workflow" },
           ]}
         />
         <PageContentContainer className="min-h-0 flex-1 overflow-auto p-0">
           <PageHeader
-            title={isEditMode ? "Edit" : "Edit"}
+            title={isEditMode ? "Edit" : "Create New"}
             onBackClick={() => navigate("/workflow-setting")}
             className="!px-4 py-4"
           />
-          <div className="px-4 pb-4">
+          <div className="px-4 py-4">
           <WorkflowBuilder
-            mode="create"
+            mode={isEditMode ? "edit" : "create"}
             value={editingTemplate?.workflowConfig}
             onSave={handleSaveWorkflow}
             onCancel={() => navigate("/workflow-setting")}

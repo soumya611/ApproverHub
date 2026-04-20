@@ -12,6 +12,7 @@ import {
   PlusIcon,
   SettingIcon,
   ShowflowIcon,
+  VerticalDots,
   Symbols_lock_Icon,
   StartIcon,
   SkipIcon,
@@ -461,7 +462,7 @@ export default function WorkflowBuilder({
   const [permissionsOpen, setPermissionsOpen] = useState(true);
   const [checklistOpen, setChecklistOpen] = useState(true);
   const [decisionPopupOpen, setDecisionPopupOpen] = useState(false);
-  const [builderOpen, setBuilderOpen] = useState(true);
+  const [stageActionsOpen, setStageActionsOpen] = useState(false);
   const [showFlow, setShowFlow] = useState(false);
   const lastSavedRef = useRef<string>("");
   const decisionPopupRef = useRef<HTMLDivElement | null>(null);
@@ -573,6 +574,51 @@ export default function WorkflowBuilder({
       setActiveStageId(next[next.length - 1].id);
       return next;
     });
+    markDirty();
+  };
+
+  const handleDuplicateActiveStage = () => {
+    if (!activeStage) return;
+    setStages((prev) => {
+      const sourceIndex = prev.findIndex((stage) => stage.id === activeStage.id);
+      if (sourceIndex < 0) return prev;
+      const duplicated: JobWorkflowStageConfig = {
+        ...activeStage,
+        id: `stage-${Date.now()}-${prev.length + 1}`,
+      };
+      const next = [...prev];
+      next.splice(sourceIndex + 1, 0, duplicated);
+      const normalized = normalizeStages(next);
+      const inserted = normalized[sourceIndex + 1];
+      if (inserted) {
+        setActiveStageId(inserted.id);
+      }
+      return normalized;
+    });
+    setStageActionsOpen(false);
+    markDirty();
+  };
+
+  const handleDeleteActiveStage = () => {
+    if (!activeStage) return;
+    setStages((prev) => {
+      if (prev.length <= 1) {
+        const fallback = buildStage(0);
+        setActiveStageId(fallback.id);
+        return [fallback];
+      }
+      const removeIndex = prev.findIndex((stage) => stage.id === activeStage.id);
+      if (removeIndex < 0) return prev;
+      const next = prev.filter((stage) => stage.id !== activeStage.id);
+      const normalized = normalizeStages(next);
+      const fallbackIndex = Math.max(0, removeIndex - 1);
+      const fallbackStage = normalized[fallbackIndex] ?? normalized[0];
+      if (fallbackStage) {
+        setActiveStageId(fallbackStage.id);
+      }
+      return normalized;
+    });
+    setStageActionsOpen(false);
     markDirty();
   };
 
@@ -743,31 +789,8 @@ export default function WorkflowBuilder({
     : "";
 
   return (
-    <div className={`rounded-xl border ${isEditMode ? 'border-transparent' : 'border-gray-200'} ${className}`}>
-      <div className={`flex flex-wrap items-center justify-between gap-3  ${isEditMode ? 'border-b border-transparent' : 'border-b border-gray-200 px-4 py-3'}   `}>
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-700">
-            {isEditMode ? workflowName.trim() || "Workflow" : "Workflow builder"}
-          </h3>
-          {!isEditMode ? (
-            <span className="text-xs text-gray-400">Build your own</span>
-          ) : null}
-        </div>
-        {!isEditMode ? (<button
-          type="button"
-          onClick={() => setBuilderOpen((prev) => !prev)}
-          className="flex h-0 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-50"
-          aria-label="Toggle workflow builder"
-        >
-          <ChevronDownIcon
-            className={`h-4 w-4 transition-transform ${builderOpen ? "rotate-180" : ""
-              }`}
-          />
-        </button>) : null}
-      </div>
-
-      {builderOpen ? (
-        <div className={`flex  flex-col gap-4 ${isEditMode ? 'py-1' : 'px-4 py-4'} `}>
+    <div className={className}>
+      <div className={`flex flex-col gap-4 ${isEditMode ? "py-1" : ""}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex flex-col items-start gap-2">
               {!isEditMode ? (
@@ -803,23 +826,53 @@ export default function WorkflowBuilder({
               </button>
             </div>
             {!isEditMode ? (
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="!rounded-md !px-4 !py-1.5 text-xs"
-                  onClick={onCancel}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  className="!rounded-md !px-4 !py-1.5 text-xs"
-                  onClick={handleSave}
-                >
-                  Save
-                </Button>
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="tiny"
+                    variant="orangebutton"
+                    className="!h-[28px] !w-[78px] !rounded-[4px] !px-0 !py-0 !text-[11px] !font-medium"
+                    onClick={onCancel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="tiny"
+                    variant="primary"
+                    className="!h-[28px] !w-[92px] !rounded-[4px] !px-0 !py-0 !text-[11px] !font-medium !bg-[var(--color-secondary-500)] !text-white hover:!bg-[var(--color-secondary-600)]"
+                    onClick={handleSave}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setStageActionsOpen((prev) => !prev)}
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100"
+                    aria-label="Open stage actions"
+                  >
+                    <VerticalDots className="h-4 w-4" />
+                  </button>
+                  <Dropdown
+                    isOpen={stageActionsOpen}
+                    onClose={() => setStageActionsOpen(false)}
+                    className="left-auto right-0 mt-1 min-w-[160px] rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+                  >
+                    <DropdownItem
+                      onClick={handleDeleteActiveStage}
+                      baseClassName="block w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50"
+                    >
+                      Delete stage
+                    </DropdownItem>
+                    <DropdownItem
+                      onClick={handleDuplicateActiveStage}
+                      baseClassName="block w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50"
+                    >
+                      Duplicate stage
+                    </DropdownItem>
+                  </Dropdown>
+                </div>
               </div>
             ) : null}
           </div>
@@ -863,7 +916,7 @@ export default function WorkflowBuilder({
                 onClick={handleAddStage}
                 className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#F25C54]"
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#F25C54]">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F25C54] text-white shadow-sm">
                   <PlusIcon className="h-3 w-3" />
                 </span>
                 Add Stage
@@ -1336,8 +1389,7 @@ export default function WorkflowBuilder({
             </div>
           </div>
         </div>
-      ) : null}
-
+      
     </div>
   );
 }
