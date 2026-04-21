@@ -7,11 +7,13 @@ import PageHeader from "@/components/ui/page-header/PageHeader";
 import RichTextEditor from "@/components/ui/rich-text-editor/RichTextEditor";
 import SearchInput from "@/components/ui/search-input/SearchInput";
 import { useAppNavigate } from "@/hooks/useAppNavigate";
+import BuilderSelect from "@/components/ui/dropdown/BuilderSelect";
 import {
     useEmailTemplatesStore,
     ALL_EVENTS,
     type EmailTemplate,
 } from "@/stores/emailTemplatesStore";
+import { EditPenIcon } from "@/icons";
 
 const BLANK: Omit<EmailTemplate, "id" | "lastUpdated"> = {
     event: "",
@@ -22,6 +24,9 @@ const BLANK: Omit<EmailTemplate, "id" | "lastUpdated"> = {
     recipients: "Sender signature",
     contextMode: "intro_only",
 };
+
+const APPROVAL_PERIODS = ["1 month", "2 months", "3 months", "6 months", "1 year"];
+const TRIGGER_POINTS = ["Pre - expiry early", "Pre - expiry final", "On expiry", "Post expiry", "Continued escalation"];
 
 export default function CreateEmailTemplate() {
     const navigate = useNavigate();
@@ -35,7 +40,8 @@ export default function CreateEmailTemplate() {
     const updateTemplate = useEmailTemplatesStore((s) => s.updateTemplate);
 
     const [form, setForm] = useState<Omit<EmailTemplate, "id" | "lastUpdated">>(BLANK);
-    const [eventOpen, setEventOpen] = useState(false);
+    const [approvalPeriod, setApprovalPeriod] = useState("1 month");
+    const [triggerPoint, setTriggerPoint] = useState("Pre expiry, early");
 
     useEffect(() => {
         if (isEdit && templateId) {
@@ -91,56 +97,58 @@ export default function CreateEmailTemplate() {
                         <div className="w-1/2  flex flex-col min-h-0">
 
                             {/* Scrollable fields */}
-                            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+                            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
 
                                 {/* Template name with pencil icon */}
-                                <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2">
+                                <div className="inline-flex items-center gap-2 border-b border-gray-300 pb-2 max-w-[280px] w-full">
                                     <input
                                         type="text"
                                         placeholder="Enter template name"
                                         value={form.name}
                                         onChange={(e) => set("name", e.target.value)}
-                                        className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
+                                        className={`flex-1 bg-transparent text-base text-[#212121] placeholder-gray-400 outline-none ${form.name ? "font-semibold" : "font-normal"}`}
                                     />
-                                    <svg className="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213l-4 1 1-4 12.362-12.726z" />
-                                    </svg>
+                                    {isEdit && <EditPenIcon className="w-3.5 h-3.5" />}
                                 </div>
 
                                 {/* Action / event dropdown */}
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-medium text-gray-700">Action</label>
-                                    <div className="relative">
-                                        <button
-                                            type="button"
-                                            onClick={() => setEventOpen((o) => !o)}
-                                            className="w-full flex items-center justify-between rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white hover:border-gray-400 focus:outline-none focus:border-[#007B8C]"
-                                        >
-                                            <span className={form.event ? "text-gray-700" : "text-gray-400"}>
-                                                {form.event || "Select event type"}
-                                            </span>
-                                            <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                                            </svg>
-                                        </button>
-
-                                        {eventOpen && (
-                                            <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-56 overflow-y-auto">
-                                                {ALL_EVENTS.map((ev) => (
-                                                    <button
-                                                        key={ev}
-                                                        type="button"
-                                                        onClick={() => { set("event", ev); setEventOpen(false); }}
-                                                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${form.event === ev ? "text-[#007B8C] font-medium" : "text-gray-700"}`}
-                                                    >
-                                                        {ev}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                                    <BuilderSelect
+                                        value={form.event}
+                                        onChange={(v) => set("event", v)}
+                                        options={ALL_EVENTS.map((ev) => ({ value: ev, label: ev }))}
+                                        placeholder="Select event type"
+                                        className="w-full"
+                                        selectClassName="rounded-lg border-gray-300 text-sm h-[38px]"
+                                    />
                                 </div>
 
+                                {/* Approval period + Trigger point — only for Expiry warning */}
+                                {form.event === "Expiry warning" && (
+                                    <div className="flex gap-4">
+                                        <div className="flex flex-col gap-1 flex-1">
+                                            <label className="text-sm font-medium text-gray-700">Approval period</label>
+                                            <BuilderSelect
+                                                value={approvalPeriod}
+                                                onChange={setApprovalPeriod}
+                                                options={APPROVAL_PERIODS.map((p) => ({ value: p, label: p }))}
+                                                className="w-full"
+                                                selectClassName="rounded-lg border-gray-300 text-sm h-[38px]"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1 flex-1">
+                                            <label className="text-sm font-medium text-gray-700">Trigger point</label>
+                                            <BuilderSelect
+                                                value={triggerPoint}
+                                                onChange={setTriggerPoint}
+                                                options={TRIGGER_POINTS.map((t) => ({ value: t, label: t }))}
+                                                className="w-full"
+                                                selectClassName="rounded-lg border-gray-300 text-sm h-[38px]"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                                 {/* Recipients */}
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-medium text-gray-700">Recipient(s)</label>
@@ -168,7 +176,7 @@ export default function CreateEmailTemplate() {
                                                     name="contextMode"
                                                     checked={form.contextMode === opt.value}
                                                     onChange={() => set("contextMode", opt.value)}
-                                                    className="mt-0.5 accent-[#007B8C]"
+                                                    className="mt-0.5 accent-[#000000] cursor-pointer"
                                                 />
                                                 <span className="text-sm text-gray-700">{opt.label}</span>
                                             </label>
@@ -200,11 +208,11 @@ export default function CreateEmailTemplate() {
                         <div className="w-1/2 flex flex-col min-h-0">
 
                             {/* Scrollable content */}
-                            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+                            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 custom-scrollbar">
                                 <p className="text-sm font-semibold text-gray-700">Email content</p>
 
                                 {/* Subject + RichText in one bordered card */}
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                <div className="border border-gray-200 rounded-lg overflow-hidden min-h-[200px]">
                                     <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200">
                                         <span className="text-sm font-medium text-gray-500 shrink-0">Subject :</span>
                                         <input
@@ -230,9 +238,9 @@ export default function CreateEmailTemplate() {
                                     <div className="px-4 py-2 border-b border-gray-200 bg-[#F0F0F0]">
                                         <p className="text-sm font-semibold text-gray-700">Preview</p>
                                     </div>
-                                    <div className="px-4 py-3 flex flex-col gap-1 min-h-[320px]">
-                                        <p className="text-sm text-gray-400">{form.recipients || "Recipient"}</p>
-                                        <p className="text-sm text-gray-500">{form.subject || "Subject"}</p>
+                                    <div className="px-4 flex flex-col min-h-[320px]">
+                                        <p className="text-sm text-gray-400 py-3 border-b border-[#E9E9E9]">{form.recipients || "Recipient"}</p>
+                                        <p className="text-sm text-gray-500 py-3 border-b border-[#E9E9E9]">{form.subject || "Subject"}</p>
                                         {form.body && (
                                             <div
                                                 className="mt-2 text-sm text-gray-600 prose prose-sm max-w-none"
@@ -255,8 +263,6 @@ export default function CreateEmailTemplate() {
                                     </div>
                                 </div>
                             </div>
-
-
 
                         </div>
                     </div>
