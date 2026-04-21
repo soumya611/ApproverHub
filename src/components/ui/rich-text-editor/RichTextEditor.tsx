@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import type { AnyExtension } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
-import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import {
+  EditorContent,
+  useEditor,
+  useEditorState,
+  type Editor,
+} from "@tiptap/react";
 import {
   AlignCenter,
   AlignLeft,
@@ -14,20 +20,7 @@ import {
 } from "lucide-react";
 import { Attachment } from "../../../icons";
 
-interface RichTextEditorProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-  toolbarClassName?: string;
-  bodyClassName?: string;
-  editorClassName?: string;
-  showAttachment?: boolean;
-  onAttachmentChange?: (files: File[]) => void;
-  toolbarItems?: RichTextToolbarItem[];
-}
-
-export type RichTextToolbarItem =
+export type RichTextBuiltinToolbarItem =
   | "bold"
   | "italic"
   | "underline"
@@ -42,12 +35,59 @@ export type RichTextToolbarItem =
   | "clearFormatting"
   | "attachment";
 
+export type RichTextToolbarItem = RichTextBuiltinToolbarItem | (string & {});
+
+export type RichTextToolbarVisibility = "always" | "desktop" | "mobile";
+
 type ToolbarDefinition = {
-  id: RichTextToolbarItem;
+  id: RichTextBuiltinToolbarItem;
   label: ReactNode;
   ariaLabel: string;
   className?: string;
 };
+
+export type RichTextToolbarItemOverride = Partial<
+  Pick<ToolbarDefinition, "label" | "ariaLabel" | "className">
+>;
+
+export type RichTextToolbarHelpers = {
+  promptForLink: () => void;
+  openAttachmentPicker: () => void;
+};
+
+export type RichTextCustomToolbarItem = {
+  id: string;
+  label: ReactNode;
+  ariaLabel: string;
+  className?: string;
+  requiresEditor?: boolean;
+  isActive?: (editor: Editor | null) => boolean;
+  isDisabled?: (editor: Editor | null) => boolean;
+  onClick: (
+    editor: Editor | null,
+    helpers: RichTextToolbarHelpers
+  ) => void;
+};
+
+interface RichTextEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  toolbarClassName?: string;
+  bodyClassName?: string;
+  editorClassName?: string;
+  showAttachment?: boolean;
+  onAttachmentChange?: (files: File[]) => void;
+  toolbarItems?: RichTextToolbarItem[];
+  showToolbar?: boolean;
+  toolbarVisibility?: RichTextToolbarVisibility;
+  toolbarItemOverrides?: Partial<
+    Record<RichTextBuiltinToolbarItem, RichTextToolbarItemOverride>
+  >;
+  customToolbarItems?: RichTextCustomToolbarItem[];
+  additionalExtensions?: AnyExtension[];
+}
 
 export const DEFAULT_RICH_TEXT_TOOLBAR_ITEMS: RichTextToolbarItem[] = [
   "bold",
@@ -65,13 +105,19 @@ export const DEFAULT_RICH_TEXT_TOOLBAR_ITEMS: RichTextToolbarItem[] = [
   "attachment",
 ];
 
+const EMPTY_ADDITIONAL_EXTENSIONS: AnyExtension[] = [];
+const EMPTY_CUSTOM_TOOLBAR_ITEMS: RichTextCustomToolbarItem[] = [];
+
 const EMPTY_HTML = "<p></p>";
 
 const normalizeHtml = (html: string) => (html === EMPTY_HTML ? "" : html);
 
 const toEditorHtml = (html: string) => (html.trim().length ? html : EMPTY_HTML);
 
-const TOOLBAR_DEFINITIONS: Record<RichTextToolbarItem, ToolbarDefinition> = {
+const TOOLBAR_DEFINITIONS: Record<
+  RichTextBuiltinToolbarItem,
+  ToolbarDefinition
+> = {
   bold: { id: "bold", label: "B", ariaLabel: "Bold", className: "font-bold" },
   italic: { id: "italic", label: "I", ariaLabel: "Italic", className: "italic" },
   underline: {
@@ -136,6 +182,34 @@ const FALLBACK_EDITOR_STATE = {
   link: false,
 };
 
+type ResolvedToolbarButton = {
+  id: RichTextToolbarItem;
+  label: ReactNode;
+  ariaLabel: string;
+  className?: string;
+  kind: "builtin" | "custom";
+  customConfig?: RichTextCustomToolbarItem;
+};
+
+const joinClasses = (...classNames: Array<string | undefined>) =>
+  classNames.filter(Boolean).join(" ");
+
+const dedupeExtensions = (extensions: AnyExtension[]) => {
+  const seen = new Set<string>();
+
+  return extensions.filter((extension) => {
+    const name = extension.name;
+    if (!name) return true;
+    if (seen.has(name)) return false;
+    seen.add(name);
+    return true;
+  });
+};
+
+const isBuiltinToolbarItem = (
+  item: RichTextToolbarItem
+): item is RichTextBuiltinToolbarItem => item in TOOLBAR_DEFINITIONS;
+
 export default function RichTextEditor({
   value,
   onChange,
@@ -147,35 +221,58 @@ export default function RichTextEditor({
   showAttachment = false,
   onAttachmentChange,
   toolbarItems,
+  showToolbar = true,
+  toolbarVisibility = "always",
+  toolbarItemOverrides,
+  customToolbarItems = EMPTY_CUSTOM_TOOLBAR_ITEMS,
+  additionalExtensions = EMPTY_ADDITIONAL_EXTENSIONS,
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const requestedToolbarItems = toolbarItems ?? DEFAULT_RICH_TEXT_TOOLBAR_ITEMS;
+  const additionalExtensionsSignature = additionalExtensions
+    .map((extension) => extension.name)
+    .join("|");
+  const resolvedExtensions = useMemo(
+    () =>
+      dedupeExtensions([
+        StarterKit.configure({
+          heading: {
+            levels: [1, 2, 3],
+          },
+        }),
+        Underline,
+        Link.configure({
+          autolink: true,
+          openOnClick: false,
+        }),
+        TextAlign.configure({
+          types: ["heading", "paragraph"],
+          alignments: ["left", "center"],
+          defaultAlignment: "left",
+        }),
+        ...additionalExtensions,
+      ]),
+    [additionalExtensionsSignature]
+  );
   const shouldShowAttachment =
     showAttachment || requestedToolbarItems.includes("attachment");
+  const shouldRenderAttachmentInput =
+    shouldShowAttachment || typeof onAttachmentChange === "function";
+  const customToolbarItemsById = useMemo(
+    () => new Map(customToolbarItems.map((item) => [item.id, item])),
+    [customToolbarItems]
+  );
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-      }),
-      Underline,
-      Link.configure({
-        autolink: true,
-        openOnClick: false,
-      }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-        alignments: ["left", "center"],
-        defaultAlignment: "left",
-      }),
-    ],
-    content: toEditorHtml(value),
-    onUpdate: ({ editor: currentEditor }) => {
-      onChange(normalizeHtml(currentEditor.getHTML()));
+  const editor = useEditor(
+    {
+      extensions: resolvedExtensions,
+      content: toEditorHtml(value),
+      onUpdate: ({ editor: currentEditor }) => {
+        onChange(normalizeHtml(currentEditor.getHTML()));
+      },
     },
-  });
+    [additionalExtensionsSignature]
+  );
 
   useEffect(() => {
     if (!editor) return;
@@ -218,6 +315,47 @@ export default function RichTextEditor({
     return requestedToolbarItems;
   }, [requestedToolbarItems, shouldShowAttachment]);
 
+  const resolvedToolbarButtons = useMemo<ResolvedToolbarButton[]>(() => {
+    return resolvedToolbarItems.reduce<ResolvedToolbarButton[]>((buttons, item) => {
+      if (isBuiltinToolbarItem(item)) {
+        const baseConfig = TOOLBAR_DEFINITIONS[item];
+        const override = toolbarItemOverrides?.[item];
+
+        buttons.push({
+          id: item,
+          label: override?.label ?? baseConfig.label,
+          ariaLabel: override?.ariaLabel ?? baseConfig.ariaLabel,
+          className: joinClasses(baseConfig.className, override?.className),
+          kind: "builtin",
+        });
+
+        return buttons;
+      }
+
+      const customConfig = customToolbarItemsById.get(item);
+      if (!customConfig) return buttons;
+
+      buttons.push({
+        id: customConfig.id,
+        label: customConfig.label,
+        ariaLabel: customConfig.ariaLabel,
+        className: customConfig.className,
+        kind: "custom",
+        customConfig,
+      });
+
+      return buttons;
+    }, []);
+  }, [
+    customToolbarItemsById,
+    resolvedToolbarItems,
+    toolbarItemOverrides,
+  ]);
+
+  const openAttachmentPicker = () => {
+    fileInputRef.current?.click();
+  };
+
   const promptForLink = () => {
     if (!editor) return;
     const currentHref = editor.getAttributes("link").href;
@@ -243,9 +381,18 @@ export default function RichTextEditor({
       .run();
   };
 
-  const executeToolbarAction = (item: RichTextToolbarItem) => {
+  const executeToolbarAction = (button: ResolvedToolbarButton) => {
+    if (button.kind === "custom") {
+      button.customConfig?.onClick(editor, {
+        promptForLink,
+        openAttachmentPicker,
+      });
+      return;
+    }
+
+    const item = button.id;
     if (item === "attachment") {
-      fileInputRef.current?.click();
+      openAttachmentPicker();
       return;
     }
     if (!editor) return;
@@ -292,8 +439,12 @@ export default function RichTextEditor({
     }
   };
 
-  const isToolbarItemActive = (item: RichTextToolbarItem) => {
-    switch (item) {
+  const isToolbarButtonActive = (button: ResolvedToolbarButton) => {
+    if (button.kind === "custom") {
+      return button.customConfig?.isActive?.(editor) ?? false;
+    }
+
+    switch (button.id) {
       case "bold":
         return editorState.bold;
       case "italic":
@@ -323,36 +474,50 @@ export default function RichTextEditor({
     }
   };
 
+  const isToolbarButtonDisabled = (button: ResolvedToolbarButton) => {
+    if (button.kind === "custom") {
+      if (button.customConfig?.isDisabled) {
+        return button.customConfig.isDisabled(editor);
+      }
+      return button.customConfig?.requiresEditor !== false && !editor;
+    }
+
+    return !editor && button.id !== "attachment";
+  };
+
   const showPlaceholder = editorState.isEmpty && !editorState.isFocused;
+  const shouldRenderToolbar = showToolbar && resolvedToolbarButtons.length > 0;
+  const toolbarVisibilityClassName =
+    toolbarVisibility === "desktop"
+      ? "hidden md:flex"
+      : toolbarVisibility === "mobile"
+      ? "flex md:hidden"
+      : "flex";
 
   return (
     <div className={`rounded-md border border-gray-200 bg-white ${className}`}>
-      <div
-        className={`flex flex-wrap items-center gap-1 border-b border-gray-200 px-3 py-2 text-xs text-gray-600 rounded-t-md bg-gray-100 ${toolbarClassName}`}
-      >
-        {resolvedToolbarItems.map((item) => {
-          const config = TOOLBAR_DEFINITIONS[item];
-          const isAttachment = item === "attachment";
-          const disabled = !editor && !isAttachment;
-
-          return (
+      {shouldRenderToolbar ? (
+        <div
+          className={`${toolbarVisibilityClassName} flex-wrap items-center gap-1 rounded-t-md border-b border-gray-200 bg-gray-100 px-3 py-2 text-xs text-gray-600 ${toolbarClassName}`}
+        >
+          {resolvedToolbarButtons.map((button) => (
             <button
-              key={config.id}
+              key={button.id}
               type="button"
-              onClick={() => executeToolbarAction(item)}
+              onClick={() => executeToolbarAction(button)}
               className={`inline-flex h-7 min-w-7 items-center justify-center rounded px-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
-                isToolbarItemActive(item)
+                isToolbarButtonActive(button)
                   ? "bg-gray-100 text-[#007B8C]"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-              } ${config.className ?? ""}`}
-              aria-label={config.ariaLabel}
-              disabled={disabled}
+              } ${button.className ?? ""}`}
+              aria-label={button.ariaLabel}
+              disabled={isToolbarButtonDisabled(button)}
             >
-              {config.label}
+              {button.label}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className={`relative px-3 py-2 ${bodyClassName}`}>
         {showPlaceholder ? (
@@ -366,7 +531,7 @@ export default function RichTextEditor({
           className={`text-sm text-gray-700 [&_.ProseMirror]:min-h-[140px] [&_.ProseMirror]:whitespace-pre-wrap [&_.ProseMirror]:break-words [&_.ProseMirror]:outline-none [&_.ProseMirror_h1]:text-lg [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h2]:text-base [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:text-sm [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_a]:text-[#007B8C] [&_.ProseMirror_a]:underline ${editorClassName}`}
         />
 
-        {shouldShowAttachment ? (
+        {shouldRenderAttachmentInput ? (
           <input
             ref={fileInputRef}
             type="file"
