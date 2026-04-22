@@ -25,8 +25,83 @@ const BLANK: Omit<EmailTemplate, "id" | "lastUpdated"> = {
     contextMode: "intro_only",
 };
 
-const APPROVAL_PERIODS = ["1 month", "2 months", "3 months", "6 months", "1 year"];
-const TRIGGER_POINTS = ["Pre - expiry early", "Pre - expiry final", "On expiry", "Post expiry", "Continued escalation"];
+// From client doc — Expiry Warning approval periods
+const APPROVAL_PERIODS = ["1 month", "3 months", "6 months", "12 months"];
+
+// From client doc — Expiry Warning trigger points
+const TRIGGER_POINTS = [
+    "Pre expiry, early",
+    "Pre expiry, final",
+    "On expiry",
+    "Post expiry, escalation",
+    "Continued escalation",
+];
+
+// ── Deadline frequency units (the number is entered separately) ──
+const DEADLINE_UNITS = [
+    "hours before",
+    "days before",
+    "hours after",
+    "days after",
+];
+
+// ── Default subjects per event (from client spec) ──
+const DEFAULT_SUBJECTS: Record<string, string> = {
+    // Core Event Notifications
+    "New job to review": "New job to review: <job.name>",
+    "Multiple jobs pending": "<jobs.count> new jobs to review",
+    "New version uploaded by Owner": "New version to review: <job.name>",
+    "Stage started": "Stage <stage.name> started: <job.name>",
+    "New version uploaded by reviewer or approver": "New version to review: <job.name>",
+    "Job/stage assigned": "No further Action Required",
+    // Job Owner Notifications
+    "Job started": "Job created: <job.name>",
+    "Reviewer assigned": "Reviewer added to: <job.name>",
+    "Decision made": "Review update: <job.name>",
+    "Comments added": "New comments on: <job.name>",
+    "Reply to comments": "",
+    "Stage complete": "Stage completed: <job.name>",
+    "Final approval": "Job approved: <job.name>",
+    "Overdue escalated": "Action overdue: <job.name>",
+    // Expiry — resolved dynamically via matrix below
+    "Expiry warning": "Expiry notice: <job.name>",
+    // Deadline Reminders — subject built dynamically from the number + unit
+    "Before deadline": "Reminder: <job.name> due soon",
+    "On deadline": "Deadline reached: <job.name>",
+    "After deadline": "Overdue: <job.name>",
+};
+
+// ── Expiry subject matrix [approvalPeriod][triggerPoint] (from client spec) ──
+const EXPIRY_SUBJECTS: Record<string, Record<string, string>> = {
+    "1 month": {
+        "Pre expiry, early": "Expiry warning: <document.name> will expire in 14 days",
+        "Pre expiry, final": "Final reminder: <document.name> will expire soon",
+        "On expiry": "Expired: <document.name>",
+        "Post expiry, escalation": "Escalation: <document.name> remains expired",
+        "Continued escalation": "Still expired: <document.name>",
+    },
+    "3 months": {
+        "Pre expiry, early": "Expiry warning: <document.name> will expire in 30 days",
+        "Pre expiry, final": "Final reminder: <document.name> will expire soon",
+        "On expiry": "Expired: <document.name>",
+        "Post expiry, escalation": "Escalation: <document.name> remains expired",
+        "Continued escalation": "Still expired: <document.name>",
+    },
+    "6 months": {
+        "Pre expiry, early": "Expiry warning: <document.name> will expire in 60 days",
+        "Pre expiry, final": "Final reminder: <document.name> will expire soon",
+        "On expiry": "Expired: <document.name>",
+        "Post expiry, escalation": "Escalation: <document.name> remains expired",
+        "Continued escalation": "Still expired: <document.name>",
+    },
+    "12 months": {
+        "Pre expiry, early": "Expiry warning: <document.name> will expire in 90 days",
+        "Pre expiry, final": "Final reminder: <document.name> will expire soon",
+        "On expiry": "Expired: <document.name>",
+        "Post expiry, escalation": "Escalation: <document.name> remains expired",
+        "Continued escalation": "Still expired: <document.name>",
+    },
+};
 
 export default function CreateEmailTemplate() {
     const navigate = useNavigate();
@@ -40,8 +115,14 @@ export default function CreateEmailTemplate() {
     const updateTemplate = useEmailTemplatesStore((s) => s.updateTemplate);
 
     const [form, setForm] = useState<Omit<EmailTemplate, "id" | "lastUpdated">>(BLANK);
+
+    // Expiry warning fields
     const [approvalPeriod, setApprovalPeriod] = useState("1 month");
     const [triggerPoint, setTriggerPoint] = useState("Pre expiry, early");
+
+    // Deadline reminder fields — split into numeric value + unit
+    const [deadlineValue, setDeadlineValue] = useState<number>(1);
+    const [deadlineUnit, setDeadlineUnit] = useState("days before");
 
     useEffect(() => {
         if (isEdit && templateId) {
@@ -52,12 +133,45 @@ export default function CreateEmailTemplate() {
             }
         } else {
             const eventParam = searchParams.get("event") ?? "";
-            setForm({ ...BLANK, event: eventParam, name: eventParam });
+            const defaultSubject = eventParam ? (DEFAULT_SUBJECTS[eventParam] ?? "") : "";
+            setForm({ ...BLANK, event: eventParam, name: eventParam, subject: defaultSubject });
         }
     }, [isEdit, templateId, getById, searchParams]);
 
     const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
         setForm((prev) => ({ ...prev, [key]: value }));
+
+    // ── Auto-update subject when event changes ──
+    const handleEventChange = (newEvent: string) => {
+        const autoSubject = DEFAULT_SUBJECTS[newEvent] ?? "";
+        setForm((prev) => ({ ...prev, event: newEvent, subject: autoSubject }));
+    };
+
+    // ── Auto-update subject when expiry approval period or trigger point changes ──
+    const handleApprovalPeriodChange = (period: string) => {
+        setApprovalPeriod(period);
+        if (form.event === "Expiry warning") {
+            const autoSubject = EXPIRY_SUBJECTS[period]?.[triggerPoint] ?? "";
+            set("subject", autoSubject);
+        }
+    };
+
+    const handleTriggerPointChange = (trigger: string) => {
+        setTriggerPoint(trigger);
+        if (form.event === "Expiry warning") {
+            const autoSubject = EXPIRY_SUBJECTS[approvalPeriod]?.[trigger] ?? "";
+            set("subject", autoSubject);
+        }
+    };
+
+    // ── Auto-update expiry subject on initial expiry event selection ──
+    useEffect(() => {
+        if (form.event === "Expiry warning") {
+            const autoSubject = EXPIRY_SUBJECTS[approvalPeriod]?.[triggerPoint] ?? "";
+            setForm((prev) => ({ ...prev, subject: autoSubject }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [form.event]);
 
     const handleSave = () => {
         if (!form.event || !form.name) return;
@@ -70,6 +184,11 @@ export default function CreateEmailTemplate() {
     };
 
     const handleCancel = () => goBack({ fallbackTo: "/settings/jobs/email-templates" });
+
+    const isExpiryWarning = form.event === "Expiry warning";
+    const isDeadlineEvent = ["Before deadline", "On deadline", "After deadline"].includes(form.event);
+    // "On deadline" has no configurable frequency — only before/after need the number input
+    const hasFrequencyInput = ["Before deadline", "After deadline"].includes(form.event);
 
     return (
         <>
@@ -93,13 +212,13 @@ export default function CreateEmailTemplate() {
                     {/* Two-column */}
                     <div className="flex flex-1 min-h-0 overflow-hidden">
 
-                        {/* ── LEFT PANEL  ── */}
-                        <div className="w-1/2  flex flex-col min-h-0">
+                        {/* ── LEFT PANEL ── */}
+                        <div className="w-1/2 flex flex-col min-h-0">
 
                             {/* Scrollable fields */}
                             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
 
-                                {/* Template name with pencil icon */}
+                                {/* Template name */}
                                 <div className="inline-flex items-center gap-2 border-b border-gray-300 pb-2 max-w-[280px] w-full">
                                     <input
                                         type="text"
@@ -116,7 +235,7 @@ export default function CreateEmailTemplate() {
                                     <label className="text-sm font-medium text-gray-700">Action</label>
                                     <BuilderSelect
                                         value={form.event}
-                                        onChange={(v) => set("event", v)}
+                                        onChange={handleEventChange}
                                         options={ALL_EVENTS.map((ev) => ({ value: ev, label: ev }))}
                                         placeholder="Select event type"
                                         className="w-full"
@@ -124,14 +243,14 @@ export default function CreateEmailTemplate() {
                                     />
                                 </div>
 
-                                {/* Approval period + Trigger point — only for Expiry warning */}
-                                {form.event === "Expiry warning" && (
+                                {/* Expiry Warning — Approval period + Trigger point */}
+                                {isExpiryWarning && (
                                     <div className="flex gap-4">
                                         <div className="flex flex-col gap-1 flex-1">
                                             <label className="text-sm font-medium text-gray-700">Approval period</label>
                                             <BuilderSelect
                                                 value={approvalPeriod}
-                                                onChange={setApprovalPeriod}
+                                                onChange={handleApprovalPeriodChange}
                                                 options={APPROVAL_PERIODS.map((p) => ({ value: p, label: p }))}
                                                 className="w-full"
                                                 selectClassName="rounded-lg border-gray-300 text-sm h-[38px]"
@@ -141,7 +260,7 @@ export default function CreateEmailTemplate() {
                                             <label className="text-sm font-medium text-gray-700">Trigger point</label>
                                             <BuilderSelect
                                                 value={triggerPoint}
-                                                onChange={setTriggerPoint}
+                                                onChange={handleTriggerPointChange}
                                                 options={TRIGGER_POINTS.map((t) => ({ value: t, label: t }))}
                                                 className="w-full"
                                                 selectClassName="rounded-lg border-gray-300 text-sm h-[38px]"
@@ -149,6 +268,40 @@ export default function CreateEmailTemplate() {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Deadline Events — Frequency field */}
+                                {isDeadlineEvent && hasFrequencyInput && (
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-sm font-medium text-gray-700">Frequency</label>
+                                        <div className="flex items-center gap-2">
+                                            {/* Numeric input for X */}
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={deadlineValue}
+                                                onChange={(e) => {
+                                                    const val = Math.max(1, parseInt(e.target.value) || 1);
+                                                    setDeadlineValue(val);
+                                                }}
+                                                className="w-[80px] rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#007B8C] focus:ring-1 focus:ring-[#007B8C] text-center"
+                                            />
+                                            {/* Unit dropdown — hours/days before/after */}
+                                            <div className="flex-1">
+                                                <BuilderSelect
+                                                    value={deadlineUnit}
+                                                    onChange={setDeadlineUnit}
+                                                    options={DEADLINE_UNITS.map((u) => ({ value: u, label: u }))}
+                                                    className="w-full"
+                                                    selectClassName="rounded-lg border-gray-300 text-sm h-[38px]"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            e.g. send {deadlineValue} {deadlineUnit} the deadline
+                                        </p>
+                                    </div>
+                                )}
+
                                 {/* Recipients */}
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm font-medium text-gray-700">Recipient(s)</label>
@@ -185,8 +338,8 @@ export default function CreateEmailTemplate() {
                                 </div>
                             </div>
 
-                            {/* ── Left footer: Cancel + Save ── */}
-                            <div className="shrink-0  px-6 py-4 flex items-center gap-3 bg-white">
+                            {/* Left footer */}
+                            <div className="shrink-0 px-6 py-4 flex items-center gap-3 bg-white">
                                 <button
                                     type="button"
                                     onClick={handleCancel}
@@ -204,15 +357,17 @@ export default function CreateEmailTemplate() {
                             </div>
                         </div>
 
-                        {/* ── RIGHT PANEL (50%) ── */}
-                        <div className="w-1/2 flex flex-col min-h-0">
+                        {/* ── RIGHT PANEL ── */}
+                        <div className="w-1/2 flex flex-col min-h-0 overflow-hidden">
 
-                            {/* Scrollable content */}
-                            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 custom-scrollbar">
+                            {/* Email content label */}
+                            <div className="shrink-0 px-6 pt-6 pb-3">
                                 <p className="text-sm font-semibold text-gray-700">Email content</p>
+                            </div>
 
-                                {/* Subject + RichText in one bordered card */}
-                                <div className="border border-gray-200 rounded-lg overflow-hidden min-h-[200px]">
+                            {/* Subject + RichText */}
+                            <div className="shrink-0 px-6">
+                                <div className="border border-gray-200 rounded-lg overflow-hidden">
                                     <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200">
                                         <span className="text-sm font-medium text-gray-500 shrink-0">Subject :</span>
                                         <input
@@ -227,20 +382,26 @@ export default function CreateEmailTemplate() {
                                         value={form.body}
                                         onChange={(v) => set("body", v)}
                                         placeholder="Enter your message.."
-                                        bodyClassName="min-h-[160px]"
+                                        bodyClassName="min-h-[100px] max-h-[120px] overflow-y-auto custom-scrollbar"
                                         className="border-none"
                                         toolbarClassName="!rounded-t-none"
                                     />
                                 </div>
+                            </div>
 
-                                {/* Preview */}
-                                <div className="rounded-t-none rounded-b-[6px] bg-[#F6F6F6]">
-                                    <div className="px-4 py-2 border-b border-gray-200 bg-[#F0F0F0]">
+                            {/* Preview — fills remaining height */}
+                            <div className="flex-1 flex flex-col min-h-0 px-6 pt-3 pb-6">
+                                <div className="flex-1 flex flex-col min-h-0 rounded-[6px] bg-[#F6F6F6] overflow-hidden">
+                                    <div className="shrink-0 px-4 py-2 border-b border-gray-200 bg-[#F0F0F0]">
                                         <p className="text-sm font-semibold text-gray-700">Preview</p>
                                     </div>
-                                    <div className="px-4 flex flex-col min-h-[320px]">
-                                        <p className="text-sm text-gray-400 py-3 border-b border-[#E9E9E9]">{form.recipients || "Recipient"}</p>
-                                        <p className="text-sm text-gray-500 py-3 border-b border-[#E9E9E9]">{form.subject || "Subject"}</p>
+                                    <div className="flex-1 min-h-0 overflow-y-auto px-4 custom-scrollbar">
+                                        <p className="text-sm text-gray-400 py-3 border-b border-[#E9E9E9]">
+                                            {form.recipients || "Recipient"}
+                                        </p>
+                                        <p className="text-sm text-gray-500 py-3 border-b border-[#E9E9E9]">
+                                            {form.subject || "Subject"}
+                                        </p>
                                         {form.body && (
                                             <div
                                                 className="mt-2 text-sm text-gray-600 prose prose-sm max-w-none"
@@ -248,12 +409,12 @@ export default function CreateEmailTemplate() {
                                             />
                                         )}
                                     </div>
-                                    {/* ── Right footer: Search to send email (uses SearchInput) ── */}
-                                    <div className="shrink-0 border-t border-[#B1B1B1] px-6 py-4">
-                                        <div className="flex items-center gap-2 bg-[#F25C54] rounded-[4px] border border-[#F25C54] px-3 py-2 w-fit">
+                                    {/* Search to send email — inside preview */}
+                                    <div className="shrink-0 border-t border-[#B1B1B1] px-4 py-4">
+                                        <div className="flex items-center gap-2 bg-[#F25C54] rounded-[4px] px-3 py-2 w-fit">
                                             <SearchInput
                                                 placeholder="Search to send email"
-                                                inputClassName="!text-sm !text-[#FFFFFF] placeholder:!text-[#FFFFFF] text-sm!"
+                                                inputClassName="!text-sm !text-[#FFFFFF] placeholder:!text-[#FFFFFF]"
                                                 iconClassName="text-white"
                                                 minSearchLength={1}
                                                 containerClassName="w-44"
